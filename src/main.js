@@ -23,6 +23,7 @@ import {
 import {
   HYPO, CONCESSIONS, VERDICT, buildHypoTrack,
   FOREKNOWLEDGE, HIJACK_T, foreknowledgeVerdict,
+  fuelProof, bozemanCost,
 } from './steelman.js';
 import { CALLS, CALL_TOTALS, FARADAY, WHY_THEY_MATTER } from './calls.js';
 import { wezWindow, LOS_HORIZON, losVsWez, mutualHorizonSmi } from './steelman.js';
@@ -814,15 +815,20 @@ function renderSteelPanel() {
 
   renderLosPanel(h);
 
+  /* The costs that are arithmetic rather than assertion are computed here, so
+     the concession list cannot drift from the model the panel above it uses. */
+  const ctx = { fuel: fuelProof(), boz: bozemanCost(target, state.claimDepart, state.interceptT) };
+
   $('#concessions').innerHTML = `
     <p style="font-size:11.5px;color:var(--ink-faint);margin:12px 0 6px">
-      Granted simultaneously. The last three cannot be bought at any price.
+      Granted simultaneously. The last four cannot be bought at any price — and the first is
+      not a concession at all, because the documented mission establishes it.
     </p>
     ${CONCESSIONS.map((c) => `
       <div class="concession ${c.blocking ? 'blocking' : 'free'}">
         <div class="cn-grant">${esc(c.grant)}</div>
         <div class="cn-detail">${esc(c.detail)}</div>
-        <div class="cn-cost">${esc(c.cost)}</div>
+        <div class="cn-cost">${esc(c.costFn ? c.costFn(ctx) : c.cost)}</div>
       </div>`).join('')}
     <div class="verdict" style="margin-top:12px">
       <h3>${esc(VERDICT.headline)}</h3>
@@ -1835,6 +1841,8 @@ function tourContext() {
   return {
     steel: steel || { miles: 0, mph: 0, mach: 0, ferryFraction: 0, totalMi: 0, totalFerryFraction: 0 },
     los: losVsWez(31000, tgt ? tgt.altFt : 5000, AIM9.rMaxMi),
+    fuel: fuelProof(),
+    boz: bozemanCost(target || PLACES.SHKV, state.claimDepart, state.interceptT),
   };
 }
 

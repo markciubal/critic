@@ -88,25 +88,31 @@ export const TOUR_STEPS = [
   {
     id: 'grant-hardware',
     tone: 'grant',
-    title: `Granted: the fuel and the missiles`,
+    title: 'The fuel is not a concession — it is proven',
     body: (c) => `
-      The first two concessions cost nothing, and it is worth saying so plainly rather than
-      pretending the claim falls at the first fence.
-      <p><strong>Fuel.</strong> ${free[0].detail} Fargo to the intercept is
-      <strong>${Math.round(c.steel.miles).toLocaleString()} miles</strong> —
-      <strong>${Math.round(c.steel.ferryFraction * 100)}%</strong> of the
-      ${F16.ferryRangeMi.toLocaleString()}-mile ferry range. Nowhere near the limit.</p>
+      This app used to hand the claim its drop tanks as a favour. That was too generous, and
+      the correction is worth making out loud.
+      <p><strong>Fuel.</strong> The undisputed part of Gibney's day includes Bozeman to Albany
+      in one leg: <strong>${Math.round(c.fuel.legBA).toLocaleString()} miles</strong>. Tanks
+      roughly double internal fuel, so a clean jet reaches about
+      ${Math.round(c.fuel.cleanFerryMi).toLocaleString()} — and carrying a passenger forces a
+      two-seat D-model with 17% less, down to about
+      <strong>${Math.round(c.fuel.twoSeatCleanMi).toLocaleString()}</strong>. The leg is
+      <strong>${c.fuel.shortfall.toFixed(1)}×</strong> that, with no aerial refuelling
+      available. The tanks are established by the mission, not granted here.</p>
       <p><strong>Missiles.</strong> ${free[1].detail} Tanks take the wing and centreline
       stations; the wingtip rails stay free. The placard describes carrying both.</p>
-      <p>The rings on the map are that envelope. An argument against this claim that leans on
-      fuel is leaning on the wrong thing.</p>`,
+      <p>So Fargo to the intercept — ${Math.round(c.steel.miles).toLocaleString()} miles,
+      ${Math.round(c.steel.ferryFraction * 100)}% of ferry range — is comfortably inside the
+      envelope on the map. Any argument against this claim that leans on fuel is leaning on the
+      wrong thing. <em>Hold on to that, because it comes back.</em></p>`,
     t: at(8, 46, 40),
     tab: 'claim',
     view: 'place:KFAR',
     viewDist: 120,
     layers: { envelope: true, wez: false, hypo: false, routeDoc: false, routeClaim: true },
     highlight: '#reach-out',
-    dwellMs: 17000,
+    dwellMs: 22000,
   },
 
   {
@@ -237,16 +243,25 @@ export const TOUR_STEPS = [
       <strong>${Math.round(c.steel.totalFerryFraction * 100)}%</strong> of ferry range —
       inside one tankful. That is the routing ${HYPO.callsign} is flying. It never goes near
       Bozeman.</p>
+      <p><strong>And here the fuel comes back.</strong> The mission that proved the tanks is
+      the same mission that proves the route. Put Bozeman back and the run to the intercept
+      goes from ${Math.round(c.boz.directMi).toLocaleString()} miles to
+      <strong>${Math.round(c.boz.viaMi).toLocaleString()}</strong> in the same
+      ${Math.round(c.boz.hours * 60)} minutes: Mach ${c.boz.directMach.toFixed(2)} becomes
+      <strong>Mach ${c.boz.viaMach.toFixed(2)}</strong> —
+      <strong>${c.boz.overPlacard.toFixed(1)}×</strong> the placarded limit for a tanked jet,
+      and that grants zero seconds on the ground at Bozeman for landing and boarding a
+      civilian.</p>
       <p>${blocking[2].cost}</p>
-      <p>So the fuel argument and the witness argument point in opposite directions. Make the
-      flying comfortable and you delete Ed Jacoby; keep Jacoby and the fuel gets much harder.
-      The claim cannot have both.</p>`,
+      <p>So one piece of evidence is doing both jobs, in opposite directions. Use the
+      documented mission to establish the fuel and you have also established the route. The
+      claim needs the first and cannot survive the second.</p>`,
     t: at(10, 20, 0),
     tab: 'claim',
     view: 'fit:KBZN,KFAR,KALB',
     layers: { hypo: true, routeDoc: true, places: true },
     highlight: '#concessions',
-    dwellMs: 20000,
+    dwellMs: 26000,
   },
 
   {

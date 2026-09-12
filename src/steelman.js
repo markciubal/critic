@@ -17,9 +17,13 @@
 
    WHAT IT GRANTS
 
-   Fuel, missiles, a perfect launch time, a perfect heading, no air-traffic
-   routing, no weather, no turnaround, the two-seat problem waved away, and an
-   order that did not exist. Every one of those is granted simultaneously.
+   Missiles, a perfect launch time, a perfect heading, no air-traffic routing,
+   no weather, no turnaround, the two-seat problem waved away, and an order that
+   did not exist. Every one of those is granted simultaneously.
+
+   Fuel is no longer on that list. It used to be, and that was too generous:
+   the external tanks are not an assumption this app makes for the claim, they
+   are a finding the claim's own documented mission forces. See below.
 
    WHAT SURVIVES ANYWAY
 
@@ -54,13 +58,107 @@ export const HYPO = {
   src: 'derived',
 };
 
+
+/* =============================================================================
+   THE FUEL IS NOT A CONCESSION
+
+   The app used to hand the claim its external tanks as a favour. That was too
+   generous by half, and wrong in a way worth correcting in public: the tanks
+   are not an assumption, they are a finding, and they follow from the mission
+   nobody disputes.
+
+   Bozeman to Albany is one leg of 1,843 miles. The app's own figures say the
+   tank fit "roughly doubles" internal fuel, so a clean airframe reaches about
+   half the tanked ferry range — call it 1,225 miles, and that is generous,
+   because tanks add drag as well as fuel. Carrying a passenger forces a
+   two-seat F-16B/D with about 17% less internal fuel, which brings a clean
+   aircraft down to roughly 1,020 miles. The leg is nearly twice that. No
+   configuration without external tanks flies it, and there was no aerial
+   refuelling.
+
+   So: the fuel is established, not granted.
+
+   AND THAT IS THE PROBLEM FOR THE CLAIM
+
+   The same documented mission that proves the tanks also proves the route, and
+   the steelman only closes because it quietly deletes the middle of it. Fargo
+   straight to Somerset County is 1,012 miles and needs about Mach 1.26 — which
+   works. Fargo via Bozeman to Somerset County is 2,354 miles in the same 71
+   minutes, which needs about Mach 2.9: roughly twice the Mach 1.6 placarded
+   limit for a tanked jet, and above the clean Mach 2.0 dash figure the
+   aircraft cannot use while carrying tanks anyway. That is before a single
+   second on the ground at Bozeman, and he had to land there, shut down enough
+   to board a civilian, and get airborne again.
+
+   You can use the documented mission to establish the fuel, or to establish
+   the route. The claim needs the first and cannot survive the second.
+   ========================================================================== */
+
+/* A two-seat F-16B/D trades internal fuel for the second cockpit. */
+export const TWO_SEAT_FUEL_PENALTY = 0.17;
+
+export function fuelProof() {
+  const legFB = haversineMi(PLACES.KFAR, PLACES.KBZN);
+  const legBA = haversineMi(PLACES.KBZN, PLACES.KALB);
+
+  // Tanks "roughly double" the fuel, so clean is about half of tanked ferry.
+  const cleanFerryMi = F16.ferryRangeMi / 2;
+  const twoSeatCleanMi = cleanFerryMi * (1 - TWO_SEAT_FUEL_PENALTY);
+  // Tanked two-seater: full external, reduced internal.
+  const twoSeatTankedMi = F16.ferryRangeMi * ((1 - TWO_SEAT_FUEL_PENALTY) + 1) / 2;
+
+  return {
+    legFB,
+    legBA,
+    dayMi: legFB + legBA,
+    cleanFerryMi,
+    twoSeatCleanMi,
+    twoSeatTankedMi,
+    shortfall: legBA / twoSeatCleanMi,       // how far over a clean two-seater
+    tankedUse: legBA / twoSeatTankedMi,      // how much of a tanked one it eats
+    needsTanks: legBA > twoSeatCleanMi,
+  };
+}
+
+/* What keeping Bozeman does to the intercept. `targetLatLon` is where United
+   93 has to be met; the window is the same one the direct run gets. */
+export function bozemanCost(targetLatLon, departEDT, interceptEDT) {
+  const hours = Math.max(1, interceptEDT - departEDT) / 3600;
+  const directMi = haversineMi(PLACES.KFAR, targetLatLon);
+  const viaMi = haversineMi(PLACES.KFAR, PLACES.KBZN)
+    + haversineMi(PLACES.KBZN, targetLatLon);
+
+  const directMph = directMi / hours;
+  const viaMph = viaMi / hours;
+
+  return {
+    hours,
+    directMi,
+    viaMi,
+    directMph,
+    viaMph,
+    directMach: machAt(directMph, 31000),
+    viaMach: machAt(viaMph, 31000),
+    placardMach: machAt(F16.maxWithTanksMph, 31000),
+    overPlacard: viaMph / F16.maxWithTanksMph,
+    // Zero ground time at Bozeman is assumed, which is impossible.
+    groundTimeGranted: 0,
+  };
+}
+
 /* Each concession, what it grants, and what granting it costs. The last
-   column is the point: three of these cannot be bought at any price. */
+   column is the point: four of these cannot be bought at any price, and the
+   first is no longer a concession at all. */
 export const CONCESSIONS = [
   {
     grant: 'He has the fuel',
     detail: 'Two 370-gallon wing tanks and a 300-gallon centreline, roughly doubling internal fuel.',
-    cost: 'Free. This is an ordinary fit, and 1,012 miles is about 41% of ferry range.',
+    cost: 'Nothing, because it is not a concession. The documented mission proves it.',
+    costFn: (c) => `Nothing — this is not a concession at all. Bozeman to Albany is a single `
+      + `leg of ${Math.round(c.fuel.legBA).toLocaleString()} miles, and a clean two-seat F-16D `
+      + `reaches about ${Math.round(c.fuel.twoSeatCleanMi).toLocaleString()}. The leg is `
+      + `${c.fuel.shortfall.toFixed(1)}× that, and there was no aerial refuelling, so the tanks `
+      + `are established by the mission rather than granted by this app.`,
     blocking: false,
   },
   {
@@ -108,7 +206,17 @@ export const CONCESSIONS = [
   {
     grant: 'He never collects Jacoby',
     detail: 'The shortest flyable version runs Fargo to the intercept and straight on to Albany — about 1,320 miles, roughly half of one tankful. It does not go to Bozeman.',
-    cost: 'Bozeman is where Ed Jacoby was standing. He was collected, he reached Albany, and he has said on the record that Gibney flew him. The concession that makes the flying easy is the one that contradicts the only first-hand witness to the mission.',
+    cost: 'Bozeman is where Ed Jacoby was standing, and putting it back breaks the kinematics.',
+    costFn: (c) => `Bozeman is where Ed Jacoby was standing. He was collected, he reached Albany, `
+      + `and he has said on the record that Gibney flew him. And this is where the fuel argument `
+      + `turns around: the documented mission is what proves the tanks, but it also proves the `
+      + `route. Fargo straight to the intercept is `
+      + `${Math.round(c.boz.directMi).toLocaleString()} mi — Mach ${c.boz.directMach.toFixed(2)}, `
+      + `which works. Fargo via Bozeman is ${Math.round(c.boz.viaMi).toLocaleString()} mi in the same `
+      + `${Math.round(c.boz.hours * 60)} minutes — Mach ${c.boz.viaMach.toFixed(2)}, or `
+      + `${c.boz.overPlacard.toFixed(1)}× the placarded limit, with zero seconds on the ground. `
+      + `The concession that makes the flying easy is the one that deletes the only first-hand `
+      + `witness to the mission.`,
     blocking: true,
   },
   {
@@ -184,7 +292,7 @@ export function buildHypoTrack(targetLatLon, departEDT, interceptEDT) {
 
 export const VERDICT = {
   headline: 'The kinematics work. Nothing else does.',
-  body: 'Granting fuel, missiles, the earliest permitted launch and a perfect heading, the run to Somerset County needs roughly Mach 1.26 sustained — inside the placarded limit for a tanked F-16, and about 41% of its ferry range. Speed and fuel do not stop this, and an argument that leans on them is leaning on the wrong thing. What stops it is that the launch requires knowing at 08:46 what would not happen until 09:28, that the sector had no track on the aircraft until four minutes after it crashed, that no order to fire existed at 09:58, and that the pilot, his unit and his passenger all place him over Montana.',
+  body: 'The fuel is not even in dispute: the documented Montana-to-Albany leg is 1,843 miles, which no clean F-16 flies, so the external tanks are established rather than granted. Add the missiles, the earliest permitted launch and a perfect heading, and the run to Somerset County needs roughly Mach 1.26 sustained — inside the placarded limit for a tanked jet, and about 41% of its ferry range. Speed and fuel do not stop this, and an argument that leans on them is leaning on the wrong thing. What stops it is that the launch requires knowing at 08:46 what would not happen until 09:28, that the sector had no track on the aircraft until four minutes after it crashed, that no order to fire existed at 09:58, and that the very mission which proves the fuel also puts Bozeman in the route — which pushes the intercept to about Mach 2.9, nearly twice what a tanked F-16 is permitted.',
   src: 'derived',
 };
 

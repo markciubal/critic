@@ -212,6 +212,41 @@ fighter in the eastern half of the country would have swept over Somerset
 County eventually. It is drawn to show the size of the gap in the record, and
 the fuel ring is drawn to show how much smaller that gap really is.
 
+## The fuel is not a concession
+
+The app used to grant the external tanks as a favour to the claim. That was too
+generous, and the correction runs the other way from what you would expect.
+
+Bozeman to Albany — an undisputed leg of Gibney's documented day — is
+**1,843 miles in one hop**. The tank fit roughly doubles internal fuel, so a
+clean airframe reaches about 1,225 miles; carrying a passenger forces a two-seat
+F-16B/D with ~17% less internal fuel, which brings a clean jet down to about
+**1,020 miles**. The leg is 1.8x that, and there was no aerial refuelling. The
+tanks are established by the mission, not granted here.
+
+Which then costs the claim the thing it needs most. The same documented mission
+that proves the tanks also proves the route, and the steelman only closes
+because it deletes the middle of it:
+
+| Route to the intercept | Distance | Speed required |
+|---|---|---|
+| Fargo direct (skips Bozeman) | ~990 mi | ~Mach 1.2 — inside the placard |
+| Fargo **via Bozeman** | ~2,330 mi | ~Mach 2.9 — nearly 2x the placard |
+
+A tanked F-16 is placarded to Mach 1.6, and the clean Mach 2.0 dash figure is
+unavailable to an aircraft carrying tanks. The via-Bozeman figure also grants
+zero seconds on the ground, when he had to land, board a civilian and get
+airborne again.
+
+So one piece of evidence does both jobs in opposite directions. You can use the
+documented mission to establish the fuel, or to establish the route. The claim
+needs the first and cannot survive the second.
+
+Both figures are computed live in `src/steelman.js` (`fuelProof`,
+`bozemanCost`) rather than written down, so the panel and the tour cannot drift
+from each other. Whether that Bozeman–Albany leg was truly flown nonstop is
+logged as an open item in the discrepancy register.
+
 ## The claim being tested
 
 In February 2004, Col. Donn de Grand-Pre (US Army, ret.) said on The Alex Jones

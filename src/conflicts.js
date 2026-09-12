@@ -218,6 +218,19 @@ export const CONFLICTS = [
 
 CONFLICTS.push(
   {
+    id: 'bozeman-albany-nonstop',
+    subject: 'Was Bozeman to Albany flown without a fuel stop?',
+    tags: ['GIBNEY'],
+    status: 'open',
+    why: 'The whole fuel finding rests on that leg being one leg. If he stopped, the leg length proves nothing about the tanks \u2014 though the tanks would still be needed, and the Bozeman kinematics would be unchanged.',
+    readings: [
+      { v: 'Two landings: Bozeman to collect Jacoby, Albany to deliver him', who: 'Press accounts of the mission', src: 'press', weight: 'No intermediate stop is mentioned. This app models it as a single leg.' },
+      { v: 'A fuel stop is plausible', who: 'Arithmetic done here', src: 'derived', weight: '1,843 miles is about 82% of a tanked two-seater\u2019s ferry range, and Gibney reportedly flew lower than normal for his passenger\u2019s comfort \u2014 which burns more, not less.' },
+    ],
+    reading: 'Unresolved, and the app should say so rather than lean on a leg length it cannot confirm. Note which way the uncertainty runs: a fuel stop would weaken the inference that the tanks are proven, but it would not help the claim at all. It adds time to a day the claim already cannot fit, and the Bozeman detour still pushes the intercept to roughly Mach 2.9.',
+    appSays: 'The app models two legs and computes the fuel finding from the longer one. The finding is badged as derived.',
+  },
+  {
     id: 'pentagon-second',
     subject: 'The Pentagon impact — 09:37:45 or 09:37:46?',
     tags: ['DATA'],
