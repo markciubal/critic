@@ -44,8 +44,9 @@
    useful conclusion than "impossible", and a harder one to wave away.
    ========================================================================== */
 
-import { PLACES, F16 } from './data.js';
-import { haversineMi, bearingDeg, gcInterp, machAt } from './geo.js';
+import { PLACES, F16, CRITIC_CHAIN } from './data.js';
+import { haversineMi, bearingDeg, gcInterp, machAt, samplePath } from './geo.js';
+import { AIM9 } from './reachability.js';
 
 const at = (h, m, s = 0) => h * 3600 + m * 60 + s;
 
@@ -288,6 +289,66 @@ export function buildHypoTrack(targetLatLon, departEDT, interceptEDT) {
     totalFerryFraction: totalMi / F16.ferryRangeMi,
     skipsBozeman: true,
   };
+}
+
+
+/* =============================================================================
+   THE CRITIC, AGAINST THE STEELMAN
+
+   This app is named after DIRNSA CRITIC 1-2001 and is a companion to a records
+   request for its text — and until now the steelman argument did not mention it
+   once. That is a strange omission, because the CRITIC chain is the single most
+   useful thing in the whole app for testing this claim.
+
+   Here is why. Every other source describes what HAPPENED: recorders, radar,
+   ATC tapes, the NEADS recordings. The CRITIC describes what the national
+   command structure BELIEVED WAS HAPPENING, timestamped to the minute, in the
+   channel designed to put information in front of the President inside ten
+   minutes. And the sequence brackets the alleged shootdown on both sides —
+   two messages before it, two after.
+
+   So: where would the best-case shooter have been, each time one went out?
+
+   The answer is the argument. At 09:49, when NORAD originates the CRITIC, the
+   steelman aircraft is seventy-odd miles from United 93 — six times outside the
+   range of its own missile. At 09:52, when NSA pushes DIRNSA CRITIC 1-2001
+   across the watch community, it is still nearly fifty miles out, six minutes
+   short. Then United 93 goes into the ground, and the two follow-ups that
+   close the sequence — sent at 10:14 and 10:48, into the highest-priority
+   channel the United States operates — are where a shootdown by a US fighter
+   would have to appear, if it had happened.
+
+   That is the document this app can name as the one that would change its mind.
+   It exists. Its contents are withheld.
+   ========================================================================== */
+
+export function criticSnapshots(hypoTrack, ua93Path, interceptEDT) {
+  if (!hypoTrack || !ua93Path) return [];
+  const impactT = ua93Path[ua93Path.length - 1][0];
+  const landsT = hypoTrack.arrivesAlbany;
+
+  return CRITIC_CHAIN.map((c) => {
+    const hp = samplePath(hypoTrack.path, c.t);
+    const up = c.t <= impactT ? samplePath(ua93Path, c.t) : null;
+    const sepMi = (hp && up) ? haversineMi(hp, up) : null;
+
+    return {
+      c,
+      hypo: hp,
+      target: up,
+      sepMi,
+      /* How far outside the missile's reach, expressed as a multiple, because
+         "72 miles" means nothing until you know the weapon reaches 11. */
+      outsideBy: sepMi === null ? null : sepMi / AIM9.rMaxMi,
+      inRange: sepMi === null ? false : sepMi <= AIM9.rMaxMi,
+      losMi: (hp && up) ? mutualHorizonSmi(hp.altFt, up.altFt) : null,
+      minsToShot: (interceptEDT - c.t) / 60,
+      // Negative once United 93 is down; positive while it is still flying.
+      minsAfterImpact: (c.t - impactT) / 60,
+      airborne: !!hp && c.t <= landsT,
+      landed: c.t > landsT,
+    };
+  });
 }
 
 export const VERDICT = {

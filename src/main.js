@@ -23,7 +23,7 @@ import {
 import {
   HYPO, CONCESSIONS, VERDICT, buildHypoTrack,
   FOREKNOWLEDGE, HIJACK_T, foreknowledgeVerdict,
-  fuelProof, bozemanCost,
+  fuelProof, bozemanCost, criticSnapshots,
 } from './steelman.js';
 import { CALLS, CALL_TOTALS, FARADAY, WHY_THEY_MATTER } from './calls.js';
 import { GLOSSARY, glossaryList } from './glossary.js';
@@ -185,6 +185,7 @@ function throttledReachPanels(force = false) {
   renderWezPanel();
   renderSteelPanel();
   renderForeknowledgePanel();
+  renderCriticVsSteelman();
 }
 
 /* United 93's live position is the target the alleged shot needs. Once it is
@@ -1120,6 +1121,74 @@ function renderDebrisTab() {
    content, and a redaction bar standing in for what is not.
    ========================================================================== */
 
+
+/* =============================================================================
+   The CRITIC against the steelman
+
+   The app is named after these messages and spent a long time arguing the
+   shootdown claim without once putting the two next to each other. They belong
+   together: the CRITIC sequence is the only minute-stamped record of what the
+   government believed while this was supposedly happening, and it brackets the
+   alleged shot on both sides.
+   ========================================================================== */
+
+function renderCriticVsSteelman() {
+  const host = $('#critic-steel');
+  if (!host) return;
+
+  const target = hypoTarget();
+  const steel = target ? buildHypoTrack(target, state.claimDepart, state.interceptT) : null;
+  const ua93 = FLIGHTS.find((f) => f.id === 'UA93');
+  const snaps = criticSnapshots(steel, ua93.path, state.interceptT);
+  if (!snaps.length) return;
+
+  const row = (k) => {
+    if (k.sepMi !== null) {
+      return `
+        <div class="cmd-row">
+          <div class="t" style="color:var(--critic)">${hms(k.c.t).slice(0, 5)}</div>
+          <div class="x">
+            <strong style="color:var(--ink)">${esc(k.c.mapLabel)}</strong> —
+            ${HYPO.callsign} would be <strong class="v-impossible">${Math.round(k.sepMi)} mi</strong>
+            from United 93. That is <strong>${k.outsideBy.toFixed(1)}×</strong> the reach of its
+            own missile, with ${Math.round(k.minsToShot)} minutes left to close.
+            <span style="color:var(--ink-faint)">In sight of it — the two could see each other
+            ${Math.round(k.losMi)} mi apart ${info('lineOfSight')} — but nowhere near able to
+            shoot at it.</span>
+          </div>
+        </div>`;
+    }
+    return `
+      <div class="cmd-row">
+        <div class="t" style="color:var(--critic)">${hms(k.c.t).slice(0, 5)}</div>
+        <div class="x">
+          <strong style="color:var(--ink)">${esc(k.c.mapLabel)}</strong> — United 93 has been on
+          the ground <strong>${Math.round(k.minsAfterImpact)} minutes</strong>.
+          ${k.landed
+            ? `${HYPO.callsign} has already landed at Albany.`
+            : `${HYPO.callsign} is over Pennsylvania, headed for Albany.`}
+        </div>
+      </div>`;
+  };
+
+  host.innerHTML = `
+    ${snaps.map(row).join('')}
+    <p style="margin:11px 0 0;font-size:12px;color:var(--ink-dim);line-height:1.55">
+      The first two messages go out while the best-case shooter is still tens of miles short.
+      That is not damning on its own — he is closing fast, and the claim only needs one instant.
+      The second pair is the harder question. If an American fighter had just destroyed an
+      American airliner, the channel built to reach the President in ten minutes is where that
+      would appear, and two messages went out on it after United 93 was down.
+    </p>
+    <p style="margin:9px 0 0;font-size:12px;color:var(--ink-dim);line-height:1.55">
+      <strong style="color:var(--ink)">What this app can and cannot say.</strong> It cannot tell
+      you those messages are silent about a shootdown, because their contents are withheld. It
+      can tell you that this is the record which would settle the question either way, that it is
+      timestamped to the minute, that it sits in NSA's own files, and that the reason you cannot
+      read it is a decision somebody made and can be asked to justify. ${srcTag('derived')}
+    </p>`;
+}
+
 function renderCriticTab() {
   const msg = (c) => `
     <div class="leg critic-msg" data-criticjump="${c.id}">
@@ -1162,6 +1231,17 @@ function renderCriticTab() {
       </div>
     </div>
 
+    <div class="card critic-steel-card">
+      <h3>Where the shootdown claim would have been, each time one went out</h3>
+      <p style="font-size:12px;color:var(--ink-dim);line-height:1.55">
+        Every other source in this app describes what <em>happened</em>. The CRITIC describes
+        what the government <em>believed was happening</em>, to the minute. So it is worth
+        asking where ${esc(HYPO.callsign)} — the best case the shootdown story can have
+        ${info('steelman')} — would have been at each of these four moments.
+      </p>
+      <div id="critic-steel"></div>
+    </div>
+
     <div class="card glimpse">
       <h3>${esc(CRITIC_GLIMPSE.title)}</h3>
       ${CRITIC_GLIMPSE.items.map((i) => `
@@ -1196,6 +1276,8 @@ function renderCriticTab() {
       <p style="margin-top:10px;font-size:12px;color:var(--ink-faint)">If records are released, they land here: each message against the minute of the morning it was sent, with the rest of the timeline already drawn around it.</p>
       <div>${srcTag(FOIA.src)}</div>
     </div>`;
+
+  renderCriticVsSteelman();
 
   $$('#critic-body .chip').forEach((b) => b.addEventListener('click', () => {
     if (b.dataset.act !== 'show-critic') return;
@@ -1900,6 +1982,7 @@ function tourContext() {
   return {
     steel: steel || { miles: 0, mph: 0, mach: 0, ferryFraction: 0, totalMi: 0, totalFerryFraction: 0 },
     los: losVsWez(31000, tgt ? tgt.altFt : 5000, AIM9.rMaxMi),
+    critic: criticSnapshots(steel, FLIGHTS.find((f) => f.id === 'UA93').path, state.interceptT),
     fuel: fuelProof(),
     boz: bozemanCost(target || PLACES.SHKV, state.claimDepart, state.interceptT),
   };

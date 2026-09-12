@@ -878,6 +878,25 @@ body.touring #legend { opacity: 0; pointer-events: none; transition: opacity .25
 .gl-plain { font-size: 12.5px; line-height: 1.55; color: var(--ink); }
 .gl-more { font-size: 11.5px; line-height: 1.55; color: var(--ink-faint); margin-top: 5px; }
 
+/* A CRITIC readout inside a tour callout: the message, and where the
+   best-case shooter would have been when it went. */
+.tour-crit {
+  margin: 9px 0 0; padding: 8px 10px;
+  background: rgba(255,31,61,.09); border-left: 2px solid var(--critic);
+  border-radius: 0 4px 4px 0;
+  font-size: 11.5px; line-height: 1.55; color: var(--ink-dim);
+}
+.tour-crit b {
+  display: inline; color: var(--critic);
+  font: 700 10px/1.4 var(--mono); letter-spacing: .6px;
+}
+.tour-crit strong { color: var(--ink); }
+
+/* The CRITIC-versus-steelman card: the app's own name, finally argued against
+   its own subject. Carries the CRITIC red so it reads as part of that chain. */
+.card.critic-steel-card { border-color: rgba(255,31,61,.42); background: rgba(255,31,61,.05); }
+.card.critic-steel-card h3 { color: var(--critic); }
+
 </style>
 </head>
 <body>
@@ -56376,8 +56395,9 @@ function scaleComparison(departEDT, nowEDT) {
 })();
 
 __m["steelman"] = (function () {
-  const { PLACES, F16 } = __m["data"];
-  const { haversineMi, bearingDeg, gcInterp, machAt } = __m["geo"];
+  const { PLACES, F16, CRITIC_CHAIN } = __m["data"];
+  const { haversineMi, bearingDeg, gcInterp, machAt, samplePath } = __m["geo"];
+  const { AIM9 } = __m["reachability"];
 /* =============================================================================
    steelman.js — the claim's best possible case.
 
@@ -56423,6 +56443,7 @@ __m["steelman"] = (function () {
    authority, and on the testimony of the people involved — which is a more
    useful conclusion than "impossible", and a harder one to wave away.
    ========================================================================== */
+
 
 
 
@@ -56669,6 +56690,66 @@ function buildHypoTrack(targetLatLon, departEDT, interceptEDT) {
   };
 }
 
+
+/* =============================================================================
+   THE CRITIC, AGAINST THE STEELMAN
+
+   This app is named after DIRNSA CRITIC 1-2001 and is a companion to a records
+   request for its text — and until now the steelman argument did not mention it
+   once. That is a strange omission, because the CRITIC chain is the single most
+   useful thing in the whole app for testing this claim.
+
+   Here is why. Every other source describes what HAPPENED: recorders, radar,
+   ATC tapes, the NEADS recordings. The CRITIC describes what the national
+   command structure BELIEVED WAS HAPPENING, timestamped to the minute, in the
+   channel designed to put information in front of the President inside ten
+   minutes. And the sequence brackets the alleged shootdown on both sides —
+   two messages before it, two after.
+
+   So: where would the best-case shooter have been, each time one went out?
+
+   The answer is the argument. At 09:49, when NORAD originates the CRITIC, the
+   steelman aircraft is seventy-odd miles from United 93 — six times outside the
+   range of its own missile. At 09:52, when NSA pushes DIRNSA CRITIC 1-2001
+   across the watch community, it is still nearly fifty miles out, six minutes
+   short. Then United 93 goes into the ground, and the two follow-ups that
+   close the sequence — sent at 10:14 and 10:48, into the highest-priority
+   channel the United States operates — are where a shootdown by a US fighter
+   would have to appear, if it had happened.
+
+   That is the document this app can name as the one that would change its mind.
+   It exists. Its contents are withheld.
+   ========================================================================== */
+
+function criticSnapshots(hypoTrack, ua93Path, interceptEDT) {
+  if (!hypoTrack || !ua93Path) return [];
+  const impactT = ua93Path[ua93Path.length - 1][0];
+  const landsT = hypoTrack.arrivesAlbany;
+
+  return CRITIC_CHAIN.map((c) => {
+    const hp = samplePath(hypoTrack.path, c.t);
+    const up = c.t <= impactT ? samplePath(ua93Path, c.t) : null;
+    const sepMi = (hp && up) ? haversineMi(hp, up) : null;
+
+    return {
+      c,
+      hypo: hp,
+      target: up,
+      sepMi,
+      /* How far outside the missile's reach, expressed as a multiple, because
+         "72 miles" means nothing until you know the weapon reaches 11. */
+      outsideBy: sepMi === null ? null : sepMi / AIM9.rMaxMi,
+      inRange: sepMi === null ? false : sepMi <= AIM9.rMaxMi,
+      losMi: (hp && up) ? mutualHorizonSmi(hp.altFt, up.altFt) : null,
+      minsToShot: (interceptEDT - c.t) / 60,
+      // Negative once United 93 is down; positive while it is still flying.
+      minsAfterImpact: (c.t - impactT) / 60,
+      airborne: !!hp && c.t <= landsT,
+      landed: c.t > landsT,
+    };
+  });
+}
+
 const VERDICT = {
   headline: 'The kinematics work. Nothing else does.',
   body: 'The fuel is not even in dispute: the documented Montana-to-Albany leg is 1,843 miles, which no clean F-16 flies, so the external tanks are established rather than granted. Add the missiles, the earliest permitted launch and a perfect heading, and the run to Somerset County needs roughly Mach 1.26 sustained — inside the placarded limit for a tanked jet, and about 41% of its ferry range. Speed and fuel do not stop this, and an argument that leans on them is leaning on the wrong thing. What stops it is that the launch requires knowing at 08:46 what would not happen until 09:28, that the sector had no track on the aircraft until four minutes after it crashed, that no order to fire existed at 09:58, and that the very mission which proves the fuel also puts Bozeman in the route — which pushes the intercept to about Mach 2.9, nearly twice what a tanked F-16 is permitted.',
@@ -56849,6 +56930,7 @@ function losVsWez(hypoAltFt, targetAltFt, rMaxMi) {
     bozemanCost,
     CONCESSIONS,
     buildHypoTrack,
+    criticSnapshots,
     VERDICT,
     HIJACK_T,
     FOREKNOWLEDGE,
@@ -57046,6 +57128,14 @@ __m["tour"] = (function () {
    and the argument collapses into "a fast jet could have got there", which is
    the opposite of what it says.
 
+   The last two steps are the CRITIC, and they were missing for far too long.
+   This app is named after DIRNSA CRITIC 1-2001 and exists as a companion to a
+   records request for its text — and the tour walked the entire argument
+   without mentioning it once. It belongs at the end rather than among the
+   blockers, because it is not another objection. It is the document that would
+   settle the question either way, it is dated to the minute, and the reason
+   nobody can read it is a decision somebody made.
+
    So the tour is not decoration. It is the argument's sequence, made playable:
    each step sets the clock, moves the camera and opens the panel that carries
    the evidence, so the claim is being *watched* while it is being explained.
@@ -57075,6 +57165,13 @@ __m["tour"] = (function () {
 
 
 const at = (h, m, s = 0) => h * 3600 + m * 60 + s;
+
+/* Local copies rather than imports from main.js, which would be a cycle. Small
+   enough that duplicating them costs less than the coupling would. */
+const esc0 = (x) => String(x).replace(/[&<>"]/g, (ch) =>
+  ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]));
+const hms0 = (t) => [t / 3600, (t % 3600) / 60, t % 60]
+  .map((n) => String(Math.floor(n)).padStart(2, '0')).join(':');
 
 /* The acts, used for the chapter strip and the accent colour. A step's tone is
    a claim about what the step is doing to the argument, not a mood. */
@@ -57335,6 +57432,68 @@ const TOUR_STEPS = [
     viewDist: 40,
     layers: { hypo: true, wez: true, envelope: true },
     highlight: '#wez-out',
+  },
+
+  {
+    id: 'critic-live',
+    tone: 'blocks',
+    title: 'The government was writing it down at the time',
+    body: (c, i) => `
+      This app is named after what is on screen now. A <strong>CRITIC</strong> ${i('critic')} is
+      the most urgent message the US intelligence system has — meant to be in front of the
+      President within ten minutes. Four went out that morning.
+      <p>They matter here because they are not a later account of the day. They are the
+      government writing down, at the time, what it believed was happening. And the sequence
+      lands on <em>both sides</em> of the moment this story needs.</p>
+      ${c.critic.slice(0, 2).map((k) => `
+      <div class="tour-crit">
+        <b>${esc0(k.c.mapLabel)}</b> &middot; ${hms0(k.c.t).slice(0, 5)}<br>
+        ${k.sepMi === null ? 'Not yet airborne.' : `
+        ${HYPO.callsign} would be <strong>${Math.round(k.sepMi)} miles</strong> from United 93 —
+        <strong>${k.outsideBy.toFixed(1)}\u00d7 further than its missile can reach</strong>, with
+        ${Math.round(k.minsToShot)} minutes left to close.`}
+      </div>`).join('')}
+      <p>So at the two moments the nation's own alarm system was ringing, the best-case shooter
+      is still tens of miles away and has not fired. Nothing about that is impossible — he is
+      closing fast. It is just the last stretch of the run, recorded by the government, minute
+      by minute, in the one channel that cannot be quietly backdated.</p>`,
+    t: at(9, 52, 0),
+    tab: 'critic',
+    view: 'hypo',
+    viewDist: 95,
+    layers: { hypo: true, critic: true, UA93: true, wez: true },
+  },
+
+  {
+    id: 'critic-silence',
+    tone: 'blocks',
+    title: 'And then the same channel says nothing about it',
+    body: (c, i) => `
+      United 93 is on the ground. If an American fighter had just destroyed an American airliner
+      full of people, that is not a detail anyone sits on — it is the single most urgent fact in
+      the country, and there is a channel built for exactly that.
+      <p>Two more messages go out on it.</p>
+      ${c.critic.slice(2).map((k) => `
+      <div class="tour-crit">
+        <b>${esc0(k.c.mapLabel)}</b> &middot; ${hms0(k.c.t).slice(0, 5)}<br>
+        United 93 has been down <strong>${Math.round(k.minsAfterImpact)} minutes</strong>.
+        ${k.landed
+          ? `${HYPO.callsign} has already landed at Albany.`
+          : `${HYPO.callsign} is over Pennsylvania on its way to Albany.`}
+      </div>`).join('')}
+      <p>Neither is publicly known to say a word about a shootdown, and a summary written two
+      days later — the place any correction to the record would go — is withheld along with
+      them.</p>
+      <p><strong>This is the honest shape of it.</strong> Those messages are redacted, so this
+      app cannot tell you they are silent on the point. What it can tell you is that this is the
+      document which would settle the question either way, that it exists, that it is dated to
+      the minute, and that the reason you cannot read it is a decision somebody made. That is
+      what the records request ${i('foia')} behind this app is for.</p>`,
+    t: at(10, 48, 0),
+    tab: 'critic',
+    view: 'reset',
+    layers: { hypo: true, critic: true },
+    highlight: '#critic-body',
   },
 
   {
@@ -58706,7 +58865,7 @@ __m["main"] = (function () {
   const { analyseClaim, analyseDocumented, ASSUMPTIONS, COMMAND_CHECK, classify, legAnalysis } = __m["analysis"];
   const { CONFLICTS, STATUS_META, conflictsFor, openCount } = __m["conflicts"];
   const { BANDS, FUEL_RING, FERRY_RING, HALF_FERRY_RING, AIM9, shanksvilleTest, reachMi, scaleComparison, TOLERANCES, DEPARTURE_BOUNDS, bandRadii, evidenceCeilingMi, CONFIG_TRADE } = __m["reachability"];
-  const { HYPO, CONCESSIONS, VERDICT, buildHypoTrack, FOREKNOWLEDGE, HIJACK_T, foreknowledgeVerdict, fuelProof, bozemanCost, wezWindow, LOS_HORIZON, losVsWez, mutualHorizonSmi } = __m["steelman"];
+  const { HYPO, CONCESSIONS, VERDICT, buildHypoTrack, FOREKNOWLEDGE, HIJACK_T, foreknowledgeVerdict, fuelProof, bozemanCost, criticSnapshots, wezWindow, LOS_HORIZON, losVsWez, mutualHorizonSmi } = __m["steelman"];
   const { CALLS, CALL_TOTALS, FARADAY, WHY_THEY_MATTER } = __m["calls"];
   const { GLOSSARY, glossaryList } = __m["glossary"];
   const { TOUR_STEPS, TONES } = __m["tour"];
@@ -58881,6 +59040,7 @@ function throttledReachPanels(force = false) {
   renderWezPanel();
   renderSteelPanel();
   renderForeknowledgePanel();
+  renderCriticVsSteelman();
 }
 
 /* United 93's live position is the target the alleged shot needs. Once it is
@@ -59816,6 +59976,74 @@ function renderDebrisTab() {
    content, and a redaction bar standing in for what is not.
    ========================================================================== */
 
+
+/* =============================================================================
+   The CRITIC against the steelman
+
+   The app is named after these messages and spent a long time arguing the
+   shootdown claim without once putting the two next to each other. They belong
+   together: the CRITIC sequence is the only minute-stamped record of what the
+   government believed while this was supposedly happening, and it brackets the
+   alleged shot on both sides.
+   ========================================================================== */
+
+function renderCriticVsSteelman() {
+  const host = $('#critic-steel');
+  if (!host) return;
+
+  const target = hypoTarget();
+  const steel = target ? buildHypoTrack(target, state.claimDepart, state.interceptT) : null;
+  const ua93 = FLIGHTS.find((f) => f.id === 'UA93');
+  const snaps = criticSnapshots(steel, ua93.path, state.interceptT);
+  if (!snaps.length) return;
+
+  const row = (k) => {
+    if (k.sepMi !== null) {
+      return `
+        <div class="cmd-row">
+          <div class="t" style="color:var(--critic)">${hms(k.c.t).slice(0, 5)}</div>
+          <div class="x">
+            <strong style="color:var(--ink)">${esc(k.c.mapLabel)}</strong> —
+            ${HYPO.callsign} would be <strong class="v-impossible">${Math.round(k.sepMi)} mi</strong>
+            from United 93. That is <strong>${k.outsideBy.toFixed(1)}×</strong> the reach of its
+            own missile, with ${Math.round(k.minsToShot)} minutes left to close.
+            <span style="color:var(--ink-faint)">In sight of it — the two could see each other
+            ${Math.round(k.losMi)} mi apart ${info('lineOfSight')} — but nowhere near able to
+            shoot at it.</span>
+          </div>
+        </div>`;
+    }
+    return `
+      <div class="cmd-row">
+        <div class="t" style="color:var(--critic)">${hms(k.c.t).slice(0, 5)}</div>
+        <div class="x">
+          <strong style="color:var(--ink)">${esc(k.c.mapLabel)}</strong> — United 93 has been on
+          the ground <strong>${Math.round(k.minsAfterImpact)} minutes</strong>.
+          ${k.landed
+            ? `${HYPO.callsign} has already landed at Albany.`
+            : `${HYPO.callsign} is over Pennsylvania, headed for Albany.`}
+        </div>
+      </div>`;
+  };
+
+  host.innerHTML = `
+    ${snaps.map(row).join('')}
+    <p style="margin:11px 0 0;font-size:12px;color:var(--ink-dim);line-height:1.55">
+      The first two messages go out while the best-case shooter is still tens of miles short.
+      That is not damning on its own — he is closing fast, and the claim only needs one instant.
+      The second pair is the harder question. If an American fighter had just destroyed an
+      American airliner, the channel built to reach the President in ten minutes is where that
+      would appear, and two messages went out on it after United 93 was down.
+    </p>
+    <p style="margin:9px 0 0;font-size:12px;color:var(--ink-dim);line-height:1.55">
+      <strong style="color:var(--ink)">What this app can and cannot say.</strong> It cannot tell
+      you those messages are silent about a shootdown, because their contents are withheld. It
+      can tell you that this is the record which would settle the question either way, that it is
+      timestamped to the minute, that it sits in NSA's own files, and that the reason you cannot
+      read it is a decision somebody made and can be asked to justify. ${srcTag('derived')}
+    </p>`;
+}
+
 function renderCriticTab() {
   const msg = (c) => `
     <div class="leg critic-msg" data-criticjump="${c.id}">
@@ -59858,6 +60086,17 @@ function renderCriticTab() {
       </div>
     </div>
 
+    <div class="card critic-steel-card">
+      <h3>Where the shootdown claim would have been, each time one went out</h3>
+      <p style="font-size:12px;color:var(--ink-dim);line-height:1.55">
+        Every other source in this app describes what <em>happened</em>. The CRITIC describes
+        what the government <em>believed was happening</em>, to the minute. So it is worth
+        asking where ${esc(HYPO.callsign)} — the best case the shootdown story can have
+        ${info('steelman')} — would have been at each of these four moments.
+      </p>
+      <div id="critic-steel"></div>
+    </div>
+
     <div class="card glimpse">
       <h3>${esc(CRITIC_GLIMPSE.title)}</h3>
       ${CRITIC_GLIMPSE.items.map((i) => `
@@ -59892,6 +60131,8 @@ function renderCriticTab() {
       <p style="margin-top:10px;font-size:12px;color:var(--ink-faint)">If records are released, they land here: each message against the minute of the morning it was sent, with the rest of the timeline already drawn around it.</p>
       <div>${srcTag(FOIA.src)}</div>
     </div>`;
+
+  renderCriticVsSteelman();
 
   $$('#critic-body .chip').forEach((b) => b.addEventListener('click', () => {
     if (b.dataset.act !== 'show-critic') return;
@@ -60596,6 +60837,7 @@ function tourContext() {
   return {
     steel: steel || { miles: 0, mph: 0, mach: 0, ferryFraction: 0, totalMi: 0, totalFerryFraction: 0 },
     los: losVsWez(31000, tgt ? tgt.altFt : 5000, AIM9.rMaxMi),
+    critic: criticSnapshots(steel, FLIGHTS.find((f) => f.id === 'UA93').path, state.interceptT),
     fuel: fuelProof(),
     boz: bozemanCost(target || PLACES.SHKV, state.claimDepart, state.interceptT),
   };

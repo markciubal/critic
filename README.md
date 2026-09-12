@@ -88,7 +88,7 @@ glossary**.
 ### The steelman tour
 
 **Steelman tour** in the top bar plays a scripted walk through the argument in
-`src/steelman.js` — twelve steps, written for someone who has never opened an
+`src/steelman.js` — fourteen steps, written for someone who has never opened an
 accident report.
 
 It exists because the steelman is the one thing here that cannot be read out of
@@ -235,6 +235,45 @@ inside one is equally unevidenced, and that morning the envelope of nearly any
 fighter in the eastern half of the country would have swept over Somerset
 County eventually. It is drawn to show the size of the gap in the record, and
 the fuel ring is drawn to show how much smaller that gap really is.
+
+## The CRITIC, against the steelman
+
+This app is named after DIRNSA CRITIC 1-2001 and exists as a companion to a
+records request for its text. For a long time the steelman argument did not
+mention it once, which was a strange omission, because the CRITIC chain is the
+most useful thing here for testing the claim.
+
+Every other source describes what *happened* — recorders, radar, ATC tapes, the
+NEADS recordings. The CRITIC describes what the national command structure
+*believed was happening*, timestamped to the minute, in the channel designed to
+reach the President inside ten minutes. And the sequence brackets the alleged
+shootdown on both sides.
+
+So the question is: where would the best case for the claim have been each time
+one went out?
+
+| Message | Time | HYPO 01 vs United 93 |
+|---|---|---|
+| NORAD originates the CRITIC | 09:49 | **72 mi apart** — 6.4x outside its own missile's reach, 9 min to close |
+| DIRNSA CRITIC 1-2001 | 09:52 | **48 mi apart** — 4.3x outside, 6 min to close |
+| FOLLOW-UP-1 | 10:14 | United 93 down 11 min; HYPO 01 en route to Albany |
+| FOLLOW-UP-2 AND FINAL | 10:48 | United 93 down 45 min; HYPO 01 already landed |
+
+The first two are not damning on their own — the aircraft is closing fast, and
+the claim only needs one instant. The second pair is the harder question. If an
+American fighter had just destroyed an American airliner, the channel built to
+reach the President in ten minutes is where that appears, and two messages went
+out on it afterwards.
+
+**What this app can and cannot say.** It cannot tell you those messages are
+silent on the point, because their contents are withheld. It can tell you that
+this is the record which would settle the question either way, that it is dated
+to the minute, that it sits in NSA's own files, and that the reason nobody can
+read it is a decision somebody made and can be asked to justify. That is what
+the request is for.
+
+Computed live in `criticSnapshots()` (`src/steelman.js`); shown as the last two
+steps of the tour and as a card in the CRITIC tab.
 
 ## The fuel is not a concession
 

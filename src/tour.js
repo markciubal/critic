@@ -8,6 +8,14 @@
    and the argument collapses into "a fast jet could have got there", which is
    the opposite of what it says.
 
+   The last two steps are the CRITIC, and they were missing for far too long.
+   This app is named after DIRNSA CRITIC 1-2001 and exists as a companion to a
+   records request for its text — and the tour walked the entire argument
+   without mentioning it once. It belongs at the end rather than among the
+   blockers, because it is not another objection. It is the document that would
+   settle the question either way, it is dated to the minute, and the reason
+   nobody can read it is a decision somebody made.
+
    So the tour is not decoration. It is the argument's sequence, made playable:
    each step sets the clock, moves the camera and opens the panel that carries
    the evidence, so the claim is being *watched* while it is being explained.
@@ -38,6 +46,13 @@ import { AIM9 } from './reachability.js';
 import { HYPO, CONCESSIONS, VERDICT, LOS_HORIZON, FOREKNOWLEDGE } from './steelman.js';
 
 const at = (h, m, s = 0) => h * 3600 + m * 60 + s;
+
+/* Local copies rather than imports from main.js, which would be a cycle. Small
+   enough that duplicating them costs less than the coupling would. */
+const esc0 = (x) => String(x).replace(/[&<>"]/g, (ch) =>
+  ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]));
+const hms0 = (t) => [t / 3600, (t % 3600) / 60, t % 60]
+  .map((n) => String(Math.floor(n)).padStart(2, '0')).join(':');
 
 /* The acts, used for the chapter strip and the accent colour. A step's tone is
    a claim about what the step is doing to the argument, not a mood. */
@@ -298,6 +313,68 @@ export const TOUR_STEPS = [
     viewDist: 40,
     layers: { hypo: true, wez: true, envelope: true },
     highlight: '#wez-out',
+  },
+
+  {
+    id: 'critic-live',
+    tone: 'blocks',
+    title: 'The government was writing it down at the time',
+    body: (c, i) => `
+      This app is named after what is on screen now. A <strong>CRITIC</strong> ${i('critic')} is
+      the most urgent message the US intelligence system has — meant to be in front of the
+      President within ten minutes. Four went out that morning.
+      <p>They matter here because they are not a later account of the day. They are the
+      government writing down, at the time, what it believed was happening. And the sequence
+      lands on <em>both sides</em> of the moment this story needs.</p>
+      ${c.critic.slice(0, 2).map((k) => `
+      <div class="tour-crit">
+        <b>${esc0(k.c.mapLabel)}</b> &middot; ${hms0(k.c.t).slice(0, 5)}<br>
+        ${k.sepMi === null ? 'Not yet airborne.' : `
+        ${HYPO.callsign} would be <strong>${Math.round(k.sepMi)} miles</strong> from United 93 —
+        <strong>${k.outsideBy.toFixed(1)}\u00d7 further than its missile can reach</strong>, with
+        ${Math.round(k.minsToShot)} minutes left to close.`}
+      </div>`).join('')}
+      <p>So at the two moments the nation's own alarm system was ringing, the best-case shooter
+      is still tens of miles away and has not fired. Nothing about that is impossible — he is
+      closing fast. It is just the last stretch of the run, recorded by the government, minute
+      by minute, in the one channel that cannot be quietly backdated.</p>`,
+    t: at(9, 52, 0),
+    tab: 'critic',
+    view: 'hypo',
+    viewDist: 95,
+    layers: { hypo: true, critic: true, UA93: true, wez: true },
+  },
+
+  {
+    id: 'critic-silence',
+    tone: 'blocks',
+    title: 'And then the same channel says nothing about it',
+    body: (c, i) => `
+      United 93 is on the ground. If an American fighter had just destroyed an American airliner
+      full of people, that is not a detail anyone sits on — it is the single most urgent fact in
+      the country, and there is a channel built for exactly that.
+      <p>Two more messages go out on it.</p>
+      ${c.critic.slice(2).map((k) => `
+      <div class="tour-crit">
+        <b>${esc0(k.c.mapLabel)}</b> &middot; ${hms0(k.c.t).slice(0, 5)}<br>
+        United 93 has been down <strong>${Math.round(k.minsAfterImpact)} minutes</strong>.
+        ${k.landed
+          ? `${HYPO.callsign} has already landed at Albany.`
+          : `${HYPO.callsign} is over Pennsylvania on its way to Albany.`}
+      </div>`).join('')}
+      <p>Neither is publicly known to say a word about a shootdown, and a summary written two
+      days later — the place any correction to the record would go — is withheld along with
+      them.</p>
+      <p><strong>This is the honest shape of it.</strong> Those messages are redacted, so this
+      app cannot tell you they are silent on the point. What it can tell you is that this is the
+      document which would settle the question either way, that it exists, that it is dated to
+      the minute, and that the reason you cannot read it is a decision somebody made. That is
+      what the records request ${i('foia')} behind this app is for.</p>`,
+    t: at(10, 48, 0),
+    tab: 'critic',
+    view: 'reset',
+    layers: { hypo: true, critic: true },
+    highlight: '#critic-body',
   },
 
   {

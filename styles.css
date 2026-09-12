@@ -863,3 +863,22 @@ body.touring #legend { opacity: 0; pointer-events: none; transition: opacity .25
 }
 .gl-plain { font-size: 12.5px; line-height: 1.55; color: var(--ink); }
 .gl-more { font-size: 11.5px; line-height: 1.55; color: var(--ink-faint); margin-top: 5px; }
+
+/* A CRITIC readout inside a tour callout: the message, and where the
+   best-case shooter would have been when it went. */
+.tour-crit {
+  margin: 9px 0 0; padding: 8px 10px;
+  background: rgba(255,31,61,.09); border-left: 2px solid var(--critic);
+  border-radius: 0 4px 4px 0;
+  font-size: 11.5px; line-height: 1.55; color: var(--ink-dim);
+}
+.tour-crit b {
+  display: inline; color: var(--critic);
+  font: 700 10px/1.4 var(--mono); letter-spacing: .6px;
+}
+.tour-crit strong { color: var(--ink); }
+
+/* The CRITIC-versus-steelman card: the app's own name, finally argued against
+   its own subject. Carries the CRITIC red so it reads as part of that chain. */
+.card.critic-steel-card { border-color: rgba(255,31,61,.42); background: rgba(255,31,61,.05); }
+.card.critic-steel-card h3 { color: var(--critic); }
