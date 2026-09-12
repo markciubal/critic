@@ -972,3 +972,35 @@ body.touring #legend { opacity: 0; pointer-events: none; transition: opacity .25
    its own subject. Carries the CRITIC red so it reads as part of that chain. */
 .card.critic-steel-card { border-color: rgba(255,31,61,.42); background: rgba(255,31,61,.05); }
 .card.critic-steel-card h3 { color: var(--critic); }
+
+/* --- reference links --------------------------------------------------------
+   Colour separates orientation from evidence: a Wikipedia article is
+   background reading and must not look like the NTSB study next to it. */
+.ref-row { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 7px; }
+.ref-row.ref-indent { margin: 0 0 10px 26px; }
+.ref {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 2px 7px; border-radius: 4px;
+  font: 500 10.5px/1.5 var(--mono); letter-spacing: .2px;
+  text-decoration: none; border: 1px solid transparent;
+  transition: background .14s, border-color .14s;
+}
+.ref::after { content: '\2197'; font-size: 9px; opacity: .65; }
+.ref:hover { text-decoration: none; }
+
+.ref-wiki {
+  color: #9fc0e8; background: rgba(74,143,231,.10); border-color: rgba(74,143,231,.30);
+}
+.ref-wiki:hover { background: rgba(74,143,231,.22); border-color: rgba(74,143,231,.6); }
+
+.ref-doc {
+  color: #7de3b6; background: rgba(53,214,164,.10); border-color: rgba(53,214,164,.30);
+}
+.ref-doc:hover { background: rgba(53,214,164,.20); border-color: rgba(53,214,164,.6); }
+
+.ref-press {
+  color: #ffd489; background: rgba(255,190,77,.10); border-color: rgba(255,190,77,.30);
+}
+.ref-press:hover { background: rgba(255,190,77,.20); border-color: rgba(255,190,77,.6); }
+
+#ip-src .ref { margin-left: 6px; }

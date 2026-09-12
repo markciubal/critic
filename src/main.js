@@ -27,6 +27,7 @@ import {
 } from './steelman.js';
 import { CALLS, CALL_TOTALS, FARADAY, WHY_THEY_MATTER } from './calls.js';
 import { GLOSSARY, glossaryList } from './glossary.js';
+import { REFS, refsFor } from './links.js';
 import { wezWindow, LOS_HORIZON, losVsWez, mutualHorizonSmi } from './steelman.js';
 import { TOUR_STEPS, TONES } from './tour.js';
 
@@ -452,6 +453,7 @@ function renderClaimTab() {
   $('#claim-body').innerHTML = `
     <div class="card">
       <h3>The allegation ${conflictChip('CLAIM')}</h3>
+      ${refRow('UA93')}${refRow('COMMISSION')}
       <p>In <strong>${esc(CRITIC.date)}</strong>, ${esc(CRITIC.claimant)} told ${esc(CRITIC.venue)} that United 93 did not crash — it was shot down. ${srcTag('claim')}</p>
       <div class="quote">“${esc(CRITIC.quote)}”</div>
       <dl class="kv">
@@ -462,6 +464,7 @@ function renderClaimTab() {
 
     <div class="card">
       <h3>Rick Gibney's documented day</h3>
+      ${refRow('GIBNEY_UNIT')}
       <p><strong>${esc(g.name)}</strong>, 119th Fighter Wing. He was flying an F-16 on the morning of September 11 — that much the claim gets right, and it is probably why the story attached to him. ${srcTag('press')}</p>
       <p>His tasking was to fly <strong>${esc(g.passenger)}</strong> home. With every civil aircraft in the country grounded, a fighter was the only way to move him.</p>
       <p style="font-size:11.5px;color:var(--ink-faint)">${esc(g.rankNote.text)}</p>
@@ -1075,6 +1078,7 @@ function renderDebrisTab() {
 
     <div class="card">
       <h3>${esc(DEBRIS_NOTE.title)}</h3>
+      ${refRow('UA93')}${refRow('SHKV')}
       ${DEBRIS_NOTE.body.split('\n\n').map((p) => `<p>${esc(p)}</p>`).join('')}
       <div>${srcTag(DEBRIS_NOTE.src)}</div>
     </div>
@@ -1219,6 +1223,7 @@ function renderCriticTab() {
         what the public-records request ${info('foia')} behind this app is asking for.</p>
       ${CRITIC_BACKGROUND.paras.map((t) => `<p>${esc(t)}</p>`).join('')}
       <div>${srcTag(CRITIC_BACKGROUND.src)}</div>
+      ${refRow('NSA')}${refRow('NORAD')}${refRow('NEADS')}
     </div>
 
     <div class="card">
@@ -1314,6 +1319,7 @@ function renderMilitaryTab() {
       <div style="margin-top:8px">
         ${f.events.map((e) => `<div class="cmd-row"><div class="t">${hms(e[0]).slice(0, 5)}</div><div class="x">${esc(e[1])}</div></div>`).join('')}
       </div>
+      ${refRow(f.id)}
       <div class="chip-row"><button class="chip" data-milshow="${f.id}">Fly to</button></div>
     </div>`;
 
@@ -1466,7 +1472,8 @@ function renderLayersTab() {
     </label>
     ${f.pathNote ? `<p style="font-size:11px;color:var(--ink-faint);line-height:1.55;
         margin:2px 0 10px 26px;border-left:2px solid var(--rule);padding-left:8px">
-        ${esc(f.pathNote)} ${srcTag(f.src)}</p>` : ''}`).join('');
+        ${esc(f.pathNote)} ${srcTag(f.src)}</p>` : ''}
+    ${refRow(f.id, 'ref-indent')}`).join('');
 
   $('#layers-body').innerHTML = `
     <div class="card">
@@ -1574,6 +1581,8 @@ function renderLayersTab() {
           <div class="gl-term">${esc(g.term)}</div>
           <div class="gl-plain">${esc(g.plain)}</div>
           ${g.more ? `<div class="gl-more">${esc(g.more)}</div>` : ''}
+          ${g.link ? `<div class="ref-row"><a class="ref ref-wiki" href="${g.link.url}"
+            target="_blank" rel="noopener noreferrer">${esc(g.link.label)}</a></div>` : ''}
         </div>`).join('')}
     </div>
 
@@ -2133,7 +2142,10 @@ function showInfo(btn) {
   $('#ip-term').textContent = g.term;
   $('#ip-plain').textContent = g.plain;
   $('#ip-more').textContent = g.more || '';
-  $('#ip-src').innerHTML = srcTag(g.src);
+  $('#ip-src').innerHTML = srcTag(g.src) + (g.link
+    ? ` <a class="ref ref-wiki" href="${g.link.url}" target="_blank" rel="noopener noreferrer"
+         >${esc(g.link.label)} &rarr;</a>`
+    : '');
 
   $$('.ii.on').forEach((b) => b.classList.remove('on'));
   btn.classList.add('on');
@@ -2258,6 +2270,17 @@ function buildFlag90() {
     slice.style.animationDelay = `${(-i * 0.08).toFixed(3)}s`;
     host.appendChild(slice);
   }
+}
+
+/* Reference chips. Explicit links from links.js, never inferred from prose —
+   an automatic linkifier gets "Logan" and "Dulles" right and then confidently
+   links the wrong Albany. `rel` is set because these all leave the page. */
+function refRow(key, extraClass = '') {
+  const rs = refsFor(key);
+  if (!rs.length) return '';
+  return `<div class="ref-row ${extraClass}">${rs.map((r) => `
+    <a class="ref ref-${r.kind}" href="${r.url}" target="_blank" rel="noopener noreferrer"
+       title="${esc(r.url)}">${esc(r.label)}</a>`).join('')}</div>`;
 }
 
 function bindChrome() {

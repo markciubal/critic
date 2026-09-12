@@ -511,6 +511,27 @@ data/states-10m.json    US Census cartographic boundaries, 1:10m (us-atlas)
 vendor/three.module.js  Three.js r160
 ```
 
+## References in the app
+
+Every claim already carries a provenance badge saying what kind of source it
+rests on. The links are the other half: `src/links.js` is an explicit registry
+keyed to the things the app already names — flight IDs, place keys, callsigns —
+and `src/glossary.js` carries one link per term, surfaced in the (i) popover and
+the glossary list.
+
+Explicit, never inferred from prose. An automatic linkifier gets "Logan" and
+"Dulles" right and then confidently links the wrong Albany.
+
+Chip colour separates orientation from evidence: blue for a Wikipedia article,
+green for a primary document. A background read should not look like the NTSB
+study sitting beside it.
+
+Links are not checked automatically. The uncertain ones were fetched and
+confirmed when written — `/wiki/Combat_radius` turned out to redirect to
+*Radius of action*, and there is no article for Donn de Grand-Pre or for
+Critical Intelligence Communication, so those are not linked. A dead link is a
+defect like any other; the discrepancy register is where one should go.
+
 ## Sources
 
 - [9/11 Commission Report](https://www.9-11commission.gov/report/) and the

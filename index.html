@@ -987,6 +987,38 @@ body.touring #legend { opacity: 0; pointer-events: none; transition: opacity .25
 .card.critic-steel-card { border-color: rgba(255,31,61,.42); background: rgba(255,31,61,.05); }
 .card.critic-steel-card h3 { color: var(--critic); }
 
+/* --- reference links --------------------------------------------------------
+   Colour separates orientation from evidence: a Wikipedia article is
+   background reading and must not look like the NTSB study next to it. */
+.ref-row { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 7px; }
+.ref-row.ref-indent { margin: 0 0 10px 26px; }
+.ref {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 2px 7px; border-radius: 4px;
+  font: 500 10.5px/1.5 var(--mono); letter-spacing: .2px;
+  text-decoration: none; border: 1px solid transparent;
+  transition: background .14s, border-color .14s;
+}
+.ref::after { content: '\2197'; font-size: 9px; opacity: .65; }
+.ref:hover { text-decoration: none; }
+
+.ref-wiki {
+  color: #9fc0e8; background: rgba(74,143,231,.10); border-color: rgba(74,143,231,.30);
+}
+.ref-wiki:hover { background: rgba(74,143,231,.22); border-color: rgba(74,143,231,.6); }
+
+.ref-doc {
+  color: #7de3b6; background: rgba(53,214,164,.10); border-color: rgba(53,214,164,.30);
+}
+.ref-doc:hover { background: rgba(53,214,164,.20); border-color: rgba(53,214,164,.6); }
+
+.ref-press {
+  color: #ffd489; background: rgba(255,190,77,.10); border-color: rgba(255,190,77,.30);
+}
+.ref-press:hover { background: rgba(255,190,77,.20); border-color: rgba(255,190,77,.6); }
+
+#ip-src .ref { margin-left: 6px; }
+
 </style>
 </head>
 <body>
@@ -57068,6 +57100,7 @@ const GLOSSARY = {
     plain: 'Building the strongest possible version of an argument you disagree with, then testing that instead of an easy version.',
     more: 'It is the opposite of a straw man. If you only ever knock down the weakest form of a claim, you never find out which of your objections actually mattered — so this app grants the claim every favourable assumption at once and looks at what is still standing.',
     src: 'derived',
+    link: { label: 'Wikipedia — steelmanning', url: 'https://en.wikipedia.org/wiki/Straw_man#Steelmanning' },
   },
 
   mach: {
@@ -57075,6 +57108,7 @@ const GLOSSARY = {
     plain: 'Speed measured against the speed of sound. Mach 1 is the speed of sound; Mach 2 is twice that.',
     more: 'The speed of sound is not a fixed number — it falls as air gets colder, so it is slower high up. At 31,000 ft it is about 675 mph, against about 761 mph at sea level. That is why the same aircraft has different Mach limits at different heights.',
     src: 'derived',
+    link: { label: 'Wikipedia — Mach number', url: 'https://en.wikipedia.org/wiki/Mach_number' },
   },
 
   placard: {
@@ -57082,6 +57116,7 @@ const GLOSSARY = {
     plain: 'The maximum speed the aircraft is legally and structurally allowed to fly in a given configuration — literally written on a placard in the cockpit.',
     more: 'An F-16 carrying external fuel tanks and wingtip missiles is limited to 600 knots indicated or Mach 1.6, whichever comes first. The famous "Mach 2" figure applies only to a clean jet carrying nothing, which no aircraft flying across the country could be.',
     src: 'press',
+    link: { label: 'Wikipedia — F-16', url: 'https://en.wikipedia.org/wiki/General_Dynamics_F-16_Fighting_Falcon' },
   },
 
   dropTanks: {
@@ -57089,6 +57124,7 @@ const GLOSSARY = {
     plain: 'Extra fuel tanks bolted to the outside of the aircraft, because a fighter carries very little fuel internally.',
     more: 'Two 370-gallon tanks under the wings plus one 300-gallon tank on the belly add about 1,040 gallons, roughly doubling what the jet carries. They cost speed and agility, which is why they are not fitted for combat patrols.',
     src: 'press',
+    link: { label: 'Wikipedia — drop tank', url: 'https://en.wikipedia.org/wiki/Drop_tank' },
   },
 
   ferryRange: {
@@ -57096,6 +57132,7 @@ const GLOSSARY = {
     plain: 'How far the aircraft can fly one way on a full load of fuel, in a straight line, with nothing left over.',
     more: 'It is the absolute maximum — no combat, no circling, no diversion, no reserve for a missed approach. Real missions never use all of it, which is why "inside ferry range" is a weaker statement than it sounds.',
     src: 'press',
+    link: { label: 'Wikipedia — range', url: 'https://en.wikipedia.org/wiki/Range_(aeronautics)' },
   },
 
   combatRadius: {
@@ -57103,6 +57140,7 @@ const GLOSSARY = {
     plain: 'How far out the aircraft can go, fight, and still get home — so it is much less than half the ferry range.',
     more: 'Fighting burns fuel fast, so a large slice is set aside for it. For a one-way trip with no fight and no return it is the wrong yardstick, and an earlier version of this app used it wrongly. The ring has since been removed from the map entirely, because a combat radius also presumes no external fuel tanks — and the documented Montana leg proves this aircraft had them. Both errors are logged in the discrepancy register.',
     src: 'press',
+    link: { label: 'Wikipedia — radius of action', url: 'https://en.wikipedia.org/wiki/Radius_of_action' },
   },
 
   sidewinder: {
@@ -57110,6 +57148,7 @@ const GLOSSARY = {
     plain: 'A short-range, heat-seeking missile. It finds a target by its engine heat, and only works close in.',
     more: 'The AIM-9M was the version in US service in 2001. Published maximum range is about 11 miles in ideal conditions; it also has a minimum range of about half a mile, below which the missile has not armed itself. So the zone it can hit is a ring, not a circle.',
     src: 'press',
+    link: { label: 'Wikipedia — AIM-9', url: 'https://en.wikipedia.org/wiki/AIM-9_Sidewinder' },
   },
 
   wez: {
@@ -57117,6 +57156,7 @@ const GLOSSARY = {
     plain: 'The ring of distances where a missile could actually reach its target — not too far, and not too close.',
     more: 'Drawn on the map as a ring rather than a disc, because a missile fired from inside the minimum range has not finished arming and will not guide.',
     src: 'derived',
+    link: { label: 'Wikipedia — AIM-9', url: 'https://en.wikipedia.org/wiki/AIM-9_Sidewinder' },
   },
 
   lineOfSight: {
@@ -57124,6 +57164,7 @@ const GLOSSARY = {
     plain: 'How far apart two aircraft can be and still see each other, before the curve of the Earth gets in the way.',
     more: 'It rises with height: from 31,000 ft against a target at 5,000 ft, two aircraft can see each other about 360 miles apart. That is roughly thirty times further than a Sidewinder can shoot — so seeing the target was never the hard part.',
     src: 'derived',
+    link: { label: 'Wikipedia — line of sight', url: 'https://en.wikipedia.org/wiki/Line-of-sight_propagation' },
   },
 
   transponder: {
@@ -57131,6 +57172,7 @@ const GLOSSARY = {
     plain: 'A box on the aircraft that answers radar with its identity and altitude. Switch it off and controllers lose the readout, though a faint blip may remain.',
     more: 'What is left is called a primary return — an echo off the airframe itself, with no identity and no altitude attached. Three of the four hijacked aircraft had their transponders switched off.',
     src: 'commission',
+    link: { label: 'Wikipedia — transponder', url: 'https://en.wikipedia.org/wiki/Transponder_(aeronautics)' },
   },
 
   fdr: {
@@ -57138,6 +57180,7 @@ const GLOSSARY = {
     plain: 'The "black box" — it records what the aircraft actually did, second by second, and it is the best evidence there is.',
     more: 'Only two of the four recorders were recovered: United 93 and American 77. That is why those two flights have real altitudes on this map and the other two have estimates. The NTSB published a Flight Path Study for each.',
     src: 'ntsb',
+    link: { label: 'Wikipedia — flight recorder', url: 'https://en.wikipedia.org/wiki/Flight_recorder' },
   },
 
   neads: {
@@ -57145,6 +57188,7 @@ const GLOSSARY = {
     plain: 'The Northeast Air Defense Sector — the military unit responsible for scrambling fighters over that part of the country.',
     more: 'Based in Rome, New York. Its tapes are one of the best sources for the morning, and they show it did not know United 93 existed until 10:07, four minutes after the aircraft had already hit the ground.',
     src: 'commission',
+    link: { label: 'Wikipedia — NEADS', url: 'https://en.wikipedia.org/wiki/Northeast_Air_Defense_Sector' },
   },
 
   critic: {
@@ -57152,6 +57196,7 @@ const GLOSSARY = {
     plain: 'The highest-priority message in US intelligence, meant to reach the President within ten minutes.',
     more: 'Short for Critical Intelligence Communication. It is reserved for events of immediate national consequence. Four were sent on the morning of 11 September; their contents are still withheld, which is what the FOIA request behind this app is asking for.',
     src: 'foia',
+    link: { label: 'Wikipedia — NSA', url: 'https://en.wikipedia.org/wiki/National_Security_Agency' },
   },
 
   dtg: {
@@ -57159,6 +57204,7 @@ const GLOSSARY = {
     plain: 'The military timestamp on a message — day, hour, minute, and a letter for the time zone.',
     more: '111349ZSEP01 means the 11th day, 13:49, zone Z (which is GMT), September 2001. In September New York is on daylight saving time, four hours behind Zulu, so 13:49Z is 09:49 in the morning in New York.',
     src: 'derived',
+    link: { label: 'Wikipedia — date-time group', url: 'https://en.wikipedia.org/wiki/Date-time_group' },
   },
 
   twoSeat: {
@@ -57166,6 +57212,7 @@ const GLOSSARY = {
     plain: 'A version of the F-16 with a second seat behind the pilot — the only kind that can carry a passenger.',
     more: 'Designated F-16B or F-16D. The second cockpit takes space that would otherwise hold fuel, so it carries about 17% less internally than the single-seat version. Gibney was carrying a passenger, so his aircraft had to be one of these.',
     src: 'derived',
+    link: { label: 'Wikipedia — F-16 variants', url: 'https://en.wikipedia.org/wiki/General_Dynamics_F-16_Fighting_Falcon_variants' },
   },
 
   airfone: {
@@ -57173,12 +57220,14 @@ const GLOSSARY = {
     plain: 'The seatback telephone airlines fitted in the 1990s. You swiped a credit card and it connected through a ground network — nothing to do with mobile phones.',
     more: 'On United 93 they were installed in the seatbacks of rows 23 to 34. Thirty-five of the thirty-seven calls from that aircraft went through them; only two were mobile calls, both made low down during the descent.',
     src: 'commission',
+    link: { label: 'Wikipedia — Airfone', url: 'https://en.wikipedia.org/wiki/Airfone' },
   },
 
   knots: {
     term: 'Knots',
     plain: 'Nautical miles per hour, the unit aviation uses. One knot is about 1.15 mph.',
     src: 'derived',
+    link: { label: 'Wikipedia — knot', url: 'https://en.wikipedia.org/wiki/Knot_(unit)' },
   },
 
   provenance: {
@@ -57193,6 +57242,7 @@ const GLOSSARY = {
     plain: 'The Freedom of Information Act — the law that lets anyone ask a US government agency for its records.',
     more: 'Agencies may withhold material under specific exemptions, and they must say which one they are using. This app is a companion to a pending request for the text of the 11 September CRITIC messages.',
     src: 'foia',
+    link: { label: 'Wikipedia — FOIA', url: 'https://en.wikipedia.org/wiki/Freedom_of_Information_Act_(United_States)' },
   },
 };
 
@@ -57206,6 +57256,104 @@ function glossaryList() {
   return {
     GLOSSARY,
     glossaryList
+  };
+})();
+
+__m["links"] = (function () {
+
+/* =============================================================================
+   links.js — where to go and read it yourself.
+
+   Every claim in this app already carries a provenance badge saying what kind
+   of source it rests on. That is half the job. The other half is letting the
+   reader go and check, and until now the URLs only existed in the README,
+   which almost nobody opens.
+
+   So: an explicit registry keyed to the things the app already names — flight
+   IDs, place keys, callsigns, glossary terms — rather than a routine that
+   scans prose for words that look like article titles. Automatic linkifying
+   gets "Logan" and "Dulles" right and then confidently links the wrong Albany.
+   Explicit is duller and does not embarrass anybody.
+
+   `kind` drives the chip colour: 'wiki' for background reading, 'doc' for a
+   primary document, 'press' for reporting. The distinction matters here. A
+   Wikipedia article is orientation, not evidence, and should not look like the
+   NTSB study sitting beside it.
+
+   URLS ARE NOT AUTOMATICALLY CHECKED. The ones that were uncertain when this
+   was written were fetched and confirmed; the rest are long-lived Wikipedia
+   articles and government documents already cited in the README. A dead link
+   here is a defect like any other — the discrepancy register is the place for
+   it if one is found.
+   ========================================================================== */
+
+const wiki = (slug, label = 'Wikipedia') =>
+  ({ label, url: `https://en.wikipedia.org/wiki/${slug}`, kind: 'wiki' });
+
+const REFS = {
+  /* --- the four aircraft ---------------------------------------------- */
+  AA11:  [wiki('American_Airlines_Flight_11')],
+  UA175: [wiki('United_Airlines_Flight_175')],
+  AA77:  [
+    wiki('American_Airlines_Flight_77'),
+    { label: 'NTSB Flight Path Study', kind: 'doc',
+      url: 'https://www.ntsb.gov/about/Documents/Flight_Path_Study_AA77.pdf' },
+  ],
+  UA93:  [
+    wiki('United_Airlines_Flight_93'),
+    { label: 'NTSB Flight Path Study', kind: 'doc',
+      url: 'https://www.ntsb.gov/about/Documents/Flight_Path_Study_UA93.pdf' },
+  ],
+
+  /* --- airports and sites ---------------------------------------------- */
+  KBOS: [wiki('Logan_International_Airport')],
+  KEWR: [wiki('Newark_Liberty_International_Airport')],
+  KIAD: [wiki('Washington_Dulles_International_Airport')],
+  KLAX: [wiki('Los_Angeles_International_Airport')],
+  KSFO: [wiki('San_Francisco_International_Airport')],
+  WTC1: [wiki('World_Trade_Center_(1973%E2%80%932001)', 'Wikipedia — WTC')],
+  WTC2: [wiki('World_Trade_Center_(1973%E2%80%932001)', 'Wikipedia — WTC')],
+  PENT: [wiki('The_Pentagon')],
+  SHKV: [wiki('Flight_93_National_Memorial', 'Wikipedia — memorial')],
+  KFAR: [wiki('Hector_International_Airport')],
+  KBZN: [wiki('Bozeman_Yellowstone_International_Airport')],
+  KALB: [wiki('Albany_International_Airport')],
+  OTIS: [wiki('Otis_Air_National_Guard_Base')],
+  LFI:  [wiki('Langley_Air_Force_Base')],
+  ADW:  [wiki('Joint_Base_Andrews')],
+  KYNG: [wiki('Youngstown%E2%80%93Warren_Regional_Airport')],
+
+  /* --- units and aircraft types ---------------------------------------- */
+  QUIT:  [wiki('1st_Fighter_Wing', 'Wikipedia — 1st FW'), wiki('Langley_Air_Force_Base', 'Langley AFB')],
+  PANTA: [wiki('102nd_Intelligence_Wing', 'Wikipedia — 102nd (ex-102nd FW)')],
+  GOFER: [
+    wiki('133rd_Airlift_Wing', 'Wikipedia — 133rd AW'),
+    { label: "9/11 Commission MFR — O'Brien interview", kind: 'doc',
+      url: 'https://www.archives.gov/files/declassification/iscap/pdf/2011-048-doc22.pdf' },
+  ],
+  BULLY: [wiki('113th_Wing', 'Wikipedia — 113th Wing')],
+  GIBNEY_UNIT: [wiki('119th_Wing', 'Wikipedia — 119th Wing')],
+
+  /* --- the institutions ------------------------------------------------ */
+  NORAD: [wiki('North_American_Aerospace_Defense_Command')],
+  NSA:   [wiki('National_Security_Agency')],
+  NEADS: [wiki('Northeast_Air_Defense_Sector')],
+
+  /* --- the primary record ---------------------------------------------- */
+  COMMISSION: [
+    { label: '9/11 Commission Report', kind: 'doc',
+      url: 'https://www.9-11commission.gov/report/' },
+    wiki('9/11_Commission'),
+  ],
+};
+
+function refsFor(key) {
+  return REFS[key] || [];
+}
+
+  return {
+    REFS,
+    refsFor
   };
 })();
 
@@ -58971,10 +59119,12 @@ __m["main"] = (function () {
   const { HYPO, CONCESSIONS, VERDICT, buildHypoTrack, FOREKNOWLEDGE, HIJACK_T, foreknowledgeVerdict, fuelProof, bozemanCost, criticSnapshots, wezWindow, LOS_HORIZON, losVsWez, mutualHorizonSmi } = __m["steelman"];
   const { CALLS, CALL_TOTALS, FARADAY, WHY_THEY_MATTER } = __m["calls"];
   const { GLOSSARY, glossaryList } = __m["glossary"];
+  const { REFS, refsFor } = __m["links"];
   const { TOUR_STEPS, TONES } = __m["tour"];
 /* =============================================================================
    main.js — app wiring: playback clock, scrubber, panels, labels.
    ========================================================================== */
+
 
 
 
@@ -59410,6 +59560,7 @@ function renderClaimTab() {
   $('#claim-body').innerHTML = `
     <div class="card">
       <h3>The allegation ${conflictChip('CLAIM')}</h3>
+      ${refRow('UA93')}${refRow('COMMISSION')}
       <p>In <strong>${esc(CRITIC.date)}</strong>, ${esc(CRITIC.claimant)} told ${esc(CRITIC.venue)} that United 93 did not crash — it was shot down. ${srcTag('claim')}</p>
       <div class="quote">“${esc(CRITIC.quote)}”</div>
       <dl class="kv">
@@ -59420,6 +59571,7 @@ function renderClaimTab() {
 
     <div class="card">
       <h3>Rick Gibney's documented day</h3>
+      ${refRow('GIBNEY_UNIT')}
       <p><strong>${esc(g.name)}</strong>, 119th Fighter Wing. He was flying an F-16 on the morning of September 11 — that much the claim gets right, and it is probably why the story attached to him. ${srcTag('press')}</p>
       <p>His tasking was to fly <strong>${esc(g.passenger)}</strong> home. With every civil aircraft in the country grounded, a fighter was the only way to move him.</p>
       <p style="font-size:11.5px;color:var(--ink-faint)">${esc(g.rankNote.text)}</p>
@@ -60033,6 +60185,7 @@ function renderDebrisTab() {
 
     <div class="card">
       <h3>${esc(DEBRIS_NOTE.title)}</h3>
+      ${refRow('UA93')}${refRow('SHKV')}
       ${DEBRIS_NOTE.body.split('\n\n').map((p) => `<p>${esc(p)}</p>`).join('')}
       <div>${srcTag(DEBRIS_NOTE.src)}</div>
     </div>
@@ -60177,6 +60330,7 @@ function renderCriticTab() {
         what the public-records request ${info('foia')} behind this app is asking for.</p>
       ${CRITIC_BACKGROUND.paras.map((t) => `<p>${esc(t)}</p>`).join('')}
       <div>${srcTag(CRITIC_BACKGROUND.src)}</div>
+      ${refRow('NSA')}${refRow('NORAD')}${refRow('NEADS')}
     </div>
 
     <div class="card">
@@ -60272,6 +60426,7 @@ function renderMilitaryTab() {
       <div style="margin-top:8px">
         ${f.events.map((e) => `<div class="cmd-row"><div class="t">${hms(e[0]).slice(0, 5)}</div><div class="x">${esc(e[1])}</div></div>`).join('')}
       </div>
+      ${refRow(f.id)}
       <div class="chip-row"><button class="chip" data-milshow="${f.id}">Fly to</button></div>
     </div>`;
 
@@ -60424,7 +60579,8 @@ function renderLayersTab() {
     </label>
     ${f.pathNote ? `<p style="font-size:11px;color:var(--ink-faint);line-height:1.55;
         margin:2px 0 10px 26px;border-left:2px solid var(--rule);padding-left:8px">
-        ${esc(f.pathNote)} ${srcTag(f.src)}</p>` : ''}`).join('');
+        ${esc(f.pathNote)} ${srcTag(f.src)}</p>` : ''}
+    ${refRow(f.id, 'ref-indent')}`).join('');
 
   $('#layers-body').innerHTML = `
     <div class="card">
@@ -60532,6 +60688,8 @@ function renderLayersTab() {
           <div class="gl-term">${esc(g.term)}</div>
           <div class="gl-plain">${esc(g.plain)}</div>
           ${g.more ? `<div class="gl-more">${esc(g.more)}</div>` : ''}
+          ${g.link ? `<div class="ref-row"><a class="ref ref-wiki" href="${g.link.url}"
+            target="_blank" rel="noopener noreferrer">${esc(g.link.label)}</a></div>` : ''}
         </div>`).join('')}
     </div>
 
@@ -61091,7 +61249,10 @@ function showInfo(btn) {
   $('#ip-term').textContent = g.term;
   $('#ip-plain').textContent = g.plain;
   $('#ip-more').textContent = g.more || '';
-  $('#ip-src').innerHTML = srcTag(g.src);
+  $('#ip-src').innerHTML = srcTag(g.src) + (g.link
+    ? ` <a class="ref ref-wiki" href="${g.link.url}" target="_blank" rel="noopener noreferrer"
+         >${esc(g.link.label)} &rarr;</a>`
+    : '');
 
   $$('.ii.on').forEach((b) => b.classList.remove('on'));
   btn.classList.add('on');
@@ -61216,6 +61377,17 @@ function buildFlag90() {
     slice.style.animationDelay = `${(-i * 0.08).toFixed(3)}s`;
     host.appendChild(slice);
   }
+}
+
+/* Reference chips. Explicit links from links.js, never inferred from prose —
+   an automatic linkifier gets "Logan" and "Dulles" right and then confidently
+   links the wrong Albany. `rel` is set because these all leave the page. */
+function refRow(key, extraClass = '') {
+  const rs = refsFor(key);
+  if (!rs.length) return '';
+  return `<div class="ref-row ${extraClass}">${rs.map((r) => `
+    <a class="ref ref-${r.kind}" href="${r.url}" target="_blank" rel="noopener noreferrer"
+       title="${esc(r.url)}">${esc(r.label)}</a>`).join('')}</div>`;
 }
 
 function bindChrome() {
