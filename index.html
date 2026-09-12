@@ -608,8 +608,9 @@ ul.plain li { font-size: 12.5px; color: var(--ink-dim); line-height: 1.55; margi
 .concession.blocking .cn-cost { color: #ffb3bd; font-style: normal; }
 
 
-/* --- foreknowledge horizon -------------------------------------------------
-   The hardest claim on the page gets the hardest styling. */
+/* --- foreknowledge ---------------------------------------------------------
+   The hardest claim on the page gets the hardest styling. It is argued in the
+   Claim tab now; the map no longer draws a ring for it. */
 .card.fk-card { border-color: rgba(255,31,61,.5); background: rgba(255,31,61,.06); }
 .card.fk-card h3 { color: var(--critic); letter-spacing: 1px; }
 .leg.fk-leg { border-color: rgba(255,31,61,.55); background: rgba(255,31,61,.09); }
@@ -621,11 +622,6 @@ ul.plain li { font-size: 12.5px; color: var(--ink-dim); line-height: 1.55; margi
 .fk-caution {
   font-size: 11px; color: var(--ink-faint); font-style: italic;
   border-left: 2px solid var(--line-2); padding-left: 9px; margin-top: 10px;
-}
-.map-label.ring.fk {
-  background: var(--critic); font-weight: 700;
-  border-color: #ff6b80; letter-spacing: .5px; padding: 3px 8px;
-  text-shadow: 0 1px 2px rgba(0,0,0,.5);
 }
 
 
@@ -56346,11 +56342,9 @@ const VERDICT = {
 const HIJACK_T = at(9, 28, 0);
 
 const FOREKNOWLEDGE = {
-  title: 'Foreknowledge horizon',
+  title: 'What the claim requires him to have known',
   hijackLabel: 'United 93 seized, 09:28',
-  color: 0xff1f3d,
-  halfWidthMi: 26,
-  caution: 'This is a statement about the claim, not about the world. The line marks what the allegation requires, not evidence that anyone knew anything.',
+  caution: 'This is a statement about the claim, not about the world. These times are what the allegation requires, not evidence that anyone knew anything.',
   src: 'derived',
 };
 
@@ -56514,7 +56508,7 @@ __m["map3d"] = (function () {
   const { FLIGHTS, MIL_FLIGHTS, PLACES, DEBRIS, GIBNEY, CLAIM_ROUTE, CRITIC_NODES, CRITIC_CHAIN, DISTRIBUTION } = __m["data"];
   const { samplePath, gcPoints, haversineMi, destinationPoint } = __m["geo"];
   const { BANDS, FUEL_RING, FERRY_RING, HALF_FERRY_RING, ringPoints, reachMi, MAX_DRAW_MI, AIM9, bandRadii, evidenceCeilingMi, DEPARTURE_BOUNDS } = __m["reachability"];
-  const { HYPO, FOREKNOWLEDGE, LOS_HORIZON, horizonSmi } = __m["steelman"];
+  const { HYPO, LOS_HORIZON, horizonSmi } = __m["steelman"];
   const { CALLS } = __m["calls"];
 /* =============================================================================
    map3d.js — the 3D map.
@@ -56578,7 +56572,6 @@ class Map3D {
     this._buildDebris();
     this._buildCritic();
     this._buildReach();
-    this._buildForeknowledge();
     this._buildCalls();
     this._buildTrail();
     this._buildHypo();
@@ -56930,10 +56923,12 @@ class Map3D {
     this.halfFerryRing = mkRing(HALF_FERRY_RING.color, 0.6, true);
     this.reachLabelAnchors = [];
     this._scratch = new THREE.Vector3();
-    // The engagement zone: an annulus, because a Sidewinder has a minimum
-    // range as well as a maximum.
-    this.wezOuter = mkRing(0xff4d4d, 1.0, false);
-    this.wezInner = mkRing(0xff4d4d, 0.6, true);
+    /* The engagement zone, drawn once, from Fargo. It used to be drawn twice:
+       a second annulus rode along with United 93, and that was a mistake. A
+       ring centred on the target reads as a threat volume the airliner was
+       flying through, when what it actually shows is a distance — and a
+       distance needs one centre, not two. The ring belongs at the place the
+       claim is about. */
     this.wezHome = mkRing(0xff4d4d, 0.5, true);
   }
 
@@ -56950,11 +56945,11 @@ class Map3D {
   }
 
   /* `anchor` is the last position with any documentary claim to a time;
-     `target` is United 93's live position, or null once it is down. */
+     The engagement ring is drawn from `anchor` only. */
   setReach(opts) {
     this._reachOpts = opts;
     if (!this.reachGroup.visible || !opts) return;
-    const { anchor, now, depart, toleranceMin, target, showWez, showEnvelope } = opts;
+    const { anchor, now, depart, toleranceMin, showWez, showEnvelope } = opts;
 
     /* A ring label has to sit ON its ring, and these rings mostly run off the
        edge of the view — the ferry ring is 2,450 miles across. A fixed fan of
@@ -57023,16 +57018,8 @@ class Map3D {
       anchorAt(pts, `${FERRY_RING.label} · ${FERRY_RING.miles.toLocaleString()} mi`, FERRY_RING.color);
     }
 
-    const wezOn = showWez && !!target;
-    this.wezOuter.visible = wezOn;
-    this.wezInner.visible = wezOn;
-    if (wezOn) {
-      this._writeRing(this.wezOuter, ringPoints(target, AIM9.rMaxMi, 120));
-      this._writeRing(this.wezInner, ringPoints(target, AIM9.rMinMi, 120));
-    }
-
-    // The same weapon drawn from the only place he is documented to have
-    // been. At national zoom it is a dot, which is the honest impression.
+    // The weapon drawn from the only place he is documented to have been.
+    // At national zoom it is a dot, which is the honest impression.
     this.wezHome.visible = showWez;
     if (showWez) this._writeRing(this.wezHome, ringPoints(anchor, AIM9.rMaxMi, 120));
   }
@@ -57154,64 +57141,6 @@ class Map3D {
   setCallsVisible(v) {
     this.callGroup.visible = v;
     if (v && this._callPos) this.setCalls(this._callPos, this._t ?? 0);
-  }
-
-  /* The foreknowledge horizon: a solid band rather than a line, because a
-     WebGL line ignores linewidth on most platforms and this one needs to read
-     as hard. It is a triangle strip between two geodesic rings, so it stays a
-     true constant-distance band under the projection instead of becoming an
-     ellipse. */
-  _buildForeknowledge() {
-    this.fkGroup = new THREE.Group();
-    this.fkGroup.visible = false;
-    this.scene.add(this.fkGroup);
-
-    const N = 181;                       // ringPoints(.., 180) yields 181
-    const geom = new THREE.BufferGeometry();
-    geom.setAttribute('position', new THREE.BufferAttribute(new Float32Array(N * 2 * 3), 3));
-    const idx = [];
-    for (let i = 0; i < N - 1; i++) {
-      const a = i * 2, b = a + 1, c = (i + 1) * 2, d = c + 1;
-      idx.push(a, b, c, b, d, c);
-    }
-    geom.setIndex(idx);
-
-    this.fkBand = new THREE.Mesh(geom, new THREE.MeshBasicMaterial({
-      color: FOREKNOWLEDGE.color, side: THREE.DoubleSide,
-      transparent: true, opacity: 0.8, depthWrite: false,
-    }));
-    this.fkBand.frustumCulled = false;
-    this.fkGroup.add(this.fkBand);
-    this.fkLabel = null;
-  }
-
-  setForeknowledge(center, radiusMi, text) {
-    this._fk = { center, radiusMi, text };
-    if (!this.fkGroup || !this.fkGroup.visible || !center || !(radiusMi > 0)) {
-      this.fkLabel = null;
-      return;
-    }
-    const w = FOREKNOWLEDGE.halfWidthMi;
-    const inner = ringPoints(center, Math.max(1, radiusMi - w), 180);
-    const outer = ringPoints(center, radiusMi + w, 180);
-    const attr = this.fkBand.geometry.attributes.position;
-    for (let i = 0; i < inner.length; i++) {
-      const [ix, iz] = projectLL(inner[i]);
-      const [ox, oz] = projectLL(outer[i]);
-      attr.setXYZ(i * 2, ix, STATE_DEPTH + 0.55, iz);
-      attr.setXYZ(i * 2 + 1, ox, STATE_DEPTH + 0.55, oz);
-    }
-    attr.needsUpdate = true;
-    this.fkBand.geometry.computeBoundingSphere();
-    this.fkLabel = {
-      ringLL: outer, order: searchOrder(outer.length), text, color: FOREKNOWLEDGE.color,
-    };
-  }
-
-  setForeknowledgeVisible(v) {
-    this.fkGroup.visible = v;
-    const f = this._fk;
-    if (f) this.setForeknowledge(f.center, f.radiusMi, f.text);
   }
 
   /* HYPO 01 — the steelman. Drawn dashed and white because it is a construct,
@@ -57870,7 +57799,7 @@ const state = {
     PANTA: true, QUIT: true, GOFER: true, BULLY: true,
     debris: false, routeDoc: false, routeClaim: false, places: true,
     critic: true,
-    envelope: true, wez: true, hypo: true, foreknowledge: true, calls: true,
+    envelope: true, wez: true, hypo: true, calls: true,
     trail: true,
   },
 };
@@ -57918,7 +57847,6 @@ async function loadTopology() {
     setTolerance(state.toleranceMin);
     map.setCriticVisible(state.layers.critic);
     map.setReachVisible(state.layers.envelope || state.layers.wez);
-    map.setForeknowledgeVisible(state.layers.foreknowledge);
     map.setHypoVisible(state.layers.hypo);
     map.setCallsVisible(state.layers.calls);
     map.setTrailVisible(state.layers.trail);
@@ -57977,7 +57905,6 @@ function setTime(t) {
   updateFlightStrip();
   map.followPoints(focusPoints());
   updateReach();
-  updateForeknowledge();
   map.setCalls(ua93StateAt, state.t);
   map.setTrail(state.t);
   if (state.layers.hypo) updateHypo();
@@ -58044,24 +57971,12 @@ function ua93StateAt(t) {
   return samplePath(f.path, t);
 }
 
-function updateForeknowledge() {
-  const target = hypoTarget();
-  if (!target) return null;
-  const v = foreknowledgeVerdict(
-    haversineMi(PLACES.KFAR, target), state.interceptT, BANDS,
-  );
-  map.setForeknowledge(target, v.horizonMi,
-    `FOREKNOWLEDGE HORIZON · ${Math.round(v.horizonMi)} mi · outside this, the launch precedes the hijacking`);
-  return v;
-}
-
 function updateReach() {
   map.setReach({
     anchor: PLACES.KFAR,
     now: state.t,
     depart: state.claimDepart,
     toleranceMin: state.toleranceMin,
-    target: ua93Position(),
     showWez: state.layers.wez,
     showEnvelope: state.layers.envelope,
   });
@@ -58380,9 +58295,6 @@ function renderClaimTab() {
       <p>United 93 was seized at <strong>09:28</strong>. Before that it was an ordinary flight climbing out of Newark. So a launch aimed at it earlier than 09:28 is not a response to a hijacking — it is a response to one that has not happened yet.</p>
       <div id="fk-out"></div>
       <p class="fk-caution">${esc(FOREKNOWLEDGE.caution)} ${srcTag(FOREKNOWLEDGE.src)}</p>
-      <div class="chip-row">
-        <button class="chip" data-act="show-fk">Draw the horizon</button>
-      </div>
     </div>
 
     <div class="card">
@@ -58471,15 +58383,6 @@ function renderClaimTab() {
   });
 
   $$('#claim-body .chip').forEach((b) => b.addEventListener('click', () => {
-    if (b.dataset.act === 'show-fk') {
-      state.layers.foreknowledge = true;
-      map.setForeknowledgeVisible(true);
-      updateForeknowledge();
-      syncLayerChecks();
-      setFollow(false);
-      map.resetView();
-      return;
-    }
     if (b.dataset.act === 'show-hypo') {
       state.layers.hypo = true;
       map.setHypoVisible(true);
@@ -58495,7 +58398,7 @@ function renderClaimTab() {
       map.setReachVisible(true);
       syncLayerChecks();
       updateReach();
-      if (k === 'wez') { setFollow(false); map.flyTo(ua93Position() || PLACES.SHKV, 26); }
+      if (k === 'wez') { setFollow(false); map.flyTo(PLACES.KFAR, 26); }
       else { setFollow(false); map.resetView(); }
       return;
     }
@@ -58575,9 +58478,10 @@ function renderForeknowledgePanel() {
       </div>`).join('')}
     <div class="fk-verdict">
       <strong>${v.allRequire ? 'Every achievable speed requires foreknowledge.' : 'Some speeds avoid it.'}</strong>
-      The horizon — the fastest speed multiplied by the thirty minutes between the seizure and the alleged shot —
-      is <strong>${Math.round(v.horizonMi)} miles</strong>. Fargo is <strong>${Math.round(v.distMi)}</strong>,
-      outside it by <strong class="v-impossible">${Math.round(v.outsideBy)} miles</strong>.
+      The furthest he could start from and still arrive without leaving early — the fastest speed
+      multiplied by the thirty minutes between the seizure and the alleged shot — is
+      <strong>${Math.round(v.horizonMi)} miles</strong>. Fargo is <strong>${Math.round(v.distMi)}</strong>,
+      further by <strong class="v-impossible">${Math.round(v.outsideBy)} miles</strong>.
     </div>`;
 }
 
@@ -58739,7 +58643,7 @@ function renderWezPanel() {
         <span class="leg-dist">${(AIM9.rMaxMi * 2).toFixed(0)} mi across</span>
       </div>
       <p style="margin:0 0 8px;font-size:12.5px;color:var(--ink-dim);line-height:1.5">
-        To fire, he must have been within about <strong style="color:var(--ink)">${AIM9.rMaxMi} miles</strong> of United 93 — and no closer than ${AIM9.rMinMi}. The map draws that ring around the aircraft as it flies.
+        To fire, he must have been within about <strong style="color:var(--ink)">${AIM9.rMaxMi} miles</strong> of United 93 — and no closer than ${AIM9.rMinMi}. The map draws that ring at Fargo, the one place the record puts him, so its size can be read against the envelope it sits inside.
       </p>
       <div class="leg-mach">
         Envelope now <strong style="color:var(--ink)">${Math.round(sc.envelopeDiameterMi).toLocaleString()} mi</strong> across ·
@@ -59233,7 +59137,7 @@ function renderLayersTab() {
       <label class="toggle">
         <input type="checkbox" data-layer="wez" ${state.layers.wez ? 'checked' : ''}>
         <span class="swatch" style="background:#ff4d4d"></span>
-        <span>Sidewinder engagement zone</span><span class="meta">${AIM9.rMaxMi} mi</span>
+        <span>Sidewinder engagement zone</span><span class="meta">${AIM9.rMaxMi} mi, from Fargo</span>
       </label>
       <label class="toggle">
         <input type="checkbox" data-layer="trail" ${state.layers.trail ? 'checked' : ''}>
@@ -59244,11 +59148,6 @@ function renderLayersTab() {
         <input type="checkbox" data-layer="calls" ${state.layers.calls ? 'checked' : ''}>
         <span class="swatch" style="background:#74c7ff"></span>
         <span>Phone calls from United 93</span><span class="meta">37 calls</span>
-      </label>
-      <label class="toggle">
-        <input type="checkbox" data-layer="foreknowledge" ${state.layers.foreknowledge ? 'checked' : ''}>
-        <span class="swatch" style="background:var(--critic)"></span>
-        <span>Foreknowledge horizon</span><span class="meta">660 mi</span>
       </label>
       <label class="toggle">
         <input type="checkbox" data-layer="hypo" ${state.layers.hypo ? 'checked' : ''}>
@@ -59302,7 +59201,6 @@ function renderLayersTab() {
     else if (k === 'debris') map.setDebrisVisible(cb.checked);
     else if (k === 'critic') map.setCriticVisible(cb.checked);
     else if (k === 'hypo') { map.setHypoVisible(cb.checked); if (cb.checked) updateHypo(); }
-    else if (k === 'foreknowledge') { map.setForeknowledgeVisible(cb.checked); updateForeknowledge(); }
     else if (k === 'calls') { map.setCallsVisible(cb.checked); map.setCalls(ua93StateAt, state.t); }
     else if (k === 'trail') { map.setTrailVisible(cb.checked); map.setTrail(state.t); }
     else if (k === 'envelope' || k === 'wez') {
@@ -59375,15 +59273,6 @@ function drawLabels() {
       pos: map.hypoMarker.position,
       text: `${HYPO.callsign} — STEELMAN, CONSTRUCTED · ${Math.round((sm?.altFt ?? 0) / 100) * 100} ft`,
       cls: 'flight hypo', color: '#ffffff', rank: 1.2,
-    });
-  }
-
-  if (map.fkGroup && map.fkGroup.visible && map.fkLabel) {
-    const f = map.fkLabel;
-    wanted.set('fk', {
-      ringLL: f.ringLL, order: f.order, text: f.text,
-      // White, not the ring colour: this label is drawn ON a red fill.
-      cls: 'ring fk', color: '#ffffff', rank: 0.5,
     });
   }
 

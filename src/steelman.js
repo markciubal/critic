@@ -215,11 +215,9 @@ export const VERDICT = {
 export const HIJACK_T = at(9, 28, 0);
 
 export const FOREKNOWLEDGE = {
-  title: 'Foreknowledge horizon',
+  title: 'What the claim requires him to have known',
   hijackLabel: 'United 93 seized, 09:28',
-  color: 0xff1f3d,
-  halfWidthMi: 26,
-  caution: 'This is a statement about the claim, not about the world. The line marks what the allegation requires, not evidence that anyone knew anything.',
+  caution: 'This is a statement about the claim, not about the world. These times are what the allegation requires, not evidence that anyone knew anything.',
   src: 'derived',
 };
 

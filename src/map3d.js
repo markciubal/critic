@@ -21,7 +21,7 @@ import {
   BANDS, FUEL_RING, FERRY_RING, HALF_FERRY_RING, ringPoints, reachMi,
   MAX_DRAW_MI, AIM9, bandRadii, evidenceCeilingMi, DEPARTURE_BOUNDS,
 } from './reachability.js';
-import { HYPO, FOREKNOWLEDGE, LOS_HORIZON, horizonSmi } from './steelman.js';
+import { HYPO, LOS_HORIZON, horizonSmi } from './steelman.js';
 import { CALLS } from './calls.js';
 import { destinationPoint } from './geo.js';
 
@@ -77,7 +77,6 @@ export class Map3D {
     this._buildDebris();
     this._buildCritic();
     this._buildReach();
-    this._buildForeknowledge();
     this._buildCalls();
     this._buildTrail();
     this._buildHypo();
@@ -429,10 +428,12 @@ export class Map3D {
     this.halfFerryRing = mkRing(HALF_FERRY_RING.color, 0.6, true);
     this.reachLabelAnchors = [];
     this._scratch = new THREE.Vector3();
-    // The engagement zone: an annulus, because a Sidewinder has a minimum
-    // range as well as a maximum.
-    this.wezOuter = mkRing(0xff4d4d, 1.0, false);
-    this.wezInner = mkRing(0xff4d4d, 0.6, true);
+    /* The engagement zone, drawn once, from Fargo. It used to be drawn twice:
+       a second annulus rode along with United 93, and that was a mistake. A
+       ring centred on the target reads as a threat volume the airliner was
+       flying through, when what it actually shows is a distance — and a
+       distance needs one centre, not two. The ring belongs at the place the
+       claim is about. */
     this.wezHome = mkRing(0xff4d4d, 0.5, true);
   }
 
@@ -449,11 +450,11 @@ export class Map3D {
   }
 
   /* `anchor` is the last position with any documentary claim to a time;
-     `target` is United 93's live position, or null once it is down. */
+     The engagement ring is drawn from `anchor` only. */
   setReach(opts) {
     this._reachOpts = opts;
     if (!this.reachGroup.visible || !opts) return;
-    const { anchor, now, depart, toleranceMin, target, showWez, showEnvelope } = opts;
+    const { anchor, now, depart, toleranceMin, showWez, showEnvelope } = opts;
 
     /* A ring label has to sit ON its ring, and these rings mostly run off the
        edge of the view — the ferry ring is 2,450 miles across. A fixed fan of
@@ -522,16 +523,8 @@ export class Map3D {
       anchorAt(pts, `${FERRY_RING.label} · ${FERRY_RING.miles.toLocaleString()} mi`, FERRY_RING.color);
     }
 
-    const wezOn = showWez && !!target;
-    this.wezOuter.visible = wezOn;
-    this.wezInner.visible = wezOn;
-    if (wezOn) {
-      this._writeRing(this.wezOuter, ringPoints(target, AIM9.rMaxMi, 120));
-      this._writeRing(this.wezInner, ringPoints(target, AIM9.rMinMi, 120));
-    }
-
-    // The same weapon drawn from the only place he is documented to have
-    // been. At national zoom it is a dot, which is the honest impression.
+    // The weapon drawn from the only place he is documented to have been.
+    // At national zoom it is a dot, which is the honest impression.
     this.wezHome.visible = showWez;
     if (showWez) this._writeRing(this.wezHome, ringPoints(anchor, AIM9.rMaxMi, 120));
   }
@@ -653,64 +646,6 @@ export class Map3D {
   setCallsVisible(v) {
     this.callGroup.visible = v;
     if (v && this._callPos) this.setCalls(this._callPos, this._t ?? 0);
-  }
-
-  /* The foreknowledge horizon: a solid band rather than a line, because a
-     WebGL line ignores linewidth on most platforms and this one needs to read
-     as hard. It is a triangle strip between two geodesic rings, so it stays a
-     true constant-distance band under the projection instead of becoming an
-     ellipse. */
-  _buildForeknowledge() {
-    this.fkGroup = new THREE.Group();
-    this.fkGroup.visible = false;
-    this.scene.add(this.fkGroup);
-
-    const N = 181;                       // ringPoints(.., 180) yields 181
-    const geom = new THREE.BufferGeometry();
-    geom.setAttribute('position', new THREE.BufferAttribute(new Float32Array(N * 2 * 3), 3));
-    const idx = [];
-    for (let i = 0; i < N - 1; i++) {
-      const a = i * 2, b = a + 1, c = (i + 1) * 2, d = c + 1;
-      idx.push(a, b, c, b, d, c);
-    }
-    geom.setIndex(idx);
-
-    this.fkBand = new THREE.Mesh(geom, new THREE.MeshBasicMaterial({
-      color: FOREKNOWLEDGE.color, side: THREE.DoubleSide,
-      transparent: true, opacity: 0.8, depthWrite: false,
-    }));
-    this.fkBand.frustumCulled = false;
-    this.fkGroup.add(this.fkBand);
-    this.fkLabel = null;
-  }
-
-  setForeknowledge(center, radiusMi, text) {
-    this._fk = { center, radiusMi, text };
-    if (!this.fkGroup || !this.fkGroup.visible || !center || !(radiusMi > 0)) {
-      this.fkLabel = null;
-      return;
-    }
-    const w = FOREKNOWLEDGE.halfWidthMi;
-    const inner = ringPoints(center, Math.max(1, radiusMi - w), 180);
-    const outer = ringPoints(center, radiusMi + w, 180);
-    const attr = this.fkBand.geometry.attributes.position;
-    for (let i = 0; i < inner.length; i++) {
-      const [ix, iz] = projectLL(inner[i]);
-      const [ox, oz] = projectLL(outer[i]);
-      attr.setXYZ(i * 2, ix, STATE_DEPTH + 0.55, iz);
-      attr.setXYZ(i * 2 + 1, ox, STATE_DEPTH + 0.55, oz);
-    }
-    attr.needsUpdate = true;
-    this.fkBand.geometry.computeBoundingSphere();
-    this.fkLabel = {
-      ringLL: outer, order: searchOrder(outer.length), text, color: FOREKNOWLEDGE.color,
-    };
-  }
-
-  setForeknowledgeVisible(v) {
-    this.fkGroup.visible = v;
-    const f = this._fk;
-    if (f) this.setForeknowledge(f.center, f.radiusMi, f.text);
   }
 
   /* HYPO 01 — the steelman. Drawn dashed and white because it is a construct,
