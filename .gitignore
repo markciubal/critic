@@ -16,3 +16,8 @@ Thumbs.db
 
 # Hook artifact: a Windows path written as a literal filename.
 *claude-notify-signals*
+
+# Probe/harness pages generated during verification. Never part of the repo.
+_t*.html
+_probe*.html
+_sa.html
