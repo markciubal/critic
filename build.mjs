@@ -97,6 +97,17 @@ function transform(id, src) {
     return `${kind} ${name}`;
   });
 
+  /* Aliased imports would destructure by the LOCAL name, which the source
+     module does not export — producing `undefined` at runtime with no build
+     error. Rather than implement renaming, refuse them. */
+  for (const [, block] of src.matchAll(RX.named)) {
+    if (/as/.test(block)) {
+      throw new Error(`${id}: aliased import ("x as y") is not supported by this bundler.
+` +
+        `Import the name directly:  ${block.trim()}`);
+    }
+  }
+
   if (/^export\s/m.test(body)) {
     throw new Error(`${id}: unhandled export form:\n` +
       body.split('\n').filter((l) => /^export\s/.test(l)).join('\n'));

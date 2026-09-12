@@ -25,6 +25,7 @@ import {
   FOREKNOWLEDGE, HIJACK_T, foreknowledgeVerdict,
 } from './steelman.js';
 import { CALLS, CALL_TOTALS, FARADAY, WHY_THEY_MATTER } from './calls.js';
+import { wezWindow } from './steelman.js';
 
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => [...document.querySelectorAll(s)];
@@ -211,7 +212,7 @@ function updateHypo() {
   const track = target
     ? buildHypoTrack(target, state.claimDepart, state.interceptT)
     : null;
-  map.setHypo(track, state.t);
+  map.setHypo(track, state.t, ua93StateAt(state.t) || ua93Position());
   return track;
 }
 
@@ -759,6 +760,33 @@ function renderForeknowledgePanel() {
     </div>`;
 }
 
+function renderLosPanel(h) {
+  const out = $('#los-out');
+  if (!out || !h) return;
+  const w = wezWindow(h, (t) => ua93StateAt(t) || ua93Position(), AIM9.rMaxMi);
+  const now = map.hypoLosInfo;
+
+  out.innerHTML = `
+    <div class="leg ${now && now.inWez ? 'los-hot' : ''}">
+      <div class="leg-head">
+        <span class="leg-name">Line of sight to United 93</span>
+        <span class="leg-dist">${now ? (now.miles < 1 ? now.miles.toFixed(2) : Math.round(now.miles)) + ' mi now' : 'not airborne'}</span>
+      </div>
+      <div class="leg-mach">
+        ${w.enter === null
+          ? 'Never inside AIM-9 range.'
+          : `Inside AIM-9 range from <strong style="color:var(--ink)">${hms(w.enter).slice(0, 8)}</strong>
+             to <strong style="color:var(--ink)">${hms(w.exit).slice(0, 8)}</strong> —
+             a window of <strong class="v-impossible">${(w.durationS / 60).toFixed(1)} minutes</strong>.`}
+      </div>
+      <p style="margin:8px 0 0;font-size:12px;color:var(--ink-dim);line-height:1.5">
+        That window is the whole of the opportunity the claim needs, and it exists only because
+        this track was <em>built</em> to arrive there. The record has to put a specific aircraft
+        inside it, to the minute. Nothing does.
+      </p>
+    </div>`;
+}
+
 function renderSteelPanel() {
   const target = hypoTarget();
   if (!target || !$('#steel-out')) return;
@@ -780,6 +808,7 @@ function renderSteelPanel() {
         ${Math.round(h.ferryFraction * 100)}% of ferry range
       </div>
     </div>
+    <div id="los-out"></div>
     <div class="cmd-row">
       <div class="t">${Math.round(h.egressMi)} mi</div>
       <div class="x">At the closest point to United 93 he turns straight for
@@ -793,6 +822,8 @@ function renderSteelPanel() {
         flyable version of the claim, and it is one in which Ed Jacoby is never collected —
         which is contradicted by Jacoby, who was.</div>
     </div>`;
+
+  renderLosPanel(h);
 
   $('#concessions').innerHTML = `
     <p style="font-size:11.5px;color:var(--ink-faint);margin:12px 0 6px">
@@ -1479,6 +1510,17 @@ function drawLabels() {
     } else if (o.impact.visible) {
       wanted.set(`f:${id}`, { pos: o.impact.position, text: `${id} impact`, cls: 'flight', color: hex(o.f.color), rank: 1 });
     }
+  }
+
+  if (map.hypoGroup && map.hypoGroup.visible && map.hypoLosInfo) {
+    const li = map.hypoLosInfo;
+    wanted.set('los', {
+      pos: li.mid,
+      text: `${li.miles < 1 ? li.miles.toFixed(2) : Math.round(li.miles)} mi${li.inWez ? ' — WITHIN AIM-9 RANGE' : ''}`,
+      cls: `flight los${li.inWez ? ' hot' : ''}`,
+      color: li.inWez ? '#ff4d4d' : li.miles <= 50 ? '#ffd447' : '#9fb6cc',
+      rank: 1.1,
+    });
   }
 
   if (map.hypoGroup && map.hypoGroup.visible && map.hypoMarker.visible) {

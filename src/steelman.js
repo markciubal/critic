@@ -257,3 +257,63 @@ export function foreknowledgeVerdict(distMi, interceptT, bands) {
     allRequire: rows.every((x) => x.requires),
   };
 }
+
+/* =============================================================================
+   Line of sight and the engagement window
+
+   HYPO 01 is built to arrive where United 93 is at 09:58, so the range between
+   them collapses to nothing at that moment by construction. What is worth
+   measuring is the shape of that approach: how long the two are inside AIM-9
+   range of each other, and how briefly.
+
+   The answer is short. A closing fighter and a descending airliner spend a
+   couple of minutes inside ten miles of each other and then the geometry opens
+   again. That window is the whole of the opportunity the claim needs — and it
+   is a window the record has to place a specific aircraft inside, to the
+   minute, with nothing putting it there.
+   ========================================================================== */
+
+export function losRange(track, targetAt, t) {
+  const a = trackSampleLL(track, t);
+  const b = targetAt(t);
+  if (!a || !b) return null;
+  return { from: a, to: b, miles: haversineMi(a, b) };
+}
+
+/* Sample HYPO 01's own path — it is stored in the same [t,lat,lon,alt] shape
+   as every other track here. */
+export function trackSampleLL(track, t) {
+  const p = track.path;
+  if (!p.length || t < p[0][0]) return null;
+  if (t >= p[p.length - 1][0]) {
+    const L = p[p.length - 1];
+    return { lat: L[1], lon: L[2], altFt: L[3] };
+  }
+  let i = 0;
+  while (i < p.length - 2 && p[i + 1][0] < t) i++;
+  const [t0, la0, lo0, a0] = p[i];
+  const [t1, la1, lo1, a1] = p[i + 1];
+  const f = t1 === t0 ? 0 : (t - t0) / (t1 - t0);
+  const q = gcInterp({ lat: la0, lon: lo0 }, { lat: la1, lon: lo1 }, f);
+  return { lat: q.lat, lon: q.lon, altFt: a0 + (a1 - a0) * f };
+}
+
+/* How long the two are inside weapon range, and how close they get. */
+export function wezWindow(track, targetAt, rMaxMi) {
+  const t0 = track.path[0][0];
+  const t1 = track.path[track.path.length - 1][0];
+  let enter = null, exit = null, min = Infinity, minAt = null;
+  for (let t = t0; t <= t1; t += 5) {
+    const r = losRange(track, targetAt, t);
+    if (!r) continue;
+    if (r.miles < min) { min = r.miles; minAt = t; }
+    if (r.miles <= rMaxMi) {
+      if (enter === null) enter = t;
+      exit = t;
+    }
+  }
+  return {
+    enter, exit, minMi: min === Infinity ? null : min, minAt,
+    durationS: enter !== null ? exit - enter : 0,
+  };
+}

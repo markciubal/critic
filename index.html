@@ -667,6 +667,18 @@ ul.plain li { font-size: 12.5px; color: var(--ink-dim); line-height: 1.55; margi
   text-shadow: 0 1px 2px rgba(0,0,0,.6);
 }
 
+
+/* Line of sight: dim at range, hot once a shot would be possible. */
+.map-label.los {
+  transform: translate(-50%, -50%);
+  background: rgba(7,10,15,.88); font-size: 10px; letter-spacing: .3px;
+}
+.map-label.los.hot {
+  background: #ff4d4d; color: #fff !important; font-weight: 700;
+  border-color: #ff8f9b; text-shadow: 0 1px 2px rgba(0,0,0,.55);
+}
+.leg.los-hot { border-color: #ff4d4d; background: rgba(255,77,77,.1); }
+
 </style>
 </head>
 <body>
@@ -56099,6 +56111,66 @@ function foreknowledgeVerdict(distMi, interceptT, bands) {
   };
 }
 
+/* =============================================================================
+   Line of sight and the engagement window
+
+   HYPO 01 is built to arrive where United 93 is at 09:58, so the range between
+   them collapses to nothing at that moment by construction. What is worth
+   measuring is the shape of that approach: how long the two are inside AIM-9
+   range of each other, and how briefly.
+
+   The answer is short. A closing fighter and a descending airliner spend a
+   couple of minutes inside ten miles of each other and then the geometry opens
+   again. That window is the whole of the opportunity the claim needs — and it
+   is a window the record has to place a specific aircraft inside, to the
+   minute, with nothing putting it there.
+   ========================================================================== */
+
+function losRange(track, targetAt, t) {
+  const a = trackSampleLL(track, t);
+  const b = targetAt(t);
+  if (!a || !b) return null;
+  return { from: a, to: b, miles: haversineMi(a, b) };
+}
+
+/* Sample HYPO 01's own path — it is stored in the same [t,lat,lon,alt] shape
+   as every other track here. */
+function trackSampleLL(track, t) {
+  const p = track.path;
+  if (!p.length || t < p[0][0]) return null;
+  if (t >= p[p.length - 1][0]) {
+    const L = p[p.length - 1];
+    return { lat: L[1], lon: L[2], altFt: L[3] };
+  }
+  let i = 0;
+  while (i < p.length - 2 && p[i + 1][0] < t) i++;
+  const [t0, la0, lo0, a0] = p[i];
+  const [t1, la1, lo1, a1] = p[i + 1];
+  const f = t1 === t0 ? 0 : (t - t0) / (t1 - t0);
+  const q = gcInterp({ lat: la0, lon: lo0 }, { lat: la1, lon: lo1 }, f);
+  return { lat: q.lat, lon: q.lon, altFt: a0 + (a1 - a0) * f };
+}
+
+/* How long the two are inside weapon range, and how close they get. */
+function wezWindow(track, targetAt, rMaxMi) {
+  const t0 = track.path[0][0];
+  const t1 = track.path[track.path.length - 1][0];
+  let enter = null, exit = null, min = Infinity, minAt = null;
+  for (let t = t0; t <= t1; t += 5) {
+    const r = losRange(track, targetAt, t);
+    if (!r) continue;
+    if (r.miles < min) { min = r.miles; minAt = t; }
+    if (r.miles <= rMaxMi) {
+      if (enter === null) enter = t;
+      exit = t;
+    }
+  }
+  return {
+    enter, exit, minMi: min === Infinity ? null : min, minAt,
+    durationS: enter !== null ? exit - enter : 0,
+  };
+}
+
   return {
     HYPO,
     CONCESSIONS,
@@ -56108,7 +56180,10 @@ function foreknowledgeVerdict(distMi, interceptT, bands) {
     FOREKNOWLEDGE,
     horizonMi,
     foreknowledgeRows,
-    foreknowledgeVerdict
+    foreknowledgeVerdict,
+    losRange,
+    trackSampleLL,
+    wezWindow
   };
 })();
 
@@ -56116,7 +56191,7 @@ __m["map3d"] = (function () {
   const { readStates } = __m["topo"];
   const { projectForState, projectLL, altToY, OMITTED_FIPS, UNITS_PER_MILE, setAltExaggeration } = __m["projection"];
   const { FLIGHTS, MIL_FLIGHTS, PLACES, DEBRIS, GIBNEY, CLAIM_ROUTE, CRITIC_NODES, CRITIC_CHAIN, DISTRIBUTION } = __m["data"];
-  const { samplePath, gcPoints, destinationPoint } = __m["geo"];
+  const { samplePath, gcPoints, haversineMi, destinationPoint } = __m["geo"];
   const { BANDS, FUEL_RING, FERRY_RING, HALF_FERRY_RING, ringPoints, reachMi, MAX_DRAW_MI, AIM9, bandRadii, evidenceCeilingMi, DEPARTURE_BOUNDS } = __m["reachability"];
   const { HYPO, FOREKNOWLEDGE } = __m["steelman"];
   const { CALLS } = __m["calls"];
@@ -56832,11 +56907,42 @@ class Map3D {
     this.hypoMarker.visible = false;
     this.hypoMarker.userData = { kind: 'hypo' };
     this.hypoGroup.add(this.hypoMarker);
+
+    /* Line of sight to the target. Long and always visible, so it carries the
+       range information at any zoom — unlike the engagement rings, which are
+       true-scale and therefore a dot until you come right in. */
+    this.hypoLos = new THREE.Line(
+      new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]),
+      new THREE.LineBasicMaterial({ color: 0x9fb6cc, transparent: true, opacity: 0.6 }),
+    );
+    this.hypoLos.frustumCulled = false;
+    this.hypoLos.visible = false;
+    this.hypoGroup.add(this.hypoLos);
+
+    /* The weapon envelope carried WITH the aircraft, as against the one drawn
+       around the target elsewhere. Same annulus, opposite anchor. */
+    const mkWez = (opacity, dashed) => {
+      const g = new THREE.BufferGeometry();
+      g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(121 * 3), 3));
+      const mat = dashed
+        ? new THREE.LineDashedMaterial({ color: 0xff4d4d, dashSize: 0.5, gapSize: 0.4, transparent: true, opacity })
+        : new THREE.LineBasicMaterial({ color: 0xff4d4d, transparent: true, opacity });
+      const l = new THREE.Line(g, mat);
+      l.frustumCulled = false;
+      l.visible = false;
+      this.hypoGroup.add(l);
+      return l;
+    };
+    this.hypoWezOuter = mkWez(0.95, false);
+    this.hypoWezInner = mkWez(0.5, true);
+    this.hypoLosInfo = null;
   }
 
-  /* `track` is the object from buildHypoTrack, or null. */
-  setHypo(track, t) {
+  /* `track` is the object from buildHypoTrack, or null. `targetLL` is the
+     aircraft it is aimed at, so the sight line and range can be drawn. */
+  setHypo(track, t, targetLL) {
     this._hypo = track;
+    this._hypoTarget = targetLL;
     if (!this.hypoGroup || !this.hypoGroup.visible || !track) {
       if (this.hypoMarker) this.hypoMarker.visible = false;
       return;
@@ -56856,21 +56962,57 @@ class Map3D {
     const s = samplePath(track.path, t);
     if (s) {
       const [x, z] = projectLL(s);
-      this.hypoMarker.position.set(x, altToY(s.altFt) + STATE_DEPTH + 0.05, z);
+      const y = altToY(s.altFt) + STATE_DEPTH + 0.05;
+      this.hypoMarker.position.set(x, y, z);
       this.hypoMarker.rotation.set(Math.PI / 2, 0, 0);
       this.hypoMarker.rotateOnWorldAxis(Y_AXIS, Math.PI - s.headingDeg * Math.PI / 180);
       this.hypoMarker.scale.setScalar(this._markerScale);
       this.hypoMarker.visible = true;
       this._hypoSample = s;
+
+      // Engagement rings, carried with the aircraft at true scale.
+      this._writeRing(this.hypoWezOuter, ringPoints(s, AIM9.rMaxMi, 120));
+      this._writeRing(this.hypoWezInner, ringPoints(s, AIM9.rMinMi, 120));
+      this.hypoWezOuter.visible = true;
+      this.hypoWezInner.visible = true;
+
+      if (targetLL) {
+        const [tx, tz] = projectLL(targetLL);
+        const ty = altToY(targetLL.altFt ?? s.altFt) + STATE_DEPTH + 0.05;
+        const p = this.hypoLos.geometry.attributes.position;
+        p.setXYZ(0, x, y, z);
+        p.setXYZ(1, tx, ty, tz);
+        p.needsUpdate = true;
+        this.hypoLos.geometry.computeBoundingSphere();
+        this.hypoLos.visible = true;
+
+        const miles = haversineMi(s, targetLL);
+        const inWez = miles <= AIM9.rMaxMi && miles >= AIM9.rMinMi;
+        // Dim at long range, amber closing, red once a shot is possible.
+        this.hypoLos.material.color.setHex(
+          inWez ? 0xff4d4d : miles <= 50 ? 0xffd447 : 0x9fb6cc);
+        this.hypoLos.material.opacity = inWez ? 1 : miles <= 50 ? 0.8 : 0.45;
+        this.hypoLosInfo = {
+          miles, inWez,
+          mid: new THREE.Vector3((x + tx) / 2, (y + ty) / 2 + 0.4, (z + tz) / 2),
+        };
+      } else {
+        this.hypoLos.visible = false;
+        this.hypoLosInfo = null;
+      }
     } else {
       this.hypoMarker.visible = false;
+      this.hypoLos.visible = false;
+      this.hypoWezOuter.visible = false;
+      this.hypoWezInner.visible = false;
       this._hypoSample = null;
+      this.hypoLosInfo = null;
     }
   }
 
   setHypoVisible(v) {
     this.hypoGroup.visible = v;
-    this.setHypo(this._hypo, this._t ?? 0);
+    this.setHypo(this._hypo, this._t ?? 0, this._hypoTarget);
   }
 
   _buildPlaces() {
@@ -57334,11 +57476,12 @@ __m["main"] = (function () {
   const { analyseClaim, analyseDocumented, ASSUMPTIONS, COMMAND_CHECK, classify, legAnalysis } = __m["analysis"];
   const { CONFLICTS, STATUS_META, conflictsFor, openCount } = __m["conflicts"];
   const { BANDS, FUEL_RING, FERRY_RING, HALF_FERRY_RING, AIM9, shanksvilleTest, reachMi, scaleComparison, TOLERANCES, DEPARTURE_BOUNDS, bandRadii, evidenceCeilingMi, CONFIG_TRADE } = __m["reachability"];
-  const { HYPO, CONCESSIONS, VERDICT, buildHypoTrack, FOREKNOWLEDGE, HIJACK_T, foreknowledgeVerdict } = __m["steelman"];
+  const { HYPO, CONCESSIONS, VERDICT, buildHypoTrack, FOREKNOWLEDGE, HIJACK_T, foreknowledgeVerdict, wezWindow } = __m["steelman"];
   const { CALLS, CALL_TOTALS, FARADAY, WHY_THEY_MATTER } = __m["calls"];
 /* =============================================================================
    main.js — app wiring: playback clock, scrubber, panels, labels.
    ========================================================================== */
+
 
 
 
@@ -57534,7 +57677,7 @@ function updateHypo() {
   const track = target
     ? buildHypoTrack(target, state.claimDepart, state.interceptT)
     : null;
-  map.setHypo(track, state.t);
+  map.setHypo(track, state.t, ua93StateAt(state.t) || ua93Position());
   return track;
 }
 
@@ -58082,6 +58225,33 @@ function renderForeknowledgePanel() {
     </div>`;
 }
 
+function renderLosPanel(h) {
+  const out = $('#los-out');
+  if (!out || !h) return;
+  const w = wezWindow(h, (t) => ua93StateAt(t) || ua93Position(), AIM9.rMaxMi);
+  const now = map.hypoLosInfo;
+
+  out.innerHTML = `
+    <div class="leg ${now && now.inWez ? 'los-hot' : ''}">
+      <div class="leg-head">
+        <span class="leg-name">Line of sight to United 93</span>
+        <span class="leg-dist">${now ? (now.miles < 1 ? now.miles.toFixed(2) : Math.round(now.miles)) + ' mi now' : 'not airborne'}</span>
+      </div>
+      <div class="leg-mach">
+        ${w.enter === null
+          ? 'Never inside AIM-9 range.'
+          : `Inside AIM-9 range from <strong style="color:var(--ink)">${hms(w.enter).slice(0, 8)}</strong>
+             to <strong style="color:var(--ink)">${hms(w.exit).slice(0, 8)}</strong> —
+             a window of <strong class="v-impossible">${(w.durationS / 60).toFixed(1)} minutes</strong>.`}
+      </div>
+      <p style="margin:8px 0 0;font-size:12px;color:var(--ink-dim);line-height:1.5">
+        That window is the whole of the opportunity the claim needs, and it exists only because
+        this track was <em>built</em> to arrive there. The record has to put a specific aircraft
+        inside it, to the minute. Nothing does.
+      </p>
+    </div>`;
+}
+
 function renderSteelPanel() {
   const target = hypoTarget();
   if (!target || !$('#steel-out')) return;
@@ -58103,6 +58273,7 @@ function renderSteelPanel() {
         ${Math.round(h.ferryFraction * 100)}% of ferry range
       </div>
     </div>
+    <div id="los-out"></div>
     <div class="cmd-row">
       <div class="t">${Math.round(h.egressMi)} mi</div>
       <div class="x">At the closest point to United 93 he turns straight for
@@ -58116,6 +58287,8 @@ function renderSteelPanel() {
         flyable version of the claim, and it is one in which Ed Jacoby is never collected —
         which is contradicted by Jacoby, who was.</div>
     </div>`;
+
+  renderLosPanel(h);
 
   $('#concessions').innerHTML = `
     <p style="font-size:11.5px;color:var(--ink-faint);margin:12px 0 6px">
@@ -58802,6 +58975,17 @@ function drawLabels() {
     } else if (o.impact.visible) {
       wanted.set(`f:${id}`, { pos: o.impact.position, text: `${id} impact`, cls: 'flight', color: hex(o.f.color), rank: 1 });
     }
+  }
+
+  if (map.hypoGroup && map.hypoGroup.visible && map.hypoLosInfo) {
+    const li = map.hypoLosInfo;
+    wanted.set('los', {
+      pos: li.mid,
+      text: `${li.miles < 1 ? li.miles.toFixed(2) : Math.round(li.miles)} mi${li.inWez ? ' — WITHIN AIM-9 RANGE' : ''}`,
+      cls: `flight los${li.inWez ? ' hot' : ''}`,
+      color: li.inWez ? '#ff4d4d' : li.miles <= 50 ? '#ffd447' : '#9fb6cc',
+      rank: 1.1,
+    });
   }
 
   if (map.hypoGroup && map.hypoGroup.visible && map.hypoMarker.visible) {

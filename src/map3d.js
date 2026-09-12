@@ -16,7 +16,7 @@ import {
   FLIGHTS, MIL_FLIGHTS, PLACES, DEBRIS, GIBNEY, CLAIM_ROUTE,
   CRITIC_NODES, CRITIC_CHAIN, DISTRIBUTION,
 } from './data.js';
-import { samplePath, gcPoints } from './geo.js';
+import { samplePath, gcPoints, haversineMi } from './geo.js';
 import {
   BANDS, FUEL_RING, FERRY_RING, HALF_FERRY_RING, ringPoints, reachMi,
   MAX_DRAW_MI, AIM9, bandRadii, evidenceCeilingMi, DEPARTURE_BOUNDS,
@@ -727,11 +727,42 @@ export class Map3D {
     this.hypoMarker.visible = false;
     this.hypoMarker.userData = { kind: 'hypo' };
     this.hypoGroup.add(this.hypoMarker);
+
+    /* Line of sight to the target. Long and always visible, so it carries the
+       range information at any zoom — unlike the engagement rings, which are
+       true-scale and therefore a dot until you come right in. */
+    this.hypoLos = new THREE.Line(
+      new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]),
+      new THREE.LineBasicMaterial({ color: 0x9fb6cc, transparent: true, opacity: 0.6 }),
+    );
+    this.hypoLos.frustumCulled = false;
+    this.hypoLos.visible = false;
+    this.hypoGroup.add(this.hypoLos);
+
+    /* The weapon envelope carried WITH the aircraft, as against the one drawn
+       around the target elsewhere. Same annulus, opposite anchor. */
+    const mkWez = (opacity, dashed) => {
+      const g = new THREE.BufferGeometry();
+      g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(121 * 3), 3));
+      const mat = dashed
+        ? new THREE.LineDashedMaterial({ color: 0xff4d4d, dashSize: 0.5, gapSize: 0.4, transparent: true, opacity })
+        : new THREE.LineBasicMaterial({ color: 0xff4d4d, transparent: true, opacity });
+      const l = new THREE.Line(g, mat);
+      l.frustumCulled = false;
+      l.visible = false;
+      this.hypoGroup.add(l);
+      return l;
+    };
+    this.hypoWezOuter = mkWez(0.95, false);
+    this.hypoWezInner = mkWez(0.5, true);
+    this.hypoLosInfo = null;
   }
 
-  /* `track` is the object from buildHypoTrack, or null. */
-  setHypo(track, t) {
+  /* `track` is the object from buildHypoTrack, or null. `targetLL` is the
+     aircraft it is aimed at, so the sight line and range can be drawn. */
+  setHypo(track, t, targetLL) {
     this._hypo = track;
+    this._hypoTarget = targetLL;
     if (!this.hypoGroup || !this.hypoGroup.visible || !track) {
       if (this.hypoMarker) this.hypoMarker.visible = false;
       return;
@@ -751,21 +782,57 @@ export class Map3D {
     const s = samplePath(track.path, t);
     if (s) {
       const [x, z] = projectLL(s);
-      this.hypoMarker.position.set(x, altToY(s.altFt) + STATE_DEPTH + 0.05, z);
+      const y = altToY(s.altFt) + STATE_DEPTH + 0.05;
+      this.hypoMarker.position.set(x, y, z);
       this.hypoMarker.rotation.set(Math.PI / 2, 0, 0);
       this.hypoMarker.rotateOnWorldAxis(Y_AXIS, Math.PI - s.headingDeg * Math.PI / 180);
       this.hypoMarker.scale.setScalar(this._markerScale);
       this.hypoMarker.visible = true;
       this._hypoSample = s;
+
+      // Engagement rings, carried with the aircraft at true scale.
+      this._writeRing(this.hypoWezOuter, ringPoints(s, AIM9.rMaxMi, 120));
+      this._writeRing(this.hypoWezInner, ringPoints(s, AIM9.rMinMi, 120));
+      this.hypoWezOuter.visible = true;
+      this.hypoWezInner.visible = true;
+
+      if (targetLL) {
+        const [tx, tz] = projectLL(targetLL);
+        const ty = altToY(targetLL.altFt ?? s.altFt) + STATE_DEPTH + 0.05;
+        const p = this.hypoLos.geometry.attributes.position;
+        p.setXYZ(0, x, y, z);
+        p.setXYZ(1, tx, ty, tz);
+        p.needsUpdate = true;
+        this.hypoLos.geometry.computeBoundingSphere();
+        this.hypoLos.visible = true;
+
+        const miles = haversineMi(s, targetLL);
+        const inWez = miles <= AIM9.rMaxMi && miles >= AIM9.rMinMi;
+        // Dim at long range, amber closing, red once a shot is possible.
+        this.hypoLos.material.color.setHex(
+          inWez ? 0xff4d4d : miles <= 50 ? 0xffd447 : 0x9fb6cc);
+        this.hypoLos.material.opacity = inWez ? 1 : miles <= 50 ? 0.8 : 0.45;
+        this.hypoLosInfo = {
+          miles, inWez,
+          mid: new THREE.Vector3((x + tx) / 2, (y + ty) / 2 + 0.4, (z + tz) / 2),
+        };
+      } else {
+        this.hypoLos.visible = false;
+        this.hypoLosInfo = null;
+      }
     } else {
       this.hypoMarker.visible = false;
+      this.hypoLos.visible = false;
+      this.hypoWezOuter.visible = false;
+      this.hypoWezInner.visible = false;
       this._hypoSample = null;
+      this.hypoLosInfo = null;
     }
   }
 
   setHypoVisible(v) {
     this.hypoGroup.visible = v;
-    this.setHypo(this._hypo, this._t ?? 0);
+    this.setHypo(this._hypo, this._t ?? 0, this._hypoTarget);
   }
 
   _buildPlaces() {
