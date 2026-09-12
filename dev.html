@@ -35,6 +35,7 @@
     <button id="btn-follow" class="ghost-btn on" aria-pressed="true"
             title="Keep the camera on whatever is airborne (F)">Follow</button>
     <button id="btn-reset-view" class="ghost-btn" title="Stop following and show the whole country">Reset view</button>
+    <button id="btn-map" class="ghost-btn only-mobile" title="Swap between the map and the reading">Map</button>
     <button id="btn-tour" class="tour-btn" title="Play a guided walk through the steelman argument">
       <span class="tour-btn-glyph">&#9654;</span> Steelman tour
     </button>
@@ -94,8 +95,10 @@
 
 <aside id="panel">
   <nav id="tabs">
-    <button data-tab="timeline" class="on">Timeline</button>
+    <button data-tab="brief" class="on">Start&nbsp;here</button>
+    <button data-tab="timeline">Timeline</button>
     <button data-tab="critic">CRITIC</button>
+    <button data-tab="aware">Who&nbsp;knew</button>
     <button data-tab="claim">Claim</button>
     <button data-tab="debris">Flight&nbsp;93</button>
     <button data-tab="military">Military</button>
@@ -103,7 +106,11 @@
     <button data-tab="layers">Layers</button>
   </nav>
 
-  <section class="tab-body" data-body="timeline">
+  <section class="tab-body" data-body="brief" id="brief-body"></section>
+
+  <section class="tab-body hidden" data-body="aware" id="aware-body"></section>
+
+  <section class="tab-body hidden" data-body="timeline">
     <div id="now-card" class="card"></div>
     <div id="event-list"></div>
   </section>

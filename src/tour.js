@@ -238,16 +238,26 @@ export const TOUR_STEPS = [
     body: (c, i) => `
       Say we grant the impossible knowledge anyway. He still has to be steered onto an airliner
       crossing Pennsylvania at 400-odd miles an hour, and a pilot cannot find that alone.
-      <p>The unit that would have done the steering ${i('neads')} <strong>did not know United 93
-      existed until 10:07</strong> — which is the time now on the clock, and four minutes
-      <em>after</em> the aircraft was already on the ground.</p>
-      <p>There was nothing to point him at. And Gibney was flying a passenger that day, not
-      sitting on the air-defence radio net.</p>`,
+      <p><strong>Half the government could see it the whole time.</strong> Cleveland Center heard
+      the hijacking live at 09:28 and never lost the aircraft — not even when the transponder went
+      off. By 09:46 the FAA had worked out it was twenty-nine minutes from Washington.</p>
+      <p><strong>The half that could send a fighter was never told.</strong> The air defence
+      sector ${i('neads')} heard the words "United 93" for the first time at
+      <strong>10:07</strong> — the time on the clock now, and four minutes <em>after</em> the
+      aircraft was already in the ground.</p>
+      <p>In between sits a twenty-five minute conversation, on recorded lines, in which the FAA
+      discusses asking the military for help and never does it. At 09:36: has anyone requested
+      fighters? At 09:49: <em>"Do we want to think about, uh, scrambling aircraft?" — "Oh, God, I
+      don't know."</em> At 09:53: still discussing.</p>
+      <p>So the objection that the government knew is <em>correct</em>, and it does not help the
+      story. Air traffic control cannot task or vector fighters. The organisation that can had no
+      track, no request, and nothing to point anyone at — and Gibney was flying a passenger, not
+      sitting on the air defence net.</p>`,
     t: at(10, 7, 0),
-    tab: 'military',
-    view: 'place:SHKV',
-    viewDist: 90,
-    layers: { hypo: true },
+    tab: 'aware',
+    view: 'reset',
+    layers: { hypo: true, aware: true },
+    highlight: '#aware-body',
   },
 
   {

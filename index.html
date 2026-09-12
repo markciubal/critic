@@ -443,12 +443,11 @@ ul.plain li { font-size: 12.5px; color: var(--ink-dim); line-height: 1.55; margi
 @media (max-width: 1150px) {
   :root { --panel-w: 360px; }
 }
-@media (max-width: 900px) {
-  body { grid-template-columns: 1fr; grid-template-areas: "top" "stage" "time"; }
-  #panel { position: fixed; right: 0; top: var(--topbar-h); bottom: var(--timeline-h); width: 340px; z-index: 20; }
-  body.panel-hidden #panel { display: none; }
-  .transport .ghost-btn { display: none; }
-}
+/* The mobile rules live in the 860px block near the end of this file. An
+   earlier version of them sat here and fought it: a grid with no panel area,
+   the panel as a fixed 340px overlay, and `.transport .ghost-btn { display:
+   none }` which outranks `.only-mobile` on specificity and so kept the
+   Map/Read toggle permanently hidden. Removed rather than patched. */
 
 
 /* --- military tab ---------------------------------------------------------- */
@@ -859,10 +858,7 @@ ul.plain li { font-size: 12.5px; color: var(--ink-dim); line-height: 1.55; margi
   35%      { box-shadow: 0 0 0 3px rgba(74,143,231,.4); }
 }
 
-@media (max-width: 900px) {
-  #tour { left: 10px; right: 10px; bottom: 10px; width: auto; }
-  #tour-body { max-height: 26vh; }
-}
+
 
 /* The callout takes the bottom-left corner, which the vertical-scale legend
    already owned. The legend steps aside rather than being covered: a control
@@ -1019,6 +1015,239 @@ body.touring #legend { opacity: 0; pointer-events: none; transition: opacity .25
 
 #ip-src .ref { margin-left: 6px; }
 
+/* --- awareness labels -------------------------------------------------------
+   Colour by who is doing the knowing, because the split between the civil side
+   and the military side is the entire argument. The NEADS counter is styled
+   hardest: an absence nobody can see is not evidence of anything. */
+.map-label.aware-line { font-weight: 600; letter-spacing: .3px; padding: 3px 7px; }
+.map-label.aware-line.aw-civil    { background: #0e3a2c; border-color: #35d6a4; color: #8ff0cd; }
+.map-label.aware-line.aw-military { background: #3a0e17; border-color: #ff1f3d; color: #ffb3bf; }
+.map-label.aware-line.aw-exec     { background: #3a320e; border-color: #ffd447; color: #ffe9a8; }
+.map-label.aware-line.aw-public   { background: #1b2740; border-color: #9fb6cc; color: #cfdcec; }
+.map-label.aware-line.dark {
+  background: var(--critic); color: #fff; border-color: #ff6b80; font-weight: 700;
+  box-shadow: 0 3px 14px rgba(255,31,61,.4);
+}
+.map-label.aware-line.fresh { animation: critic-arrive 1.1s ease-out 3; }
+
+/* --- Start here: bottom line up front ---------------------------------------
+   The conclusion, then the reasoning, then the evidence, then the objections.
+   Headlines alone are the ninety-second version; the bodies are the hour. */
+.card.bluf {
+  border-color: rgba(74,143,231,.4);
+  background: linear-gradient(180deg, rgba(74,143,231,.09), rgba(74,143,231,.02));
+}
+.bluf-kicker {
+  font: 700 10px/1 var(--mono); letter-spacing: 1.4px; text-transform: uppercase;
+  color: var(--ui); margin-bottom: 8px;
+}
+.card.bluf h2 {
+  margin: 0 0 10px; font-size: 21px; line-height: 1.25; color: #fff;
+  letter-spacing: -.2px;
+}
+.card.bluf p { font-size: 13.5px; line-height: 1.62; }
+.bluf-note {
+  margin-top: 11px; padding-top: 10px; border-top: 1px solid var(--line-2);
+  font-size: 12px; color: var(--ink-dim);
+}
+.chip-go { background: var(--critic); border-color: var(--critic); color: #fff; font-weight: 600; }
+.chip-go:hover { background: #ff4560; }
+
+.sec-head {
+  margin: 22px 0 4px; font-size: 12px; letter-spacing: 1.3px; text-transform: uppercase;
+  color: var(--ink-faint); font-family: var(--mono);
+}
+.sec-note { margin: 0 0 10px; font-size: 12px; color: var(--ink-faint); line-height: 1.55; }
+
+/* The walkthrough: a native disclosure, so it works before any JS runs and
+   keyboard and screen readers get it for free. */
+.wt {
+  background: var(--bg-3); border: 1px solid var(--line); border-radius: 9px;
+  margin-bottom: 8px; overflow: hidden;
+}
+.wt[open] { border-color: var(--line-2); }
+.wt > summary {
+  display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
+  padding: 13px 14px; cursor: pointer; list-style: none;
+  min-height: 44px;
+}
+.wt > summary::-webkit-details-marker { display: none; }
+.wt > summary:hover { background: rgba(255,255,255,.03); }
+.wt-kicker {
+  flex: none; font: 700 9.5px/1.6 var(--mono); letter-spacing: 1.1px;
+  text-transform: uppercase; color: var(--ui);
+}
+.wt-head { flex: 1 1 auto; font-size: 14.5px; line-height: 1.35; color: var(--ink); font-weight: 600; }
+.wt-more { flex: none; width: 11px; height: 11px; position: relative; align-self: center; }
+.wt-more::before, .wt-more::after {
+  content: ''; position: absolute; background: var(--ink-faint); transition: transform .18s;
+}
+.wt-more::before { left: 0; right: 0; top: 5px; height: 1.5px; }
+.wt-more::after  { top: 0; bottom: 0; left: 5px; width: 1.5px; }
+.wt[open] .wt-more::after { transform: scaleY(0); }
+.wt-body { padding: 0 14px 14px; }
+.wt-body p { margin: 0 0 9px; font-size: 13px; line-height: 1.62; color: var(--ink-dim); }
+.wt-body strong { color: var(--ink); }
+
+/* The objection, inside the section it undercuts. */
+.wt-counter {
+  margin-top: 11px; padding: 11px 12px; border-radius: 7px;
+  background: rgba(255,190,77,.07); border-left: 3px solid var(--ua175);
+}
+.wt-counter-q {
+  font-size: 12.5px; font-weight: 650; color: var(--ua175); margin-bottom: 6px;
+}
+.wt-counter p { margin: 0; font-size: 12.5px; color: var(--ink-dim); }
+.wt-counter .chip { margin-top: 9px; }
+
+/* However long you have */
+.paths { display: flex; flex-direction: column; gap: 7px; }
+.path {
+  display: grid; grid-template-columns: 62px 1fr; gap: 3px 11px; text-align: left;
+  padding: 11px 13px; min-height: 44px;
+  background: var(--bg-3); border: 1px solid var(--line); border-radius: 8px;
+  cursor: pointer; color: inherit; font: inherit;
+}
+.path:hover { border-color: var(--ui); background: rgba(74,143,231,.07); }
+.path-min {
+  grid-row: 1 / span 2; align-self: center;
+  font: 700 11px/1.3 var(--mono); color: var(--ui); letter-spacing: .3px;
+}
+.path-label { font-size: 13px; font-weight: 600; color: var(--ink); }
+.path-note { font-size: 11.5px; color: var(--ink-faint); line-height: 1.5; }
+
+/* --- the awareness chain --------------------------------------------------- */
+.aw-list { display: flex; flex-direction: column; }
+.aw {
+  display: grid; grid-template-columns: 54px 1fr; gap: 12px;
+  padding: 12px 0 12px 2px; border-top: 1px solid var(--line);
+  position: relative;
+}
+.aw::before {
+  content: ''; position: absolute; left: 47px; top: 0; bottom: 0; width: 2px;
+  background: var(--aw); opacity: .3;
+}
+.aw-t { font: 600 12px/1.4 var(--mono); color: var(--aw); letter-spacing: .4px; }
+.aw-actor {
+  font: 700 9px/1.5 var(--mono); letter-spacing: 1.1px; text-transform: uppercase;
+  color: var(--aw);
+}
+.aw-who { font-size: 12.5px; font-weight: 600; color: var(--ink); margin: 1px 0 4px; }
+.aw-what { margin: 0 0 7px; font-size: 12.5px; line-height: 1.6; color: var(--ink-dim); }
+.aw-bearing {
+  margin: 0; font-size: 11.5px; line-height: 1.6; color: var(--ink-faint);
+  padding-left: 9px; border-left: 2px solid var(--line-2);
+}
+.aw-bearing strong { color: var(--ink-dim); }
+.aw-pivot { background: rgba(255,31,61,.07); border-radius: 7px; padding-left: 8px; }
+.aw-pivot::before { opacity: .85; width: 3px; }
+.aw-key {
+  display: flex; align-items: baseline; gap: 8px; font-size: 12px; line-height: 1.6;
+  color: var(--ink-dim); margin-bottom: 5px;
+}
+.aw-key i { flex: none; width: 9px; height: 9px; border-radius: 50%; align-self: center; }
+.aw-key b { color: var(--ink); }
+.aw-obj {
+  font-size: 13px; font-style: italic; color: var(--ink); line-height: 1.6;
+  padding: 10px 12px; border-left: 3px solid var(--ua175);
+  background: rgba(255,190,77,.07); border-radius: 0 6px 6px 0; margin-bottom: 12px;
+}
+
+/* --- mobile -----------------------------------------------------------------
+   A phone cannot show a map and an argument at once, so it does not try. The
+   map becomes a fixed hero you can swap to full height; the reading is the
+   main scroll; the tab bar is sticky and scrolls sideways. Everything
+   touchable is at least 44 pixels. */
+.only-mobile { display: none; }
+
+@media (max-width: 860px) {
+  body {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 34vh 1fr auto;
+    grid-template-areas: "top" "stage" "panel" "time";
+  }
+  .only-mobile { display: inline-block; }
+
+  /* Grid items default to min-width:auto, which lets a wide child — the
+     transport row, the tab strip — push the whole body wider than the screen
+     and clip every paragraph mid-word. This is the fix for that, and it has to
+     be on the items, not the body. */
+  body { overflow-x: hidden; }
+  #topbar, #stage, #panel, #timeline { min-width: 0; }
+  #topbar { gap: 9px; padding: 0 10px; flex-wrap: nowrap; overflow: hidden; }
+  .brand { min-width: 0; flex: 0 1 auto; }
+  .brand h1 { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .clock-wrap { flex: none; }
+  .transport { flex: none; }
+  /* Four playback rates will not fit beside a clock on a phone. The two that
+     matter are real time and the default. */
+  .rate-group button[data-rate="60"],
+  .rate-group button[data-rate="240"] { display: none; }
+  #topbar::before { width: 240px; }
+  .brand .sub { display: none; }
+  .brand h1 { font-size: 13px; }
+  .flag90 { width: 40px; height: 21px; }
+  #clock { font-size: 17px; }
+  .clock-label { display: none; }
+  .transport { gap: 6px; }
+  .rate-group button { padding: 9px 8px; }
+  .icon-btn { width: 42px; height: 38px; }
+  #btn-follow, #btn-reset-view, #btn-tour { display: none; }
+  .ghost-btn { padding: 10px 12px; }
+
+  #stage { min-height: 0; }
+  #aside-toggle, #legend { display: none; }
+  #hud { font-size: 10px; }
+  #hud-hint { display: none; }
+
+  /* The map full-screen, when you ask for it. */
+  body.map-open { grid-template-rows: auto 1fr 0 auto; }
+  body.map-open #panel { display: none; }
+
+  #panel {
+    grid-area: panel; border-left: 0; border-top: 1px solid var(--line);
+    position: static; width: auto; opacity: 1; pointer-events: auto;
+  }
+  body.panel-hidden #panel { display: flex; }
+
+  /* Sticky, sideways-scrolling tabs. Seven will not fit across a phone, and
+     wrapping them eats a third of the screen. */
+  #tabs {
+    position: sticky; top: 0; z-index: 5; flex-wrap: nowrap;
+    overflow-x: auto; scrollbar-width: none; background: var(--bg-2);
+  }
+  #tabs::-webkit-scrollbar { display: none; }
+  #tabs button { flex: 0 0 auto; padding: 13px 14px; font-size: 12px; min-height: 44px; }
+
+  .tab-body { padding: 12px 12px 28px; }
+  .card { padding: 13px; }
+  .card.bluf h2 { font-size: 19px; }
+  .card.bluf p { font-size: 14px; }
+  .wt-body p, .wt-counter p { font-size: 13.5px; }
+
+  #timeline { padding: 7px 11px 6px; gap: 6px; }
+  #flight-strip { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+  #flight-strip::-webkit-scrollbar { display: none; }
+  .fs { flex: 0 0 auto; }
+
+  #tour { left: 8px; right: 8px; bottom: 8px; width: auto; }
+  #tour-body { max-height: 30vh; }
+  .tour-ctl button { min-width: 42px; height: 34px; }
+
+  #info-pop { width: calc(100vw - 22px); }
+  .chip { padding: 9px 12px; min-height: 38px; }
+  .toggle { min-height: 44px; }
+}
+
+@media (max-width: 420px) {
+  body { grid-template-rows: auto 28vh 1fr auto; }
+  .brand h1 { font-size: 12px; }
+  #clock { font-size: 15px; }
+  .rate-group button { padding: 9px 6px; font-size: 10px; }
+  .card.bluf h2 { font-size: 17.5px; }
+  .path { grid-template-columns: 54px 1fr; }
+}
+
 </style>
 </head>
 <body>
@@ -1050,6 +1279,7 @@ body.touring #legend { opacity: 0; pointer-events: none; transition: opacity .25
     <button id="btn-follow" class="ghost-btn on" aria-pressed="true"
             title="Keep the camera on whatever is airborne (F)">Follow</button>
     <button id="btn-reset-view" class="ghost-btn" title="Stop following and show the whole country">Reset view</button>
+    <button id="btn-map" class="ghost-btn only-mobile" title="Swap between the map and the reading">Map</button>
     <button id="btn-tour" class="tour-btn" title="Play a guided walk through the steelman argument">
       <span class="tour-btn-glyph">&#9654;</span> Steelman tour
     </button>
@@ -1109,8 +1339,10 @@ body.touring #legend { opacity: 0; pointer-events: none; transition: opacity .25
 
 <aside id="panel">
   <nav id="tabs">
-    <button data-tab="timeline" class="on">Timeline</button>
+    <button data-tab="brief" class="on">Start&nbsp;here</button>
+    <button data-tab="timeline">Timeline</button>
     <button data-tab="critic">CRITIC</button>
+    <button data-tab="aware">Who&nbsp;knew</button>
     <button data-tab="claim">Claim</button>
     <button data-tab="debris">Flight&nbsp;93</button>
     <button data-tab="military">Military</button>
@@ -1118,7 +1350,11 @@ body.touring #legend { opacity: 0; pointer-events: none; transition: opacity .25
     <button data-tab="layers">Layers</button>
   </nav>
 
-  <section class="tab-body" data-body="timeline">
+  <section class="tab-body" data-body="brief" id="brief-body"></section>
+
+  <section class="tab-body hidden" data-body="aware" id="aware-body"></section>
+
+  <section class="tab-body hidden" data-body="timeline">
     <div id="now-card" class="card"></div>
     <div id="event-list"></div>
   </section>
@@ -57357,6 +57593,535 @@ function refsFor(key) {
   };
 })();
 
+__m["awareness"] = (function () {
+
+/* =============================================================================
+   awareness.js — who knew United 93 was hijacked, and when.
+
+   This app said, for a long time, that "NEADS did not know United 93 existed
+   until 10:07". True, and on its own it invites a reasonable objection: the
+   FAA knew for thirty-five minutes, so somebody in the federal government
+   plainly did — and if somebody did, why could nobody have vectored a fighter?
+
+   That objection deserves an answer rather than a silence, so here is the whole
+   chain, with what each step does and does not establish.
+
+   THE SHAPE OF IT
+
+   The crash was not a surprise to the federal government. It was a surprise to
+   the United States military. Those are different sentences and the distance
+   between them is the most important fact about Flight 93.
+
+   The civil side — Cleveland Center, the Command Center at Herndon, FAA
+   headquarters — had the aircraft continuously from 09:28. They heard the
+   takeover live. They tracked it on primary radar after the transponder went
+   off. They computed how many minutes it was from Washington. And for
+   twenty-five minutes they discussed, on recorded lines, whether to ask the
+   military for help.
+
+   They never completed the request. The air defence sector heard the words
+   "United 93" for the first time at 10:07, four minutes after the aircraft was
+   already in the ground.
+
+   WHAT THAT DOES TO THE SHOOTDOWN CLAIM
+
+   It removes the last mechanism. Granting foreknowledge, granting fuel and
+   missiles, granting a perfect launch — a pilot still has to be pointed at a
+   target moving at four hundred knots, and the only organisation holding that
+   track had no way to point him and no authority to try. The FAA does not
+   control fighters. The military, which does, was not told.
+
+   `bearing` on each entry is the point of the register: what this step proves,
+   and what it does not. An entry that only proves somebody knew something is
+   marked as such, because "the government knew" is doing a lot of work in the
+   claim and very little of it survives contact with who specifically knew what.
+   ========================================================================== */
+
+const at = (h, m, s = 0) => h * 3600 + m * 60 + s;
+
+/* Who is doing the knowing. The split is the whole argument, so it is a field
+   rather than a matter of reading the prose carefully. */
+const ACTORS = {
+  civil:    { label: 'FAA — civil',      color: '#35d6a4', note: 'Air traffic control. Has radar. Cannot launch or direct fighters.' },
+  military: { label: 'Military',         color: '#ff1f3d', note: 'NEADS and NORAD. Can launch and direct fighters. Needs to be told.' },
+  exec:     { label: 'Executive',        color: '#ffd447', note: 'The White House, the Secret Service, the national command structure.' },
+  public:   { label: 'Outside government', color: '#9fb6cc', note: 'Passengers, families, a county dispatcher, people on the ground.' },
+};
+
+
+/* =============================================================================
+   WHERE THE KNOWLEDGE WAS
+
+   The CRITIC chain gets drawn on the map because a message is a thing that
+   travels between places. So is this, and drawing it makes the argument visible
+   in a way the prose cannot: the civil network lights up across four states in
+   the space of six minutes, and the one node that could have launched a fighter
+   stays dark until after the aircraft is already in the ground.
+   ========================================================================== */
+
+const AWARE_NODES = {
+  ZOB:   { name: 'Cleveland Center (Oberlin, Ohio)', short: 'Cleveland Center',
+           lat: 41.2939, lon: -82.2182, actor: 'civil',
+           note: 'The air route traffic control centre holding United 93. Heard the hijacking live and never lost the aircraft.' },
+  ATCSCC:{ name: 'FAA Command Center, Herndon, Virginia', short: 'Herndon Command Center',
+           lat: 38.9696, lon: -77.3861, actor: 'civil',
+           note: 'The national flow-control hub. Told at 09:34, and the source of the 09:49 "do we want to think about scrambling aircraft?" exchange.' },
+  FAAHQ: { name: 'FAA headquarters, Washington DC', short: 'FAA HQ',
+           lat: 38.8870, lon: -77.0220, actor: 'civil',
+           note: 'Where the request for military help would have had to be authorised. It was discussed three times and never made.' },
+  NEADSN:{ name: 'Northeast Air Defense Sector, Rome, New York', short: 'NEADS',
+           lat: 43.2338, lon: -75.4071, actor: 'military',
+           note: 'The only node on this map that could have launched or vectored a fighter. Not told until 10:07.' },
+  NORADN:{ name: 'NORAD, Colorado Springs', short: 'NORAD',
+           lat: 38.7440, lon: -104.8460, actor: 'military',
+           note: 'Originated the CRITIC at 09:49. Alarmed, reporting upward, and not holding a track on United 93.' },
+  PEOC:  { name: 'White House / PEOC, Washington DC', short: 'White House',
+           lat: 38.8977, lon: -77.0365, actor: 'exec',
+           note: 'Where shootdown authority was given at about 10:18, against a picture relayed from FAA data that was already out of date.' },
+  WCO:   { name: 'Westmoreland County 911, Greensburg, Pennsylvania', short: 'Westmoreland 911',
+           lat: 40.3015, lon: -79.5389, actor: 'public',
+           note: 'Took Edward Felt\'s call at 09:58. A county dispatcher, not a federal agency.' },
+};
+
+const AWARENESS = [
+  {
+    t: at(9, 24, 0), actor: 'civil',
+    who: 'United Airlines dispatcher Ed Ballinger',
+    what: 'Sends United 93 a warning: "Beware any cockpit intrusion — two a/c hit World Trade Center."',
+    bearing: 'An airline, not the government, and a general warning rather than a track. It establishes that the morning was already understood as an attack, four minutes before the takeover.',
+    src: 'commission',
+  },
+  {
+    t: at(9, 28, 0), actor: 'civil',
+    who: 'Cleveland Center',
+    node: 'ZOB',
+    what: 'Hears the takeover live — a "Mayday" and the sounds of a struggle over the open radio.',
+    bearing: 'The single most important entry. From this second the civil side has the aircraft, and it never loses it.',
+    src: 'commission',
+  },
+  {
+    t: at(9, 32, 0), actor: 'civil',
+    who: 'Cleveland Center',
+    node: 'ZOB',
+    what: 'Hears Jarrah keying the wrong switch: "Ladies and Gentlemen: Here the captain, please sit down keep remaining sitting. We have a bomb on board." The controller understands it as a hijacking.',
+    bearing: 'Not an inference from radar. A hijacker announcing the hijacking, on tape, to a federal controller.',
+    src: 'commission',
+  },
+  {
+    t: at(9, 34, 0), actor: 'civil',
+    who: 'Cleveland Center → FAA Command Center, Herndon',
+    from: 'ZOB', to: 'ATCSCC',
+    what: 'Reports United 93 hijacked.',
+    bearing: 'The knowledge is now national, not one facility. Twenty-nine minutes before the crash.',
+    src: 'commission',
+  },
+  {
+    t: at(9, 36, 0), actor: 'civil',
+    who: 'Cleveland Center → FAA headquarters',
+    from: 'ZOB', to: 'FAAHQ',
+    what: 'Asks whether anyone has requested that the military launch fighters. Headquarters answers that it has to "run it up the chain of command."',
+    bearing: 'The first of several moments where the handoff could have been made and was not. Note who is asking: the controller watching the aircraft. See the note below — this exchange is regularly read as evidence of foreknowledge, and it is closer to the reverse.',
+    src: 'commission',
+    weigh: 'fighters-question',
+  },
+  {
+    t: at(9, 41, 0), actor: 'civil',
+    who: 'Cleveland Center',
+    node: 'ZOB',
+    what: 'Transponder goes off. The Center holds the aircraft on primary radar and by asking nearby aircraft to look.',
+    bearing: 'Losing the transponder did not lose the aircraft. Any claim that United 93 "disappeared" after 09:41 is wrong about the civil picture.',
+    src: 'commission',
+  },
+  {
+    t: at(9, 46, 0), actor: 'civil',
+    who: 'FAA Command Center → FAA headquarters',
+    from: 'ATCSCC', to: 'FAAHQ',
+    what: 'Reports United 93 "twenty-nine minutes out of Washington, D.C."',
+    bearing: 'Not merely a track — a projection. The civil side knew where it was going and how long it had.',
+    src: 'commission',
+  },
+  {
+    t: at(9, 49, 0), actor: 'military',
+    who: 'NORAD',
+    node: 'NORADN',
+    what: 'Originates the CRITIC, putting the hijackings into the national warning channel.',
+    bearing: 'The military is alarmed and reporting upward. It is not tracking United 93: the one fragment that survived redaction describes a Boeing 767 from JFK, an aircraft that did not exist.',
+    src: 'foia',
+  },
+  {
+    t: at(9, 49, 0), actor: 'civil',
+    who: 'FAA Command Center → FAA headquarters',
+    from: 'ATCSCC', to: 'FAAHQ',
+    what: '"Do we want to think about, uh, scrambling aircraft?" — "Oh, God, I don\'t know." — "That\'s a decision somebody\'s gonna have to make probably in the next ten minutes."',
+    bearing: 'The clearest single exchange in the record. Recorded, quoted in the Commission report, and it ends without a decision.',
+    src: 'commission',
+  },
+  {
+    t: at(9, 53, 0), actor: 'civil',
+    who: 'FAA headquarters',
+    node: 'FAAHQ',
+    what: 'Tells the Command Center that the deputy director for air traffic services is discussing scrambling aircraft with Monte Belger.',
+    bearing: 'Still a discussion. No request reaches the military from this conversation, then or later.',
+    src: 'commission',
+  },
+  {
+    t: at(9, 58, 0), actor: 'public',
+    who: 'Westmoreland County 911',
+    node: 'WCO',
+    what: 'Dispatcher Glenn Cramer takes Edward Felt\'s call from a rear lavatory.',
+    bearing: 'A county dispatcher, not a federal agency. Included because it is often cited as the government knowing, and it is not that.',
+    src: 'commission',
+  },
+  {
+    t: at(10, 3, 11), actor: 'civil',
+    who: 'Cleveland Center and the Command Center',
+    what: 'United 93 goes into the ground near Shanksville. The civil side knows within moments.',
+    bearing: 'The crash was not discovered later by witnesses. The agency watching the aircraft saw it stop.',
+    src: 'ntsb',
+  },
+  {
+    t: at(10, 7, 0), actor: 'military',
+    who: 'Cleveland Center → NEADS',
+    from: 'ZOB', to: 'NEADSN',
+    what: 'The military is told, for the first time, that United 93 was hijacked.',
+    bearing: 'Four minutes after it crashed. This is the entry the shootdown claim cannot survive: there was no military track to vector anyone onto, at any point, ever.',
+    src: 'commission',
+    pivotal: true,
+  },
+  {
+    t: at(10, 15, 0), actor: 'military',
+    who: 'Washington Center → NEADS',
+    from: 'FAAHQ', to: 'NEADSN',
+    what: 'NEADS is told United 93 has crashed.',
+    bearing: 'The military learns of the aircraft\'s existence and its destruction eight minutes apart, both after the fact.',
+    src: 'commission',
+  },
+  {
+    t: at(10, 18, 0), actor: 'exec',
+    who: 'The Vice President, in the PEOC',
+    node: 'PEOC',
+    what: 'Authorises engagement of an inbound aircraft reported at eighty, then sixty, then thirty miles out.',
+    bearing: 'The Commission concluded these reports probably concerned United 93, relayed from FAA data by the Secret Service — but the aircraft had already crashed, and the military never held that track. Authority was granted against a picture that was out of date.',
+    src: 'commission',
+  },
+  {
+    t: at(10, 31, 0), actor: 'military',
+    who: 'NEADS',
+    from: 'PEOC', to: 'NEADSN',
+    what: 'Receives the shootdown authorisation over the Air Threat Conference Call, and does not pass it to its pilots.',
+    bearing: 'Twenty-eight minutes after United 93 was already down, and the order stops at the sector.',
+    src: 'commission',
+  },
+];
+
+/* =============================================================================
+   THE 09:36 QUESTION
+
+   "Has anyone requested that the military launch fighters?" It is a striking
+   thing for a controller to ask, and it gets read two ways.
+
+   The suspicious reading is that the question presumes fighters were already a
+   live possibility — that somebody, somewhere, was expected to have asked — and
+   that this is a trace of an intercept already under way.
+
+   The ordinary reading is that by 09:36 two aircraft had hit the World Trade
+   Center, the Pentagon was one minute from being struck, every civil departure
+   in the country had been stopped, and fighters HAD been scrambled twice
+   already — Otis at 08:46, Langley at 09:24. A controller holding a hijacked
+   airliner pointed at Washington, on a morning when fighters were already up,
+   asking whether anyone had asked for fighters, is not a man who knows
+   something. He is a man doing the obvious thing.
+
+   And on the specific question of foreknowledge it runs the wrong way for the
+   claim, for three reasons.
+
+   The question is evidence of ABSENCE. The person with the radar track is
+   asking whether anything is being done, which establishes that as of 09:36 the
+   civil side had no indication that anything was. The answer — that it must be
+   run up the chain — establishes that there was no standing mechanism either.
+
+   The timing is worse still. The best case this app can build for the claim
+   launches from Fargo at 08:46. At 09:36, fifty minutes into that flight, the
+   jet is most of the way to Pennsylvania — while the agency watching the target
+   is asking whether anyone has requested fighters at all. The claim therefore
+   needs an intercept that is fifty minutes old and that the controller holding
+   the track has never heard of.
+
+   And every real scramble that morning left a trace. Otis and Langley have
+   tail numbers, tapes, times and pilots' names. The one alleged intercept has
+   none of that.
+
+   The honest limit: a covert tasking would not route through FAA headquarters,
+   so this exchange cannot disprove one. What it does is raise the price. The
+   claim now needs a parallel command channel that left no trace, ran alongside
+   a documented chain that was visibly failing to function, and was invisible to
+   the controller holding the only track.
+   ========================================================================== */
+
+const FIGHTERS_QUESTION = {
+  id: 'fighters-question',
+  title: 'Does the 09:36 question show foreknowledge?',
+  short: 'No — and it costs the claim rather than helping it.',
+  readings: [
+    { v: 'It presumes fighters were already expected, so something was under way.',
+      who: 'The suspicious reading', src: 'claim',
+      weight: 'Reasonable on its face. It is the reason this entry is weighed rather than listed.' },
+    { v: 'Fighters had already been scrambled twice that morning — Otis at 08:46, Langley at 09:24 — and the Pentagon was one minute from being hit. The question is the obvious one.',
+      who: 'The ordinary reading', src: 'commission',
+      weight: 'Fits every other fact about the morning without requiring anything unseen.' },
+  ],
+  points: [
+    'It is evidence of absence. The man holding the radar track is asking whether anything is being done, which establishes that nothing visibly was — and the answer, that it has to go up the chain, establishes there was no standing mechanism either.',
+    'The timing runs against the claim. The best case this app can build launches from Fargo at 08:46. At 09:36 that jet is fifty minutes into its run — while the controller watching the target asks whether anyone has requested fighters at all.',
+    'Every real scramble that morning left a trace: tail numbers, tapes, times, pilots. The one alleged intercept left none.',
+  ],
+  limit: 'A covert tasking would not route through FAA headquarters, so this exchange cannot disprove one. What it does is raise the price — the claim now needs a parallel channel that left no trace, ran alongside a documented chain that was visibly failing, and was invisible to the only people holding a track.',
+  src: 'derived',
+};
+
+/* The objection this register exists to answer, stated in its strongest form
+   and then answered — which is the same method the steelman uses on the claim
+   as a whole. */
+const AWARENESS_COUNTER = {
+  objection: 'The FAA tracked United 93 for thirty-five minutes. So the federal government did know. Why could that not have been passed to a fighter?',
+  answers: [
+    {
+      point: 'The FAA cannot direct fighters.',
+      detail: 'Air traffic control separates aircraft; it does not task or vector interceptors. The route from a controller\'s scope to a pilot\'s radio runs through a military sector that has to be asked. The asking is the step that did not happen.',
+      src: 'commission',
+    },
+    {
+      point: 'The request was discussed and never made.',
+      detail: 'Cleveland Center asked at 09:36. The Command Center raised it again at 09:49. Headquarters was still discussing it at 09:53. No request for military assistance against United 93 reached NEADS before the crash — the first NEADS heard of the flight was at 10:07.',
+      src: 'commission',
+    },
+    {
+      point: 'Gibney was not on that net in any case.',
+      detail: 'The claim needs a specific pilot, on a transport tasking, to be handed a target by an organisation he was not talking to, using a track it had no channel to give him. Even granting every other assumption, there is no mechanism here to grant.',
+      src: 'derived',
+    },
+    {
+      point: 'And the thing that does cut against the official account cuts the other way.',
+      detail: 'This register is not flattering to the government. It shows a civil agency watching a hijacked airliner approach Washington for half an hour while its own headquarters failed to make a phone call. That is a real and serious failure. It is not evidence of a shootdown — it is close to the opposite, because a shootdown requires a coordination that demonstrably did not exist that morning.',
+      src: 'derived',
+    },
+  ],
+  src: 'derived',
+};
+
+/* Minutes each side held the aircraft, computed rather than asserted. */
+function awarenessGap() {
+  const first = AWARENESS.find((a) => a.actor === 'civil' && a.t >= at(9, 28, 0));
+  const mil = AWARENESS.find((a) => a.actor === 'military' && a.pivotal);
+  const impact = at(10, 3, 11);
+  return {
+    civilFrom: first.t,
+    militaryFrom: mil.t,
+    impact,
+    civilMinutes: (impact - first.t) / 60,
+    militaryLateMinutes: (mil.t - impact) / 60,
+    gapMinutes: (mil.t - first.t) / 60,
+  };
+}
+
+  return {
+    ACTORS,
+    AWARE_NODES,
+    AWARENESS,
+    FIGHTERS_QUESTION,
+    AWARENESS_COUNTER,
+    awarenessGap
+  };
+})();
+
+__m["brief"] = (function () {
+
+/* =============================================================================
+   brief.js — the bottom line, first.
+
+   Everything else in this app is a reference work. You can spend hours in the
+   discrepancy register or the phone log, and some people will. Most people will
+   not, and the old front door — a timeline scrubber and seven tabs — asked them
+   to assemble the argument themselves from parts.
+
+   So this is the argument, stated in the order an argument should be stated:
+   the conclusion, then the reasoning, then the evidence, then the objections.
+   Each section is a headline you can read in five seconds and a body you can
+   open if you want the detail. Skim the headlines and you have the whole case
+   in about ninety seconds. Open everything and you are reading for an hour.
+
+   Counter-arguments are inside the sections rather than quarantined in a
+   rebuttal page at the end. A counter-argument that only appears after the
+   reader has been convinced is decoration; one that appears inside the claim it
+   undercuts is an argument.
+   ========================================================================== */
+
+const BOTTOM_LINE = {
+  kicker: 'Bottom line',
+  headline: 'The flying works. Nothing else does.',
+  paras: [
+    'There is a story that a US fighter pilot shot down United 93 over Pennsylvania on 11 September 2001. This app builds the strongest possible version of that story — granting it every favourable assumption at once — and then tests it.',
+    'The result is worth stating plainly, because most people arguing against this story get it wrong: <strong>the aircraft could have made the trip.</strong> Speed and fuel do not sink it. Anyone who tells you an F-16 was too slow or too short-legged has not checked.',
+    'What sinks it is everything that is not flying. The pilot would have to know about a hijacking forty-two minutes before it happened. Nobody was tracking the airliner to guide him — the military first heard the words "United 93" four minutes <em>after</em> it was already in the ground. Permission to shoot did not exist for another half hour. And the one trip that proves he had the fuel also proves he was somewhere else.',
+  ],
+  verdictNote: 'That is a more useful answer than "impossible". A claim beaten on arithmetic invites better arithmetic. A claim beaten on knowledge, permission and an eyewitness has nowhere left to go.',
+  src: 'derived',
+};
+
+const WHY_CRITIC = {
+  kicker: 'Why this app is called CRITIC',
+  headline: 'It is named after four messages nobody is allowed to read.',
+  paras: [
+    'A <strong>CRITIC</strong> is the most urgent message the US intelligence system has — a Critical Intelligence Communication, meant to be in front of the President within ten minutes of being sent. It is not routine reporting. Sending one is a deliberate act asserting that the information cannot wait.',
+    'Four went out on the morning of 11 September. The first was originated by NORAD at 09:49 and became <strong>DIRNSA CRITIC 1-2001</strong>. Their contents are still withheld.',
+    'They matter here because every other source describes what <em>happened</em> — recorders, radar, control tapes. The CRITIC describes what the national command structure <em>believed was happening</em>, timestamped to the minute. And the sequence lands on both sides of the moment this story needs: two messages before the alleged shot, two after.',
+  ],
+  hook: 'This app is a companion to a public-records request for their text. If the records are released they land here, against the minute of the morning they were sent.',
+  src: 'foia',
+};
+
+/* The walkthrough. Each section is a headline plus a body; `counter` is the
+   strongest objection to that section, carried inside it. */
+const WALKTHROUGH = [
+  {
+    id: 'w-claim',
+    kicker: 'The claim',
+    headline: 'What the story actually says',
+    body: [
+      'Rick Gibney was a real Air National Guard pilot in Fargo, North Dakota. On 11 September he really did fly a state official, Ed Jacoby Jr., from Montana back to Albany, New York. Jacoby has described the flight. That part is not in dispute.',
+      'The accusation, made in 2004 by a retired Army colonel on a radio show, is that in between he was scrambled from Fargo, intercepted United 93 over Somerset County, and shot it down with two Sidewinder missiles.',
+    ],
+    counter: {
+      point: 'Is it worth testing at all?',
+      text: 'It is a single unsourced assertion by one man, three years after the fact, with no document behind it. The reason to test it anyway is that the checkable parts — a real pilot, a real unit, a real flight that day — are what make it stick. An allegation that gets its details right deserves to be measured rather than dismissed.',
+    },
+  },
+
+  {
+    id: 'w-steelman',
+    kicker: 'The method',
+    headline: 'Build the best version, then break it',
+    body: [
+      'Arguing against the weakest form of a claim teaches you nothing: you never find out which of your objections were load-bearing and which were decoration.',
+      'So the app grants the story everything it could reasonably want at once — the aircraft, the weapons, the earliest possible takeoff, a perfect route, no air-traffic delays, no weather — and draws the result on the map as a white dashed track called STEELMAN. <strong>No such aircraft existed.</strong> It is drawn to show what the story would require, not to suggest any of it happened.',
+    ],
+    counter: {
+      point: 'Does granting all that not just help the conspiracy theory?',
+      text: 'It helps the parts that are true, which is the point. Granting the fuel and the speed and then watching the claim fail anyway is a far stronger result than refusing to grant them. It also means the failures that remain cannot be waved away as hostile assumptions.',
+    },
+  },
+
+  {
+    id: 'w-fuel',
+    kicker: 'What survives',
+    headline: 'He had the fuel, and the jet could make the trip',
+    body: [
+      'This is not a concession — it is a finding. The undisputed Montana-to-Albany leg is 1,843 miles in one hop, which no F-16 flies without external fuel tanks bolted on. So the tanks are established by the trip he actually made.',
+      'With those tanks, Fargo to Pennsylvania is about 990 miles, roughly 40% of the jet\'s one-way range, needing about 830 mph. That is inside what a tanked F-16 is permitted to fly. <strong>The kinematics work.</strong>',
+    ],
+    counter: {
+      point: 'So the story is possible?',
+      text: 'The flying is possible. That is all this establishes, and the app draws the rings to prove it rather than hiding them. Proving the tanks also costs the story something: Mach 2.0 is a clean-configuration number, and a jet carrying tanks cannot reach it. Establishing the fuel caps the speed.',
+    },
+  },
+
+  {
+    id: 'w-knowledge',
+    kicker: 'Problem 1',
+    headline: 'He would have to know the future',
+    body: [
+      'To be over Somerset County at 09:58, the earliest usable takeoff is 08:46 — the moment the first aircraft hit the World Trade Center, and the first instant anyone had a reason to act.',
+      'At 08:46, United 93 had been airborne four minutes and was climbing normally out of Newark. It would not be hijacked for another <strong>42 minutes</strong>. So launching towards it means already knowing that this particular ordinary flight was going to be seized at 09:28, and where it would be an hour and a quarter later.',
+    ],
+    counter: {
+      point: 'What if he launched later and flew faster?',
+      text: 'Then the speed required climbs past what a tanked F-16 can fly. The app lets you move the departure dial and watch the two constraints close on each other. Every achievable speed still requires leaving before the hijacking.',
+    },
+  },
+
+  {
+    id: 'w-tracking',
+    kicker: 'Problem 2',
+    headline: 'Nobody could have guided him to it',
+    body: [
+      'A pilot cannot find an airliner crossing Pennsylvania at 400 knots on his own. He has to be vectored, and the organisation that vectors fighters is the air defence sector.',
+      'That sector heard the words "United 93" for the first time at <strong>10:07</strong> — four minutes after the aircraft was already in the ground.',
+    ],
+    counter: {
+      point: 'But the FAA knew for thirty-five minutes. Somebody in the government could have told him.',
+      text: 'This is the strongest objection in the whole set, and it is right about the facts. Cleveland Center heard the hijacking live at 09:28 and never lost the aircraft. What it gets wrong is the mechanism: air traffic control does not task fighters, the request to the military was discussed at 09:36, again at 09:49, still being discussed at 09:53, and never made. The app now documents that whole chain, minute by minute, in its own section — including how badly it reflects on the FAA.',
+      more: 'awareness',
+    },
+  },
+
+  {
+    id: 'w-order',
+    kicker: 'Problem 3',
+    headline: 'Nobody had permission to shoot',
+    body: [
+      'No pilot destroys an airliner with forty people aboard on his own judgement. Authorisation to engage civilian aircraft was conveyed at about 10:10 and reached the air defence sector at 10:31 — which then never passed it to its own pilots.',
+      'The alleged shot is at 09:58. That is <strong>33 minutes before</strong> the permission existed anywhere in the chain of command.',
+    ],
+    counter: {
+      point: 'What if he acted without orders?',
+      text: 'Then the claim changes from "the government shot down Flight 93" to "one pilot committed an unauthorised act of mass killing and every person in his chain covered it for twenty-five years." That is a much larger allegation, and nothing in the record supports it.',
+    },
+  },
+
+  {
+    id: 'w-jacoby',
+    kicker: 'Problem 4',
+    headline: 'The easy version erases the only witness',
+    body: [
+      'The route that makes the flying comfortable runs Fargo → intercept → Albany. About 1,320 miles, inside one tank of fuel — and it never goes to Montana.',
+      'But Montana is where Ed Jacoby was standing. He was collected, he reached Albany, and he has said so. He is the one first-hand witness to the entire day.',
+      'Put Montana back and the run to the intercept grows to about 2,330 miles in the same 72 minutes — roughly <strong>Mach 2.9</strong>, nearly twice what that jet is permitted to fly, and that grants zero seconds on the ground to land and pick someone up.',
+    ],
+    counter: {
+      point: 'Could the Montana leg have happened after the shootdown?',
+      text: 'Then he flies east to Pennsylvania, turns around and flies 1,600 miles back west to collect a passenger, then 1,800 miles east again to deliver him. A 4,500-mile day, with a westbound detour immediately after the alleged shot. The app draws that version too.',
+    },
+  },
+
+  {
+    id: 'w-shot',
+    kicker: 'Problem 5',
+    headline: 'And the shot itself needs a twenty-mile coincidence',
+    body: [
+      'A Sidewinder is a short-range heat-seeker. It reaches about 11 miles, and will not work closer than about half a mile, so the area it can actually hit is a thin ring roughly twenty miles across.',
+      'Two aircraft at those altitudes can <em>see</em> each other about 360 miles apart. Seeing was never the hard part. Being inside a twenty-mile circle around one specific airliner at one specific instant is — and nothing in the record puts him there, or anywhere else.',
+    ],
+    counter: {
+      point: 'The record is incomplete though.',
+      text: 'It is, and the app keeps a register of every gap it knows about, including its own. But "no record places him there" is not the same as "the record is silent" — his unit, his passenger and his own account all place him over Montana. The absence has to be argued against positive evidence, not into a vacuum.',
+    },
+  },
+];
+
+/* Where to go next, by how much time you have. The app is both a ninety-second
+   read and an afternoon, and it should say so rather than leaving the reader to
+   discover which by accident. */
+const PATHS = [
+  { min: '2 min',  label: 'Play the guided tour',   act: 'tour',
+    note: 'Fourteen steps. The map moves with the argument.' },
+  { min: '5 min',  label: 'Who knew, and when',      act: 'tab:aware',
+    note: 'The awareness chain, minute by minute, and what it does and does not prove.' },
+  { min: '10 min', label: 'The CRITIC messages',     act: 'tab:critic',
+    note: 'Four withheld messages, and where the best case for the claim would have been as each one went out.' },
+  { min: '20 min', label: 'The full claim analysis', act: 'tab:claim',
+    note: 'Every concession, the speed dials, the engagement ring, the fuel rings.' },
+  { min: 'hours',  label: 'The discrepancy register', act: 'tab:conflicts',
+    note: 'Every contradiction the app knows about, including the ones in the app itself.' },
+];
+
+  return {
+    BOTTOM_LINE,
+    WHY_CRITIC,
+    WALKTHROUGH,
+    PATHS
+  };
+})();
+
 __m["tour"] = (function () {
   const { F16 } = __m["data"];
   const { AIM9 } = __m["reachability"];
@@ -57600,16 +58365,26 @@ const TOUR_STEPS = [
     body: (c, i) => `
       Say we grant the impossible knowledge anyway. He still has to be steered onto an airliner
       crossing Pennsylvania at 400-odd miles an hour, and a pilot cannot find that alone.
-      <p>The unit that would have done the steering ${i('neads')} <strong>did not know United 93
-      existed until 10:07</strong> — which is the time now on the clock, and four minutes
-      <em>after</em> the aircraft was already on the ground.</p>
-      <p>There was nothing to point him at. And Gibney was flying a passenger that day, not
-      sitting on the air-defence radio net.</p>`,
+      <p><strong>Half the government could see it the whole time.</strong> Cleveland Center heard
+      the hijacking live at 09:28 and never lost the aircraft — not even when the transponder went
+      off. By 09:46 the FAA had worked out it was twenty-nine minutes from Washington.</p>
+      <p><strong>The half that could send a fighter was never told.</strong> The air defence
+      sector ${i('neads')} heard the words "United 93" for the first time at
+      <strong>10:07</strong> — the time on the clock now, and four minutes <em>after</em> the
+      aircraft was already in the ground.</p>
+      <p>In between sits a twenty-five minute conversation, on recorded lines, in which the FAA
+      discusses asking the military for help and never does it. At 09:36: has anyone requested
+      fighters? At 09:49: <em>"Do we want to think about, uh, scrambling aircraft?" — "Oh, God, I
+      don't know."</em> At 09:53: still discussing.</p>
+      <p>So the objection that the government knew is <em>correct</em>, and it does not help the
+      story. Air traffic control cannot task or vector fighters. The organisation that can had no
+      track, no request, and nothing to point anyone at — and Gibney was flying a passenger, not
+      sitting on the air defence net.</p>`,
     t: at(10, 7, 0),
-    tab: 'military',
-    view: 'place:SHKV',
-    viewDist: 90,
-    layers: { hypo: true },
+    tab: 'aware',
+    view: 'reset',
+    layers: { hypo: true, aware: true },
+    highlight: '#aware-body',
   },
 
   {
@@ -57800,6 +58575,7 @@ __m["map3d"] = (function () {
   const { BANDS, FERRY_RING, HALF_FERRY_RING, ringPoints, reachMi, MAX_DRAW_MI, AIM9, bandRadii, evidenceCeilingMi, DEPARTURE_BOUNDS } = __m["reachability"];
   const { HYPO, LOS_HORIZON, horizonSmi } = __m["steelman"];
   const { CALLS } = __m["calls"];
+  const { AWARENESS, AWARE_NODES, ACTORS } = __m["awareness"];
 /* =============================================================================
    map3d.js — the 3D map.
 
@@ -57861,6 +58637,7 @@ class Map3D {
     this._buildGibney();
     this._buildDebris();
     this._buildCritic();
+    this._buildAwareness();
     this._buildReach();
     this._buildCalls();
     this._buildTrail();
@@ -58227,6 +59004,146 @@ class Map3D {
           pos: l.userData.apex,
           text: `${c.mapLabel || 'CRITIC'} · ${when} · ${lines.length} addressees, withheld`,
           fresh,
+        });
+      }
+    }
+    return out;
+  }
+
+
+  /* =========================================================================
+     The awareness network
+
+     Same treatment as the CRITIC chain, for the same reason: knowledge moving
+     between places is a thing with a geography, and the geography is the
+     argument here. Civil nodes are green and light as each one is told. The
+     military node is red and stays unlit until 10:07 — four minutes after the
+     aircraft it is being told about has already hit the ground.
+
+     A node that has NOT been told is drawn as a hollow ring rather than
+     omitted. An absence you cannot see is not evidence of anything. */
+  _buildAwareness() {
+    this.awareGroup = new THREE.Group();
+    this.awareGroup.visible = false;
+    this.scene.add(this.awareGroup);
+
+    this.awareNodes = new Map();
+    for (const [key, n] of Object.entries(AWARE_NODES)) {
+      const [x, z] = projectLL(n);
+      const col = new THREE.Color(ACTORS[n.actor].color).getHex();
+
+      // Unlit: a hollow ring. Lit: a filled dot inside it.
+      const ring = new THREE.Mesh(
+        new THREE.RingGeometry(0.5, 0.72, 20),
+        new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: 0.42,
+          side: THREE.DoubleSide }),
+      );
+      ring.rotation.x = -Math.PI / 2;
+      ring.position.set(x, STATE_DEPTH + 0.32, z);
+      this.awareGroup.add(ring);
+
+      const dot = new THREE.Mesh(
+        new THREE.SphereGeometry(0.46, 12, 10),
+        new THREE.MeshBasicMaterial({ color: col }),
+      );
+      dot.position.set(x, STATE_DEPTH + 0.38, z);
+      dot.visible = false;
+      dot.userData = { kind: 'awareNode', key, name: n.name, note: n.note, src: 'commission' };
+      this.awareGroup.add(dot);
+
+      this.awareNodes.set(key, { n, ring, dot, pos: new THREE.Vector3(x, STATE_DEPTH + 0.38, z) });
+    }
+
+    /* Every one of these handoffs happens inside a few hundred miles of the
+       north-east, so drawn at one height their apexes land on top of each
+       other and the declutter keeps a single label. Each arc gets its own
+       height instead: they nest, and because the camera is tilted the apexes
+       separate vertically on screen, which is what the labels need. */
+    this.awareArcs = [];
+    let arcN = 0;
+    for (const a of AWARENESS) {
+      if (!a.from || !a.to) continue;
+      const from = AWARE_NODES[a.from], to = AWARE_NODES[a.to];
+      if (!from || !to) continue;
+
+      const lift = 8 + arcN * 4.5;
+      arcN += 1;
+      const pts = gcPoints(from, to, 40).map((p, i, arr) => {
+        const [x, z] = projectLL(p);
+        const f = i / (arr.length - 1);
+        return new THREE.Vector3(x, STATE_DEPTH + 0.45 + Math.sin(f * Math.PI) * lift, z);
+      });
+      const line = new THREE.Line(
+        new THREE.BufferGeometry().setFromPoints(pts),
+        new THREE.LineBasicMaterial({
+          color: new THREE.Color(ACTORS[a.actor].color).getHex(),
+          transparent: true, opacity: 0.9,
+        }),
+      );
+      line.visible = false;
+      this.awareGroup.add(line);
+      this.awareArcs.push({ a, line, apex: pts[Math.floor(pts.length / 2)].clone() });
+    }
+  }
+
+  _updateAwareness(t) {
+    if (!this.awareGroup.visible) return;
+
+    // A node is lit once anything has told it, or once it has said something.
+    const lit = new Set();
+    for (const a of AWARENESS) {
+      if (t < a.t) continue;
+      if (a.node) lit.add(a.node);
+      if (a.from) { lit.add(a.from); lit.add(a.to); }
+    }
+    for (const [key, o] of this.awareNodes) {
+      o.dot.visible = lit.has(key);
+      o.ring.material.opacity = lit.has(key) ? 0.75 : 0.3;
+    }
+    for (const arc of this.awareArcs) arc.line.visible = t >= arc.a.t;
+  }
+
+  setAwarenessVisible(v) {
+    this.awareGroup.visible = v;
+    this._updateAwareness(this._t ?? 0);
+  }
+
+  /* Labels for the arcs that have fired, plus a standing label on the military
+     node saying how long it has been in the dark. That counter is the whole
+     point of the layer, so it is not left to be inferred from an unlit ring. */
+  awarenessLabels() {
+    if (!this.awareGroup.visible) return [];
+    const t = this._t ?? 0;
+    const out = [];
+
+    for (const { a, line, apex } of this.awareArcs) {
+      if (!line.visible) continue;
+      out.push({
+        key: `aw:${a.t}:${a.from}`,
+        pos: apex,
+        text: `${hms(a.t).slice(0, 5)} · ${AWARE_NODES[a.from].short} → ${AWARE_NODES[a.to].short}`,
+        actor: a.actor,
+        fresh: (t - a.t) < 90,
+      });
+    }
+
+    const mil = this.awareNodes.get('NEADSN');
+    if (mil) {
+      const told = AWARENESS.find((x) => x.pivotal);
+      if (t < told.t) {
+        const mins = Math.floor((told.t - t) / 60);
+        out.push({
+          key: 'aw:dark',
+          pos: mil.pos,
+          text: `NEADS · NOT TOLD · ${mins} min to go`,
+          actor: 'military', dark: true,
+        });
+      } else {
+        out.push({
+          key: 'aw:dark',
+          pos: mil.pos,
+          text: 'NEADS · told at 10:07 · 4 min after the crash',
+          actor: 'military', fresh: (t - told.t) < 90,
         });
       }
     }
@@ -58728,6 +59645,7 @@ class Map3D {
       ...this.placeGroup.children,
       ...(this.debrisGroup.visible ? this.debrisGroup.children : []),
       ...(this.criticGroup.visible ? this.criticGroup.children : []),
+      ...(this.awareGroup.visible ? this.awareGroup.children : []),
       ...(this.callGroup.visible ? this.callGroup.children : []),
       ...(this.trailGroup.visible ? this.trailGroup.children : []),
       ...[...this.flightObjs.values()].filter((o) => o.marker.visible).map((o) => o.marker),
@@ -58833,6 +59751,7 @@ class Map3D {
   setTime(t) {
     this._t = t;
     this._updateCritic(t);
+    this._updateAwareness(t);
     for (const o of this.flightObjs.values()) {
       const { f, dense, flown, shadow, marker, tether, impact } = o;
       const t0 = f.path[0][0], t1 = f.path[f.path.length - 1][0];
@@ -59120,10 +60039,14 @@ __m["main"] = (function () {
   const { CALLS, CALL_TOTALS, FARADAY, WHY_THEY_MATTER } = __m["calls"];
   const { GLOSSARY, glossaryList } = __m["glossary"];
   const { REFS, refsFor } = __m["links"];
+  const { AWARENESS, ACTORS, AWARENESS_COUNTER, FIGHTERS_QUESTION, awarenessGap } = __m["awareness"];
+  const { BOTTOM_LINE, WHY_CRITIC, WALKTHROUGH, PATHS } = __m["brief"];
   const { TOUR_STEPS, TONES } = __m["tour"];
 /* =============================================================================
    main.js — app wiring: playback clock, scrubber, panels, labels.
    ========================================================================== */
+
+
 
 
 
@@ -59161,7 +60084,7 @@ const state = {
     PANTA: true, QUIT: true, GOFER: true, BULLY: true,
     debris: false, routeDoc: false, routeClaim: false, places: true,
     critic: true,
-    envelope: true, wez: true, hypo: true, calls: true,
+    envelope: true, wez: true, hypo: true, calls: true, aware: true,
     trail: true,
   },
 };
@@ -59198,6 +60121,8 @@ async function loadTopology() {
     buildTimelineUI();
     buildFlightStrip();
     renderEvents();
+    renderBriefTab();
+    renderAwareTab();
     renderClaimTab();
     renderDebrisTab();
     renderCriticTab();
@@ -59209,6 +60134,7 @@ async function loadTopology() {
     setAltScale(state.altScale);
     setTolerance(state.toleranceMin);
     map.setCriticVisible(state.layers.critic);
+    map.setAwarenessVisible(state.layers.aware);
     map.setReachVisible(state.layers.envelope || state.layers.wez);
     map.setHypoVisible(state.layers.hypo);
     map.setCallsVisible(state.layers.calls);
@@ -60642,6 +61568,11 @@ function renderLayersTab() {
         <span>Phone calls from United 93</span><span class="meta">37 calls</span>
       </label>
       <label class="toggle">
+        <input type="checkbox" data-layer="aware" ${state.layers.aware ? 'checked' : ''}>
+        <span class="swatch" style="background:#35d6a4"></span>
+        <span>Who knew, and when</span><span class="meta">FAA &rarr; military</span>
+      </label>
+      <label class="toggle">
         <input type="checkbox" data-layer="hypo" ${state.layers.hypo ? 'checked' : ''}>
         <span class="swatch" style="background:#fff"></span>
         <span>${esc(HYPO.callsign)} — best-case track</span><span class="meta">constructed</span>
@@ -60708,6 +61639,7 @@ function renderLayersTab() {
     }
     else if (k === 'debris') map.setDebrisVisible(cb.checked);
     else if (k === 'critic') map.setCriticVisible(cb.checked);
+    else if (k === 'aware') map.setAwarenessVisible(cb.checked);
     else if (k === 'hypo') { map.setHypoVisible(cb.checked); if (cb.checked) updateHypo(); }
     else if (k === 'calls') { map.setCallsVisible(cb.checked); map.setCalls(ua93StateAt, state.t); }
     else if (k === 'trail') { map.setTrailVisible(cb.checked); map.setTrail(state.t); }
@@ -60781,6 +61713,16 @@ function drawLabels() {
       pos: map.hypoMarker.position,
       text: `${HYPO.callsign} — CONSTRUCTED · ${Math.round((sm?.altFt ?? 0) / 100) * 100} ft`,
       cls: 'flight hypo', color: '#ffffff', rank: 1.2,
+    });
+  }
+
+  /* The awareness handoffs, and a standing counter on the military node. */
+  for (const al of map.awarenessLabels()) {
+    wanted.set(al.key, {
+      pos: al.pos,
+      text: al.text,
+      cls: `aware-line aw-${al.actor}${al.fresh ? ' fresh' : ''}${al.dark ? ' dark' : ''}`,
+      rank: al.dark ? 0.15 : 0.35,
     });
   }
 
@@ -60904,6 +61846,8 @@ function handlePick(ud) {
     showTipAt(`${ud.who} → ${ud.to}`,
       `${ud.callType === 'cellular' ? 'CELLULAR' : 'Airfone'} · ${hms(ud.t).slice(0, 5)}\n${ud.note}`,
       'commission');
+  } else if (ud.kind === 'awareNode') {
+    showTipAt(ud.name, ud.note, ud.src);
   } else if (ud.kind === 'criticNode') {
     showTipAt(ud.name, ud.note, ud.src);
   } else if (ud.kind === 'place') {
@@ -60988,7 +61932,7 @@ function tourEnter() {
     playing: state.playing,
     follow: state.follow,
     layers: { ...state.layers },
-    tab: ($('#tabs button.on') || {}).dataset?.tab || 'timeline',
+    tab: ($('#tabs button.on') || {}).dataset?.tab || 'brief',
   };
 
   tour.on = true;
@@ -61038,6 +61982,7 @@ function applyAllLayers() {
   map.setDebrisVisible(state.layers.debris);
   map.placeGroup.visible = state.layers.places;
   map.setCriticVisible(state.layers.critic);
+  map.setAwarenessVisible(state.layers.aware);
   map.setRouteVisible('documented', state.layers.routeDoc);
   map.setRouteVisible('claim', state.layers.routeClaim);
   map.setReachVisible(state.layers.envelope || state.layers.wez);
@@ -61051,12 +61996,7 @@ function applyAllLayers() {
   map.setTime(state.t);
 }
 
-function tourTab(name) {
-  const btn = $(`#tabs button[data-tab="${name}"]`);
-  if (!btn) return;
-  $$('#tabs button').forEach((x) => x.classList.toggle('on', x === btn));
-  $$('.tab-body').forEach((sec) => sec.classList.toggle('hidden', sec.dataset.body !== name));
-}
+const tourTab = (name) => gotoTab(name);
 
 /* `view` is resolved here rather than in tour.js so the step data stays free
    of anything that needs the map to exist. */
@@ -61390,6 +62330,189 @@ function refRow(key, extraClass = '') {
        title="${esc(r.url)}">${esc(r.label)}</a>`).join('')}</div>`;
 }
 
+/* =============================================================================
+   Start here — the bottom line, then the walkthrough
+
+   The old front door was a timeline scrubber and seven tabs, which asked the
+   reader to assemble the argument from parts. This states it in the order an
+   argument should be stated: conclusion, reasoning, evidence, objections.
+
+   Every section is a headline you can read in five seconds over a body you can
+   open if you want it. Skim the headlines and the whole case takes about ninety
+   seconds; open everything and it is an hour. Counter-arguments sit inside the
+   sections they undercut rather than in a rebuttal page at the end, because one
+   that only appears after the reader is convinced is decoration.
+   ========================================================================== */
+
+function renderBriefTab() {
+  const bl = BOTTOM_LINE, wc = WHY_CRITIC;
+
+  const section = (w) => `
+    <details class="wt" id="${w.id}">
+      <summary>
+        <span class="wt-kicker">${esc(w.kicker)}</span>
+        <span class="wt-head">${esc(w.headline)}</span>
+        <span class="wt-more" aria-hidden="true"></span>
+      </summary>
+      <div class="wt-body">
+        ${w.body.map((p) => `<p>${p}</p>`).join('')}
+        ${w.counter ? `
+          <div class="wt-counter">
+            <div class="wt-counter-q">${esc(w.counter.point)}</div>
+            <p>${w.counter.text}</p>
+            ${w.counter.more === 'awareness'
+              ? `<button class="chip" data-goto="aware">See the whole chain &rarr;</button>` : ''}
+          </div>` : ''}
+      </div>
+    </details>`;
+
+  $('#brief-body').innerHTML = `
+    <div class="card bluf">
+      <div class="bluf-kicker">${esc(bl.kicker)}</div>
+      <h2>${esc(bl.headline)}</h2>
+      ${bl.paras.map((p) => `<p>${p}</p>`).join('')}
+      <p class="bluf-note">${esc(bl.verdictNote)} ${srcTag(bl.src)}</p>
+      <div class="chip-row">
+        <button class="chip chip-go" data-goto="tour">&#9654; Walk me through it</button>
+      </div>
+    </div>
+
+    <div class="card critic-steel-card">
+      <div class="bluf-kicker">${esc(wc.kicker)}</div>
+      <h3>${esc(wc.headline)}</h3>
+      ${wc.paras.map((p) => `<p>${p}</p>`).join('')}
+      <p class="bluf-note">${esc(wc.hook)} ${srcTag(wc.src)}</p>
+      <div class="chip-row">
+        <button class="chip" data-goto="critic">The four messages &rarr;</button>
+      </div>
+    </div>
+
+    <h3 class="sec-head">The walkthrough</h3>
+    <p class="sec-note">${WALKTHROUGH.length} steps. Headlines alone are the short version;
+    open any one for the detail and the strongest objection to it.</p>
+    ${WALKTHROUGH.map(section).join('')}
+
+    <h3 class="sec-head">However long you have</h3>
+    <div class="paths">
+      ${PATHS.map((p) => `
+        <button class="path" data-goto="${esc(p.act.replace('tab:', ''))}">
+          <span class="path-min">${esc(p.min)}</span>
+          <span class="path-label">${esc(p.label)}</span>
+          <span class="path-note">${esc(p.note)}</span>
+        </button>`).join('')}
+    </div>`;
+
+  $$('#brief-body [data-goto]').forEach((b) => b.addEventListener('click', () => {
+    const to = b.dataset.goto;
+    if (to === 'tour') { tourEnter(); return; }
+    gotoTab(to);
+  }));
+}
+
+/* =============================================================================
+   Who knew — the awareness chain
+
+   Built because the app used to say "NEADS did not know United 93 existed until
+   10:07" and stop there, which invites the obvious objection that the FAA knew
+   for thirty-five minutes. It did. That is documented here in full, including
+   how badly it reflects on the FAA, because an argument that hides its best
+   counter-evidence is not an argument.
+   ========================================================================== */
+
+function renderAwareTab() {
+  const g = awarenessGap();
+
+  const row = (a) => {
+    const act = ACTORS[a.actor];
+    return `
+      <div class="aw${a.pivotal ? ' aw-pivot' : ''}" style="--aw:${act.color}">
+        <div class="aw-t">${hms(a.t).slice(0, 5)}</div>
+        <div class="aw-main">
+          <div class="aw-actor">${esc(act.label)}</div>
+          <div class="aw-who">${esc(a.who)}</div>
+          <p class="aw-what">${esc(a.what)}</p>
+          <p class="aw-bearing"><strong>What it establishes:</strong> ${esc(a.bearing)}
+            ${srcTag(a.src)}</p>
+          ${a.weigh === 'fighters-question' ? `
+            <button class="chip" data-weigh="fighters-question">
+              Does this show foreknowledge? &rarr;</button>` : ''}
+        </div>
+      </div>`;
+  };
+
+  const fq = FIGHTERS_QUESTION;
+
+  $('#aware-body').innerHTML = `
+    <div class="card bluf">
+      <div class="bluf-kicker">The short version</div>
+      <h2>The crash was not a surprise to the government. It was a surprise to the military.</h2>
+      <p>The civil side had United 93 continuously for
+        <strong>${Math.round(g.civilMinutes)} minutes</strong> before it went down. They heard the
+        takeover live, kept it on radar after the transponder went off, and worked out how many
+        minutes it was from Washington.</p>
+      <p>The air defence sector heard the words "United 93" for the first time
+        <strong>${Math.round(g.militaryLateMinutes)} minutes after it had already crashed</strong> —
+        a gap of ${Math.round(g.gapMinutes)} minutes between the two halves of the same government.</p>
+      <p class="bluf-note">That gap is the most important fact about Flight 93, and it is the
+        thing the shootdown story needs not to exist. ${srcTag('derived')}</p>
+    </div>
+
+    <div class="card">
+      <h3>Who is who</h3>
+      ${Object.values(ACTORS).map((a) => `
+        <div class="aw-key"><i style="background:${a.color}"></i>
+          <b>${esc(a.label)}</b> — ${esc(a.note)}</div>`).join('')}
+    </div>
+
+    <h3 class="sec-head">The chain, minute by minute</h3>
+    <div class="aw-list">${AWARENESS.map(row).join('')}</div>
+
+    <div class="card fk-card" id="fighters-question">
+      <h3>${esc(fq.title)}</h3>
+      <p><strong>${esc(fq.short)}</strong></p>
+      ${fq.readings.map((r) => `
+        <div class="cmd-row">
+          <div class="t" style="color:var(--ink-faint)">${esc(r.who)}</div>
+          <div class="x">${esc(r.v)} <span style="color:var(--ink-faint)">${esc(r.weight)}</span>
+            ${srcTag(r.src)}</div>
+        </div>`).join('')}
+      <ul class="plain" style="margin-top:10px">
+        ${fq.points.map((p) => `<li>${esc(p)}</li>`).join('')}
+      </ul>
+      <p class="fk-caution"><strong>The limit:</strong> ${esc(fq.limit)} ${srcTag(fq.src)}</p>
+    </div>
+
+    <div class="card">
+      <h3>The objection this answers</h3>
+      <p class="aw-obj">${esc(AWARENESS_COUNTER.objection)}</p>
+      ${AWARENESS_COUNTER.answers.map((a) => `
+        <div class="finding">
+          <h4>${esc(a.point)}</h4>
+          <p>${esc(a.detail)} ${srcTag(a.src)}</p>
+        </div>`).join('')}
+    </div>`;
+
+  $$('#aware-body [data-weigh]').forEach((b) => b.addEventListener('click', () => {
+    const el = $('#fighters-question');
+    if (el) {
+      el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      el.classList.remove('tour-lit'); void el.offsetWidth; el.classList.add('tour-lit');
+    }
+  }));
+}
+
+/* One way in and out of every tab, so the brief's chips and the tab bar cannot
+   get out of step. */
+function gotoTab(name) {
+  const btn = $(`#tabs button[data-tab="${name}"]`);
+  if (!btn) return;
+  $$('#tabs button').forEach((x) => x.classList.toggle('on', x === btn));
+  $$('.tab-body').forEach((sec) => sec.classList.toggle('hidden', sec.dataset.body !== name));
+  const body = $(`.tab-body[data-body="${name}"]`);
+  if (body) body.scrollTop = 0;
+  document.body.classList.remove('map-open');
+}
+
 function bindChrome() {
   $('#btn-play').addEventListener('click', () => {
     if (state.t >= T1) setTime(T0);
@@ -61419,11 +62542,15 @@ function bindChrome() {
     state.rate = +b.dataset.rate;
   }));
 
-  $$('#tabs button').forEach((b) => b.addEventListener('click', () => {
-    $$('#tabs button').forEach((x) => x.classList.remove('on'));
-    b.classList.add('on');
-    $$('.tab-body').forEach((s) => s.classList.toggle('hidden', s.dataset.body !== b.dataset.tab));
-  }));
+  $$('#tabs button').forEach((b) => b.addEventListener('click', () => gotoTab(b.dataset.tab)));
+
+  // Mobile: swap between the map and the reading, since both cannot be tall.
+  const mapBtn = $('#btn-map');
+  if (mapBtn) mapBtn.addEventListener('click', () => {
+    document.body.classList.toggle('map-open');
+    mapBtn.textContent = document.body.classList.contains('map-open') ? 'Read' : 'Map';
+    setTimeout(() => map.resize(), 260);
+  });
 
   $('#aside-toggle').addEventListener('click', () => {
     document.body.classList.toggle('panel-hidden');

@@ -28,6 +28,8 @@ import {
 import { CALLS, CALL_TOTALS, FARADAY, WHY_THEY_MATTER } from './calls.js';
 import { GLOSSARY, glossaryList } from './glossary.js';
 import { REFS, refsFor } from './links.js';
+import { AWARENESS, ACTORS, AWARENESS_COUNTER, FIGHTERS_QUESTION, awarenessGap } from './awareness.js';
+import { BOTTOM_LINE, WHY_CRITIC, WALKTHROUGH, PATHS } from './brief.js';
 import { wezWindow, LOS_HORIZON, losVsWez, mutualHorizonSmi } from './steelman.js';
 import { TOUR_STEPS, TONES } from './tour.js';
 
@@ -54,7 +56,7 @@ const state = {
     PANTA: true, QUIT: true, GOFER: true, BULLY: true,
     debris: false, routeDoc: false, routeClaim: false, places: true,
     critic: true,
-    envelope: true, wez: true, hypo: true, calls: true,
+    envelope: true, wez: true, hypo: true, calls: true, aware: true,
     trail: true,
   },
 };
@@ -91,6 +93,8 @@ async function loadTopology() {
     buildTimelineUI();
     buildFlightStrip();
     renderEvents();
+    renderBriefTab();
+    renderAwareTab();
     renderClaimTab();
     renderDebrisTab();
     renderCriticTab();
@@ -102,6 +106,7 @@ async function loadTopology() {
     setAltScale(state.altScale);
     setTolerance(state.toleranceMin);
     map.setCriticVisible(state.layers.critic);
+    map.setAwarenessVisible(state.layers.aware);
     map.setReachVisible(state.layers.envelope || state.layers.wez);
     map.setHypoVisible(state.layers.hypo);
     map.setCallsVisible(state.layers.calls);
@@ -1535,6 +1540,11 @@ function renderLayersTab() {
         <span>Phone calls from United 93</span><span class="meta">37 calls</span>
       </label>
       <label class="toggle">
+        <input type="checkbox" data-layer="aware" ${state.layers.aware ? 'checked' : ''}>
+        <span class="swatch" style="background:#35d6a4"></span>
+        <span>Who knew, and when</span><span class="meta">FAA &rarr; military</span>
+      </label>
+      <label class="toggle">
         <input type="checkbox" data-layer="hypo" ${state.layers.hypo ? 'checked' : ''}>
         <span class="swatch" style="background:#fff"></span>
         <span>${esc(HYPO.callsign)} — best-case track</span><span class="meta">constructed</span>
@@ -1601,6 +1611,7 @@ function renderLayersTab() {
     }
     else if (k === 'debris') map.setDebrisVisible(cb.checked);
     else if (k === 'critic') map.setCriticVisible(cb.checked);
+    else if (k === 'aware') map.setAwarenessVisible(cb.checked);
     else if (k === 'hypo') { map.setHypoVisible(cb.checked); if (cb.checked) updateHypo(); }
     else if (k === 'calls') { map.setCallsVisible(cb.checked); map.setCalls(ua93StateAt, state.t); }
     else if (k === 'trail') { map.setTrailVisible(cb.checked); map.setTrail(state.t); }
@@ -1674,6 +1685,16 @@ function drawLabels() {
       pos: map.hypoMarker.position,
       text: `${HYPO.callsign} — CONSTRUCTED · ${Math.round((sm?.altFt ?? 0) / 100) * 100} ft`,
       cls: 'flight hypo', color: '#ffffff', rank: 1.2,
+    });
+  }
+
+  /* The awareness handoffs, and a standing counter on the military node. */
+  for (const al of map.awarenessLabels()) {
+    wanted.set(al.key, {
+      pos: al.pos,
+      text: al.text,
+      cls: `aware-line aw-${al.actor}${al.fresh ? ' fresh' : ''}${al.dark ? ' dark' : ''}`,
+      rank: al.dark ? 0.15 : 0.35,
     });
   }
 
@@ -1797,6 +1818,8 @@ function handlePick(ud) {
     showTipAt(`${ud.who} → ${ud.to}`,
       `${ud.callType === 'cellular' ? 'CELLULAR' : 'Airfone'} · ${hms(ud.t).slice(0, 5)}\n${ud.note}`,
       'commission');
+  } else if (ud.kind === 'awareNode') {
+    showTipAt(ud.name, ud.note, ud.src);
   } else if (ud.kind === 'criticNode') {
     showTipAt(ud.name, ud.note, ud.src);
   } else if (ud.kind === 'place') {
@@ -1881,7 +1904,7 @@ function tourEnter() {
     playing: state.playing,
     follow: state.follow,
     layers: { ...state.layers },
-    tab: ($('#tabs button.on') || {}).dataset?.tab || 'timeline',
+    tab: ($('#tabs button.on') || {}).dataset?.tab || 'brief',
   };
 
   tour.on = true;
@@ -1931,6 +1954,7 @@ function applyAllLayers() {
   map.setDebrisVisible(state.layers.debris);
   map.placeGroup.visible = state.layers.places;
   map.setCriticVisible(state.layers.critic);
+  map.setAwarenessVisible(state.layers.aware);
   map.setRouteVisible('documented', state.layers.routeDoc);
   map.setRouteVisible('claim', state.layers.routeClaim);
   map.setReachVisible(state.layers.envelope || state.layers.wez);
@@ -1944,12 +1968,7 @@ function applyAllLayers() {
   map.setTime(state.t);
 }
 
-function tourTab(name) {
-  const btn = $(`#tabs button[data-tab="${name}"]`);
-  if (!btn) return;
-  $$('#tabs button').forEach((x) => x.classList.toggle('on', x === btn));
-  $$('.tab-body').forEach((sec) => sec.classList.toggle('hidden', sec.dataset.body !== name));
-}
+const tourTab = (name) => gotoTab(name);
 
 /* `view` is resolved here rather than in tour.js so the step data stays free
    of anything that needs the map to exist. */
@@ -2283,6 +2302,189 @@ function refRow(key, extraClass = '') {
        title="${esc(r.url)}">${esc(r.label)}</a>`).join('')}</div>`;
 }
 
+/* =============================================================================
+   Start here — the bottom line, then the walkthrough
+
+   The old front door was a timeline scrubber and seven tabs, which asked the
+   reader to assemble the argument from parts. This states it in the order an
+   argument should be stated: conclusion, reasoning, evidence, objections.
+
+   Every section is a headline you can read in five seconds over a body you can
+   open if you want it. Skim the headlines and the whole case takes about ninety
+   seconds; open everything and it is an hour. Counter-arguments sit inside the
+   sections they undercut rather than in a rebuttal page at the end, because one
+   that only appears after the reader is convinced is decoration.
+   ========================================================================== */
+
+function renderBriefTab() {
+  const bl = BOTTOM_LINE, wc = WHY_CRITIC;
+
+  const section = (w) => `
+    <details class="wt" id="${w.id}">
+      <summary>
+        <span class="wt-kicker">${esc(w.kicker)}</span>
+        <span class="wt-head">${esc(w.headline)}</span>
+        <span class="wt-more" aria-hidden="true"></span>
+      </summary>
+      <div class="wt-body">
+        ${w.body.map((p) => `<p>${p}</p>`).join('')}
+        ${w.counter ? `
+          <div class="wt-counter">
+            <div class="wt-counter-q">${esc(w.counter.point)}</div>
+            <p>${w.counter.text}</p>
+            ${w.counter.more === 'awareness'
+              ? `<button class="chip" data-goto="aware">See the whole chain &rarr;</button>` : ''}
+          </div>` : ''}
+      </div>
+    </details>`;
+
+  $('#brief-body').innerHTML = `
+    <div class="card bluf">
+      <div class="bluf-kicker">${esc(bl.kicker)}</div>
+      <h2>${esc(bl.headline)}</h2>
+      ${bl.paras.map((p) => `<p>${p}</p>`).join('')}
+      <p class="bluf-note">${esc(bl.verdictNote)} ${srcTag(bl.src)}</p>
+      <div class="chip-row">
+        <button class="chip chip-go" data-goto="tour">&#9654; Walk me through it</button>
+      </div>
+    </div>
+
+    <div class="card critic-steel-card">
+      <div class="bluf-kicker">${esc(wc.kicker)}</div>
+      <h3>${esc(wc.headline)}</h3>
+      ${wc.paras.map((p) => `<p>${p}</p>`).join('')}
+      <p class="bluf-note">${esc(wc.hook)} ${srcTag(wc.src)}</p>
+      <div class="chip-row">
+        <button class="chip" data-goto="critic">The four messages &rarr;</button>
+      </div>
+    </div>
+
+    <h3 class="sec-head">The walkthrough</h3>
+    <p class="sec-note">${WALKTHROUGH.length} steps. Headlines alone are the short version;
+    open any one for the detail and the strongest objection to it.</p>
+    ${WALKTHROUGH.map(section).join('')}
+
+    <h3 class="sec-head">However long you have</h3>
+    <div class="paths">
+      ${PATHS.map((p) => `
+        <button class="path" data-goto="${esc(p.act.replace('tab:', ''))}">
+          <span class="path-min">${esc(p.min)}</span>
+          <span class="path-label">${esc(p.label)}</span>
+          <span class="path-note">${esc(p.note)}</span>
+        </button>`).join('')}
+    </div>`;
+
+  $$('#brief-body [data-goto]').forEach((b) => b.addEventListener('click', () => {
+    const to = b.dataset.goto;
+    if (to === 'tour') { tourEnter(); return; }
+    gotoTab(to);
+  }));
+}
+
+/* =============================================================================
+   Who knew — the awareness chain
+
+   Built because the app used to say "NEADS did not know United 93 existed until
+   10:07" and stop there, which invites the obvious objection that the FAA knew
+   for thirty-five minutes. It did. That is documented here in full, including
+   how badly it reflects on the FAA, because an argument that hides its best
+   counter-evidence is not an argument.
+   ========================================================================== */
+
+function renderAwareTab() {
+  const g = awarenessGap();
+
+  const row = (a) => {
+    const act = ACTORS[a.actor];
+    return `
+      <div class="aw${a.pivotal ? ' aw-pivot' : ''}" style="--aw:${act.color}">
+        <div class="aw-t">${hms(a.t).slice(0, 5)}</div>
+        <div class="aw-main">
+          <div class="aw-actor">${esc(act.label)}</div>
+          <div class="aw-who">${esc(a.who)}</div>
+          <p class="aw-what">${esc(a.what)}</p>
+          <p class="aw-bearing"><strong>What it establishes:</strong> ${esc(a.bearing)}
+            ${srcTag(a.src)}</p>
+          ${a.weigh === 'fighters-question' ? `
+            <button class="chip" data-weigh="fighters-question">
+              Does this show foreknowledge? &rarr;</button>` : ''}
+        </div>
+      </div>`;
+  };
+
+  const fq = FIGHTERS_QUESTION;
+
+  $('#aware-body').innerHTML = `
+    <div class="card bluf">
+      <div class="bluf-kicker">The short version</div>
+      <h2>The crash was not a surprise to the government. It was a surprise to the military.</h2>
+      <p>The civil side had United 93 continuously for
+        <strong>${Math.round(g.civilMinutes)} minutes</strong> before it went down. They heard the
+        takeover live, kept it on radar after the transponder went off, and worked out how many
+        minutes it was from Washington.</p>
+      <p>The air defence sector heard the words "United 93" for the first time
+        <strong>${Math.round(g.militaryLateMinutes)} minutes after it had already crashed</strong> —
+        a gap of ${Math.round(g.gapMinutes)} minutes between the two halves of the same government.</p>
+      <p class="bluf-note">That gap is the most important fact about Flight 93, and it is the
+        thing the shootdown story needs not to exist. ${srcTag('derived')}</p>
+    </div>
+
+    <div class="card">
+      <h3>Who is who</h3>
+      ${Object.values(ACTORS).map((a) => `
+        <div class="aw-key"><i style="background:${a.color}"></i>
+          <b>${esc(a.label)}</b> — ${esc(a.note)}</div>`).join('')}
+    </div>
+
+    <h3 class="sec-head">The chain, minute by minute</h3>
+    <div class="aw-list">${AWARENESS.map(row).join('')}</div>
+
+    <div class="card fk-card" id="fighters-question">
+      <h3>${esc(fq.title)}</h3>
+      <p><strong>${esc(fq.short)}</strong></p>
+      ${fq.readings.map((r) => `
+        <div class="cmd-row">
+          <div class="t" style="color:var(--ink-faint)">${esc(r.who)}</div>
+          <div class="x">${esc(r.v)} <span style="color:var(--ink-faint)">${esc(r.weight)}</span>
+            ${srcTag(r.src)}</div>
+        </div>`).join('')}
+      <ul class="plain" style="margin-top:10px">
+        ${fq.points.map((p) => `<li>${esc(p)}</li>`).join('')}
+      </ul>
+      <p class="fk-caution"><strong>The limit:</strong> ${esc(fq.limit)} ${srcTag(fq.src)}</p>
+    </div>
+
+    <div class="card">
+      <h3>The objection this answers</h3>
+      <p class="aw-obj">${esc(AWARENESS_COUNTER.objection)}</p>
+      ${AWARENESS_COUNTER.answers.map((a) => `
+        <div class="finding">
+          <h4>${esc(a.point)}</h4>
+          <p>${esc(a.detail)} ${srcTag(a.src)}</p>
+        </div>`).join('')}
+    </div>`;
+
+  $$('#aware-body [data-weigh]').forEach((b) => b.addEventListener('click', () => {
+    const el = $('#fighters-question');
+    if (el) {
+      el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      el.classList.remove('tour-lit'); void el.offsetWidth; el.classList.add('tour-lit');
+    }
+  }));
+}
+
+/* One way in and out of every tab, so the brief's chips and the tab bar cannot
+   get out of step. */
+function gotoTab(name) {
+  const btn = $(`#tabs button[data-tab="${name}"]`);
+  if (!btn) return;
+  $$('#tabs button').forEach((x) => x.classList.toggle('on', x === btn));
+  $$('.tab-body').forEach((sec) => sec.classList.toggle('hidden', sec.dataset.body !== name));
+  const body = $(`.tab-body[data-body="${name}"]`);
+  if (body) body.scrollTop = 0;
+  document.body.classList.remove('map-open');
+}
+
 function bindChrome() {
   $('#btn-play').addEventListener('click', () => {
     if (state.t >= T1) setTime(T0);
@@ -2312,11 +2514,15 @@ function bindChrome() {
     state.rate = +b.dataset.rate;
   }));
 
-  $$('#tabs button').forEach((b) => b.addEventListener('click', () => {
-    $$('#tabs button').forEach((x) => x.classList.remove('on'));
-    b.classList.add('on');
-    $$('.tab-body').forEach((s) => s.classList.toggle('hidden', s.dataset.body !== b.dataset.tab));
-  }));
+  $$('#tabs button').forEach((b) => b.addEventListener('click', () => gotoTab(b.dataset.tab)));
+
+  // Mobile: swap between the map and the reading, since both cannot be tall.
+  const mapBtn = $('#btn-map');
+  if (mapBtn) mapBtn.addEventListener('click', () => {
+    document.body.classList.toggle('map-open');
+    mapBtn.textContent = document.body.classList.contains('map-open') ? 'Read' : 'Map';
+    setTimeout(() => map.resize(), 260);
+  });
 
   $('#aside-toggle').addEventListener('click', () => {
     document.body.classList.toggle('panel-hidden');

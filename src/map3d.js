@@ -23,6 +23,7 @@ import {
 } from './reachability.js';
 import { HYPO, LOS_HORIZON, horizonSmi } from './steelman.js';
 import { CALLS } from './calls.js';
+import { AWARENESS, AWARE_NODES, ACTORS } from './awareness.js';
 import { destinationPoint } from './geo.js';
 
 const COL = {
@@ -76,6 +77,7 @@ export class Map3D {
     this._buildGibney();
     this._buildDebris();
     this._buildCritic();
+    this._buildAwareness();
     this._buildReach();
     this._buildCalls();
     this._buildTrail();
@@ -442,6 +444,146 @@ export class Map3D {
           pos: l.userData.apex,
           text: `${c.mapLabel || 'CRITIC'} · ${when} · ${lines.length} addressees, withheld`,
           fresh,
+        });
+      }
+    }
+    return out;
+  }
+
+
+  /* =========================================================================
+     The awareness network
+
+     Same treatment as the CRITIC chain, for the same reason: knowledge moving
+     between places is a thing with a geography, and the geography is the
+     argument here. Civil nodes are green and light as each one is told. The
+     military node is red and stays unlit until 10:07 — four minutes after the
+     aircraft it is being told about has already hit the ground.
+
+     A node that has NOT been told is drawn as a hollow ring rather than
+     omitted. An absence you cannot see is not evidence of anything. */
+  _buildAwareness() {
+    this.awareGroup = new THREE.Group();
+    this.awareGroup.visible = false;
+    this.scene.add(this.awareGroup);
+
+    this.awareNodes = new Map();
+    for (const [key, n] of Object.entries(AWARE_NODES)) {
+      const [x, z] = projectLL(n);
+      const col = new THREE.Color(ACTORS[n.actor].color).getHex();
+
+      // Unlit: a hollow ring. Lit: a filled dot inside it.
+      const ring = new THREE.Mesh(
+        new THREE.RingGeometry(0.5, 0.72, 20),
+        new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: 0.42,
+          side: THREE.DoubleSide }),
+      );
+      ring.rotation.x = -Math.PI / 2;
+      ring.position.set(x, STATE_DEPTH + 0.32, z);
+      this.awareGroup.add(ring);
+
+      const dot = new THREE.Mesh(
+        new THREE.SphereGeometry(0.46, 12, 10),
+        new THREE.MeshBasicMaterial({ color: col }),
+      );
+      dot.position.set(x, STATE_DEPTH + 0.38, z);
+      dot.visible = false;
+      dot.userData = { kind: 'awareNode', key, name: n.name, note: n.note, src: 'commission' };
+      this.awareGroup.add(dot);
+
+      this.awareNodes.set(key, { n, ring, dot, pos: new THREE.Vector3(x, STATE_DEPTH + 0.38, z) });
+    }
+
+    /* Every one of these handoffs happens inside a few hundred miles of the
+       north-east, so drawn at one height their apexes land on top of each
+       other and the declutter keeps a single label. Each arc gets its own
+       height instead: they nest, and because the camera is tilted the apexes
+       separate vertically on screen, which is what the labels need. */
+    this.awareArcs = [];
+    let arcN = 0;
+    for (const a of AWARENESS) {
+      if (!a.from || !a.to) continue;
+      const from = AWARE_NODES[a.from], to = AWARE_NODES[a.to];
+      if (!from || !to) continue;
+
+      const lift = 8 + arcN * 4.5;
+      arcN += 1;
+      const pts = gcPoints(from, to, 40).map((p, i, arr) => {
+        const [x, z] = projectLL(p);
+        const f = i / (arr.length - 1);
+        return new THREE.Vector3(x, STATE_DEPTH + 0.45 + Math.sin(f * Math.PI) * lift, z);
+      });
+      const line = new THREE.Line(
+        new THREE.BufferGeometry().setFromPoints(pts),
+        new THREE.LineBasicMaterial({
+          color: new THREE.Color(ACTORS[a.actor].color).getHex(),
+          transparent: true, opacity: 0.9,
+        }),
+      );
+      line.visible = false;
+      this.awareGroup.add(line);
+      this.awareArcs.push({ a, line, apex: pts[Math.floor(pts.length / 2)].clone() });
+    }
+  }
+
+  _updateAwareness(t) {
+    if (!this.awareGroup.visible) return;
+
+    // A node is lit once anything has told it, or once it has said something.
+    const lit = new Set();
+    for (const a of AWARENESS) {
+      if (t < a.t) continue;
+      if (a.node) lit.add(a.node);
+      if (a.from) { lit.add(a.from); lit.add(a.to); }
+    }
+    for (const [key, o] of this.awareNodes) {
+      o.dot.visible = lit.has(key);
+      o.ring.material.opacity = lit.has(key) ? 0.75 : 0.3;
+    }
+    for (const arc of this.awareArcs) arc.line.visible = t >= arc.a.t;
+  }
+
+  setAwarenessVisible(v) {
+    this.awareGroup.visible = v;
+    this._updateAwareness(this._t ?? 0);
+  }
+
+  /* Labels for the arcs that have fired, plus a standing label on the military
+     node saying how long it has been in the dark. That counter is the whole
+     point of the layer, so it is not left to be inferred from an unlit ring. */
+  awarenessLabels() {
+    if (!this.awareGroup.visible) return [];
+    const t = this._t ?? 0;
+    const out = [];
+
+    for (const { a, line, apex } of this.awareArcs) {
+      if (!line.visible) continue;
+      out.push({
+        key: `aw:${a.t}:${a.from}`,
+        pos: apex,
+        text: `${hms(a.t).slice(0, 5)} · ${AWARE_NODES[a.from].short} → ${AWARE_NODES[a.to].short}`,
+        actor: a.actor,
+        fresh: (t - a.t) < 90,
+      });
+    }
+
+    const mil = this.awareNodes.get('NEADSN');
+    if (mil) {
+      const told = AWARENESS.find((x) => x.pivotal);
+      if (t < told.t) {
+        const mins = Math.floor((told.t - t) / 60);
+        out.push({
+          key: 'aw:dark',
+          pos: mil.pos,
+          text: `NEADS · NOT TOLD · ${mins} min to go`,
+          actor: 'military', dark: true,
+        });
+      } else {
+        out.push({
+          key: 'aw:dark',
+          pos: mil.pos,
+          text: 'NEADS · told at 10:07 · 4 min after the crash',
+          actor: 'military', fresh: (t - told.t) < 90,
         });
       }
     }
@@ -943,6 +1085,7 @@ export class Map3D {
       ...this.placeGroup.children,
       ...(this.debrisGroup.visible ? this.debrisGroup.children : []),
       ...(this.criticGroup.visible ? this.criticGroup.children : []),
+      ...(this.awareGroup.visible ? this.awareGroup.children : []),
       ...(this.callGroup.visible ? this.callGroup.children : []),
       ...(this.trailGroup.visible ? this.trailGroup.children : []),
       ...[...this.flightObjs.values()].filter((o) => o.marker.visible).map((o) => o.marker),
@@ -1048,6 +1191,7 @@ export class Map3D {
   setTime(t) {
     this._t = t;
     this._updateCritic(t);
+    this._updateAwareness(t);
     for (const o of this.flightObjs.values()) {
       const { f, dense, flown, shadow, marker, tether, impact } = o;
       const t0 = f.path[0][0], t1 = f.path[f.path.length - 1][0];

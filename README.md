@@ -236,6 +236,70 @@ fighter in the eastern half of the country would have swept over Somerset
 County eventually. It is drawn to show the size of the gap in the record, and
 the fuel ring is drawn to show how much smaller that gap really is.
 
+## Start here, and who knew
+
+The front door used to be a timeline scrubber and seven tabs, which asked the
+reader to assemble the argument from parts. **Start here** now states it in the
+order an argument should be stated: conclusion, reasoning, evidence, objections.
+Eight walkthrough sections, each a headline you can read in five seconds over a
+body you can open. Skim the headlines and the case takes ninety seconds; open
+everything and it is an hour. A "however long you have" panel routes you by time
+budget, from a two-minute tour to the discrepancy register.
+
+Counter-arguments live inside the sections they undercut, not in a rebuttal page
+at the end. One that only appears after the reader is convinced is decoration.
+
+### Who knew, and when
+
+`src/awareness.js` documents the whole chain from 09:24 to 10:31, with what each
+step establishes and what it does not. The shape of it:
+
+> The crash was not a surprise to the federal government. It was a surprise to
+> the United States military.
+
+The civil side had United 93 for **35 minutes** — heard the takeover live at
+09:28, held it on primary radar after the transponder went off, worked out it
+was 29 minutes from Washington. The air defence sector heard the words "United
+93" for the first time at 10:07, **four minutes after it had already crashed**.
+
+In between sits a recorded conversation in which the FAA discusses asking the
+military for help and never does it — at 09:36, again at 09:49, still at 09:53.
+
+This is not flattering to the government, and it is in the app because an
+argument that hides its best counter-evidence is not an argument. It is also not
+evidence of a shootdown — closer to the opposite, since a shootdown requires a
+coordination that demonstrably did not exist that morning.
+
+The chain is drawn on the map as well as listed: nodes for Cleveland Center,
+Herndon, FAA HQ, NEADS, NORAD, the White House and Westmoreland County 911, with
+arcs that fire as each handoff happens. Civil nodes are green, military red, and
+a node that has not been told is a hollow ring rather than absent — an absence
+you cannot see is not evidence of anything. The NEADS node carries a live
+counter reading **NOT TOLD — n min to go**.
+
+### Does the 09:36 question show foreknowledge?
+
+Cleveland Center asking whether anyone has requested that the military launch
+fighters gets read as a trace of an intercept already under way.
+`FIGHTERS_QUESTION` in `src/awareness.js` weighs it and concludes no — and that
+it costs the claim rather than helping it. The man holding the radar track is
+asking whether anything is being done, which establishes that nothing visibly
+was. The best case this app can build launches at 08:46, so at 09:36 that jet is
+fifty minutes into a run the controller watching the target has never heard of.
+And every real scramble that morning left tail numbers, tapes and names; the
+alleged one left none.
+
+The honest limit is stated too: a covert tasking would not route through FAA
+headquarters, so this cannot disprove one. It raises the price.
+
+## Mobile
+
+A phone cannot show a map and an argument at once, so it does not try. Below
+860px the layout is a single column: a compact top bar, the map as a 34vh hero
+with a **Map / Read** toggle that swaps it to full height, the reading as the
+main scroll, and a sticky tab strip that scrolls sideways. Everything touchable
+is at least 44px.
+
 ## The CRITIC, against the steelman
 
 This app is named after DIRNSA CRITIC 1-2001 and exists as a companion to a
