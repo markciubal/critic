@@ -1662,7 +1662,7 @@ function drawLabels() {
     const sm = map._hypoSample;
     wanted.set('hypo', {
       pos: map.hypoMarker.position,
-      text: `${HYPO.callsign} — STEELMAN, CONSTRUCTED · ${Math.round((sm?.altFt ?? 0) / 100) * 100} ft`,
+      text: `${HYPO.callsign} — CONSTRUCTED · ${Math.round((sm?.altFt ?? 0) / 100) * 100} ft`,
       cls: 'flight hypo', color: '#ffffff', rank: 1.2,
     });
   }

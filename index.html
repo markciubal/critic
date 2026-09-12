@@ -58251,7 +58251,7 @@ class Map3D {
     if (v && this._callPos) this.setCalls(this._callPos, this._t ?? 0);
   }
 
-  /* STEELMAN — the steelman. Drawn dashed and white because it is a construct,
+  /* The steelman aircraft. Drawn dashed and white because it is a construct,
      and labelled as one wherever it appears. It is off by default. */
   _buildHypo() {
     this.hypoGroup = new THREE.Group();
@@ -60527,7 +60527,7 @@ function drawLabels() {
     const sm = map._hypoSample;
     wanted.set('hypo', {
       pos: map.hypoMarker.position,
-      text: `${HYPO.callsign} — STEELMAN, CONSTRUCTED · ${Math.round((sm?.altFt ?? 0) / 100) * 100} ft`,
+      text: `${HYPO.callsign} — CONSTRUCTED · ${Math.round((sm?.altFt ?? 0) / 100) * 100} ft`,
       cls: 'flight hypo', color: '#ffffff', rank: 1.2,
     });
   }

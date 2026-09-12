@@ -707,7 +707,7 @@ export class Map3D {
     if (v && this._callPos) this.setCalls(this._callPos, this._t ?? 0);
   }
 
-  /* STEELMAN — the steelman. Drawn dashed and white because it is a construct,
+  /* The steelman aircraft. Drawn dashed and white because it is a construct,
      and labelled as one wherever it appears. It is off by default. */
   _buildHypo() {
     this.hypoGroup = new THREE.Group();
