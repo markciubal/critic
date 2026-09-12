@@ -81,22 +81,39 @@ export const MIL_FLIGHTS = [
     label: 'GOFER 06',
     type: 'C-130H Hercules',
     unit: '133rd Airlift Wing, Minnesota ANG',
-    base: 'Transiting — Andrews toward Minnesota',
+    base: 'Andrews to Youngstown, Ohio',
     armed: 'UNARMED cargo aircraft',
     color: 0x6fd3ff,
     src: 'recon',
+    /* Corrected. The first version of this track was traced from secondary
+       retellings and was wrong three ways: it launched at 09:30 rather than
+       the 1333Z on the Andrews tower strips, it continued west as though the
+       aircraft reached Minnesota, and it passed within three miles of United
+       93 — close enough to manufacture a contact that never happened.
+
+       The primary sources are the 9/11 Commission's interview with the pilot
+       and Miles Kara's radar reconstruction. O'Brien's own radio call put the
+       smoke "about 30 miles" off; Kara's radar puts him roughly 34 nautical
+       miles southeast of the crash site. Both are far outside the ten-mile
+       ring the app draws for an AIM-9, which the earlier track was not. */
     path: [
-      [at(9, 30, 0), 38.81, -76.87, 3000],
-      [at(9, 35, 0), 38.83, -77.00, 4500],
-      [at(9, 37, 46), 38.88, -77.10, 5000],
-      [at(9, 45, 0), 39.10, -77.60, 12000],
-      [at(10, 5, 0), 40.15, -79.15, 20000],
-      [at(10, 25, 0), 40.60, -80.60, 22000],
+      [at(9, 33, 0), 38.8108, -76.8670, 0],
+      [at(9, 36, 0), 38.85, -77.02, 4000],
+      [at(9, 37, 45), 38.88, -77.09, 5000],
+      [at(9, 45, 0), 39.15, -77.70, 14000],
+      [at(9, 55, 0), 39.45, -78.05, 21000],
+      [at(10, 2, 0), 39.66, -78.30, 24000],
+      [at(10, 6, 0), 39.83, -78.42, 24000],
+      [at(10, 20, 0), 40.55, -79.55, 23000],
+      [at(10, 34, 0), 41.2607, -80.6791, 0],
     ],
     events: [
-      [at(9, 33, 0), 'Controllers ask this cargo crew to identify an unknown aircraft. It is American 77.', 'commission'],
-      [at(9, 37, 46), 'Lt. Col. Steven O’Brien watches it strike the Pentagon: "Looks like that aircraft crashed into the Pentagon, sir."', 'press'],
-      [at(10, 5, 0), 'Asked to look for United 93, the crew sees black smoke from an open field about 17 miles off — roughly 100 seconds after impact.', 'press'],
+      [at(9, 33, 0), 'Wheels up from Andrews at 1333Z, three minutes late behind a 747 held for wake turbulence. Those three minutes put him where he was.', 'commission'],
+      [at(9, 35, 0), 'Controllers ask this cargo crew to identify an unknown aircraft. It is American 77.', 'commission'],
+      [at(9, 37, 45), 'Lt. Col. Steven O’Brien watches it strike the Pentagon: "Looks like that aircraft crashed into the Pentagon, sir." He asks to orbit; ATC refuses and sends him west.', 'press'],
+      [at(10, 2, 0), 'Turned north onto heading 030, away from United 93’s projected path.', 'press'],
+      [at(10, 6, 0), 'Reports "black smoke at our nine o’clock, looks like about 30 miles". It is the Flight 93 crash site.', 'commission'],
+      [at(10, 34, 0), 'Diverts and lands at Youngstown, Ohio. He never reaches Minneapolis.', 'commission'],
     ],
   },
   {
@@ -130,8 +147,8 @@ export const CALLSIGNS = [
     note: 'Gibney’s parent wing. QUIT 27 was the Supervisor of Flying, who launched in trail as a third aircraft.', src: 'press' },
   { cs: 'BULLY / WILD / CAPS', what: 'F-16C — 113th Wing, DC ANG, Andrews',
     note: 'Launched after United 93 was already down. Source wording on these varies.', src: 'press' },
-  { cs: 'GOFER 06', what: 'C-130H — 133rd AW, Minnesota ANG',
-    note: 'Witnessed the Pentagon impact and the Shanksville smoke. Some accounts render it "Gofer 86".', src: 'press' },
+  { cs: 'GOFER 06', what: 'C-130H3 — 133rd AW, Minnesota ANG',
+    note: 'Witnessed the Pentagon impact and the Shanksville smoke, then diverted to Youngstown. Some accounts render it "Gofer 86".', src: 'press' },
   { cs: 'VENUS 77', what: 'E-4B National Airborne Operations Center',
     note: 'Frequently cited in shootdown claims. A flying command post, not an armed aircraft.', src: 'press' },
   { cs: 'ANGEL', what: 'F/A-18 — VMFA-321, Marine Reserve, Andrews',

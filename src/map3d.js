@@ -21,7 +21,7 @@ import {
   BANDS, FUEL_RING, FERRY_RING, HALF_FERRY_RING, ringPoints, reachMi,
   MAX_DRAW_MI, AIM9, bandRadii, evidenceCeilingMi, DEPARTURE_BOUNDS,
 } from './reachability.js';
-import { HYPO, FOREKNOWLEDGE } from './steelman.js';
+import { HYPO, FOREKNOWLEDGE, LOS_HORIZON, horizonSmi } from './steelman.js';
 import { CALLS } from './calls.js';
 import { destinationPoint } from './geo.js';
 
@@ -551,45 +551,54 @@ export class Map3D {
     this.scene.add(this.trailGroup);
     this.trailDots = [];
 
-    const f = FLIGHTS.find((x) => x.id === 'UA93');
-    if (!f || !f.dataPoints) return;
+    /* Both flights whose recorders were recovered, not just United 93.
+       American 77 now carries the same treatment off its own NTSB study, and
+       the contrast is the point: American 11 and United 175 get no dots at
+       all, because there is nothing to put down. An empty track is the
+       honest rendering of a recorder that was never found. */
+    for (const f of FLIGHTS) {
+      if (!f.dataPoints) continue;
+      const tEnd = f.path[f.path.length - 1][0];
 
-    for (const d of f.dataPoints) {
-      const sm = samplePath(f.path, Math.min(d.t, f.path[f.path.length - 1][0]));
-      if (!sm) continue;
-      const [x, z] = projectLL(sm);
-      const lettered = d.mark !== '\u2022';
-      const m = new THREE.Mesh(
-        new THREE.SphereGeometry(lettered ? 0.34 : 0.22, 12, 10),
-        new THREE.MeshBasicMaterial({ color: lettered ? 0x8cf27a : 0xdfe8f2 }),
-      );
-      m.position.set(x, altToY(sm.altFt) + STATE_DEPTH + 0.05, z);
-      m.visible = false;
-      m.userData = {
-        kind: 'datum', mark: d.mark, label: d.label, t: d.t, src: d.src,
-        altFt: sm.altFt,
-      };
-      this.trailGroup.add(m);
+      for (const d of f.dataPoints) {
+        const sm = samplePath(f.path, Math.min(d.t, tEnd));
+        if (!sm) continue;
+        const [x, z] = projectLL(sm);
+        const lettered = d.mark !== '\u2022';
+        const m = new THREE.Mesh(
+          new THREE.SphereGeometry(lettered ? 0.34 : 0.22, 12, 10),
+          new THREE.MeshBasicMaterial({ color: lettered ? 0x8cf27a : 0xdfe8f2 }),
+        );
+        m.position.set(x, altToY(sm.altFt) + STATE_DEPTH + 0.05, z);
+        m.visible = false;
+        m.userData = {
+          kind: 'datum', mark: d.mark, label: d.label, t: d.t, src: d.src,
+          altFt: sm.altFt, fid: f.id, flight: f.label,
+        };
+        this.trailGroup.add(m);
 
-      // A stem down to the ground so the altitude of each datum reads.
-      const stem = new THREE.Line(
-        new THREE.BufferGeometry().setFromPoints([
-          new THREE.Vector3(x, altToY(sm.altFt) + STATE_DEPTH + 0.05, z),
-          new THREE.Vector3(x, STATE_DEPTH + 0.02, z),
-        ]),
-        new THREE.LineBasicMaterial({ color: 0x8cf27a, transparent: true, opacity: 0.3 }),
-      );
-      stem.visible = false;
-      this.trailGroup.add(stem);
+        // A stem down to the ground so the altitude of each datum reads.
+        const stem = new THREE.Line(
+          new THREE.BufferGeometry().setFromPoints([
+            new THREE.Vector3(x, altToY(sm.altFt) + STATE_DEPTH + 0.05, z),
+            new THREE.Vector3(x, STATE_DEPTH + 0.02, z),
+          ]),
+          new THREE.LineBasicMaterial({ color: 0x8cf27a, transparent: true, opacity: 0.3 }),
+        );
+        stem.visible = false;
+        this.trailGroup.add(stem);
 
-      this.trailDots.push({ d, mesh: m, stem });
+        this.trailDots.push({ d, mesh: m, stem, fid: f.id });
+      }
     }
   }
 
   setTrail(t) {
     if (!this.trailGroup || !this.trailGroup.visible) return;
-    for (const { d, mesh, stem } of this.trailDots) {
-      const on = t >= d.t;
+    for (const { d, mesh, stem, fid } of this.trailDots) {
+      // A datum belongs to its flight: hide the track, hide its record.
+      const fo = this.flightObjs.get(fid);
+      const on = t >= d.t && (!fo || fo.visible);
       mesh.visible = on;
       stem.visible = on;
       mesh.scale.setScalar(this._markerScale);
@@ -755,6 +764,19 @@ export class Map3D {
     };
     this.hypoWezOuter = mkWez(0.95, false);
     this.hypoWezInner = mkWez(0.5, true);
+
+    /* The line-of-sight horizon: everything the aircraft can see, bounded by
+       altitude and the curvature of the Earth. Drawn beside the engagement
+       rings so the ratio between them is visible — about thirty to one. */
+    const hg = new THREE.BufferGeometry();
+    hg.setAttribute('position', new THREE.BufferAttribute(new Float32Array(121 * 3), 3));
+    this.hypoHorizon = new THREE.Line(hg, new THREE.LineBasicMaterial({
+      color: LOS_HORIZON.color, transparent: true, opacity: 0.4,
+    }));
+    this.hypoHorizon.frustumCulled = false;
+    this.hypoHorizon.visible = false;
+    this.hypoGroup.add(this.hypoHorizon);
+    this.hypoHorizonInfo = null;
     this.hypoLosInfo = null;
   }
 
@@ -796,6 +818,15 @@ export class Map3D {
       this.hypoWezOuter.visible = true;
       this.hypoWezInner.visible = true;
 
+      // And the horizon it can see to, which is a different thing entirely.
+      const hz = horizonSmi(s.altFt);
+      const hzPts = ringPoints(s, hz, 120);
+      this._writeRing(this.hypoHorizon, hzPts);
+      this.hypoHorizon.visible = true;
+      this.hypoHorizonInfo = {
+        miles: hz, ringLL: hzPts, order: searchOrder(hzPts.length),
+      };
+
       if (targetLL) {
         const [tx, tz] = projectLL(targetLL);
         const ty = altToY(targetLL.altFt ?? s.altFt) + STATE_DEPTH + 0.05;
@@ -825,8 +856,10 @@ export class Map3D {
       this.hypoLos.visible = false;
       this.hypoWezOuter.visible = false;
       this.hypoWezInner.visible = false;
+      this.hypoHorizon.visible = false;
       this._hypoSample = null;
       this.hypoLosInfo = null;
+      this.hypoHorizonInfo = null;
     }
   }
 
@@ -1105,6 +1138,7 @@ export class Map3D {
   setFlightVisible(id, v) {
     const o = this.flightObjs.get(id);
     if (o) o.visible = v;
+    if (this.trailGroup && this.trailGroup.visible) this.setTrail(this._t ?? 0);
   }
 
   setDebrisVisible(v) { this.debrisGroup.visible = v; }

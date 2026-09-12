@@ -25,7 +25,7 @@ import {
   FOREKNOWLEDGE, HIJACK_T, foreknowledgeVerdict,
 } from './steelman.js';
 import { CALLS, CALL_TOTALS, FARADAY, WHY_THEY_MATTER } from './calls.js';
-import { wezWindow } from './steelman.js';
+import { wezWindow, LOS_HORIZON, losVsWez, mutualHorizonSmi } from './steelman.js';
 
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => [...document.querySelectorAll(s)];
@@ -81,6 +81,7 @@ async function loadTopology() {
     map.onPick = handlePick;
     // Panning or zooming by hand is the user taking the wheel.
     map.onManualCamera = () => setFollow(false);
+    window.__map = map;
 
     buildTimelineUI();
     buildFlightStrip();
@@ -765,6 +766,8 @@ function renderLosPanel(h) {
   if (!out || !h) return;
   const w = wezWindow(h, (t) => ua93StateAt(t) || ua93Position(), AIM9.rMaxMi);
   const now = map.hypoLosInfo;
+  const tgt = ua93StateAt(state.interceptT);
+  const lv = losVsWez(31000, tgt ? tgt.altFt : 5000, AIM9.rMaxMi);
 
   out.innerHTML = `
     <div class="leg ${now && now.inWez ? 'los-hot' : ''}">
@@ -784,6 +787,14 @@ function renderLosPanel(h) {
         this track was <em>built</em> to arrive there. The record has to put a specific aircraft
         inside it, to the minute. Nothing does.
       </p>
+    </div>
+    <div class="cmd-row">
+      <div class="t" style="color:${hex(LOS_HORIZON.color)}">${Math.round(lv.losMi)} mi</div>
+      <div class="x"><strong style="color:var(--ink)">Line-of-sight horizon</strong> — what it can
+        <em>see</em>, from 31,000 ft against a target at 5,000. Against
+        <strong>${lv.wezMi} mi</strong> of weapon, that is a ratio of
+        <strong class="v-impossible">${Math.round(lv.ratio)}:1</strong>.
+        ${esc(LOS_HORIZON.note)} Seeing was never the constraint.</div>
     </div>`;
 }
 
@@ -1341,20 +1352,26 @@ function jumpToConflict(tag) {
    ========================================================================== */
 
 function renderLayersTab() {
+  /* A flight carrying a pathNote gets it printed under its own toggle. The
+     note is the difference between what the recorder says and what this app
+     drew, and a caveat nobody can read is not a caveat. */
   const fl = FLIGHTS.map((f) => `
     <label class="toggle">
       <input type="checkbox" data-layer="${f.id}" ${state.layers[f.id] ? 'checked' : ''}>
       <span class="swatch" style="background:${hex(f.color)}"></span>
       <span>${esc(f.label)}</span>
       <span class="meta">${esc(f.type.replace('Boeing ', 'B'))}</span>
-    </label>`).join('');
+    </label>
+    ${f.pathNote ? `<p style="font-size:11px;color:var(--ink-faint);line-height:1.55;
+        margin:2px 0 10px 26px;border-left:2px solid var(--rule);padding-left:8px">
+        ${esc(f.pathNote)} ${srcTag(f.src)}</p>` : ''}`).join('');
 
   $('#layers-body').innerHTML = `
     <div class="card">
       <h3>Hijacked aircraft</h3>
       ${fl}
       <p style="font-size:11.5px;color:var(--ink-faint);margin-top:8px">
-        Tracks are reconstructions: documented positions and times, with the segments between them interpolated. The shape is indicative, not radar data. ${srcTag('recon')}
+        Tracks are reconstructions: documented positions and times, with the segments between them interpolated. The shape is indicative, not radar data. United 93 and American 77 are the two whose recorders were recovered, so their altitudes and timings are FDR values and their notes say where the drawing starts and the record stops. American 11 and United 175 have no recorder at all. ${srcTag('recon')}
       </p>
     </div>
 
@@ -1401,7 +1418,7 @@ function renderLayersTab() {
       <label class="toggle">
         <input type="checkbox" data-layer="trail" ${state.layers.trail ? 'checked' : ''}>
         <span class="swatch" style="background:var(--ua93)"></span>
-        <span>United 93 — recorded data trail</span><span class="meta">FDR points</span>
+        <span>Recorded-data trail</span><span class="meta">UA93 + AA77 · FDR</span>
       </label>
       <label class="toggle">
         <input type="checkbox" data-layer="calls" ${state.layers.calls ? 'checked' : ''}>
@@ -1510,6 +1527,15 @@ function drawLabels() {
     } else if (o.impact.visible) {
       wanted.set(`f:${id}`, { pos: o.impact.position, text: `${id} impact`, cls: 'flight', color: hex(o.f.color), rank: 1 });
     }
+  }
+
+  if (map.hypoGroup && map.hypoGroup.visible && map.hypoHorizonInfo) {
+    const hz = map.hypoHorizonInfo;
+    wanted.set('horizon', {
+      ringLL: hz.ringLL, order: hz.order,
+      text: `Line-of-sight horizon · ${Math.round(hz.miles)} mi`,
+      cls: 'ring', color: hex(LOS_HORIZON.color), rank: 2.4,
+    });
   }
 
   if (map.hypoGroup && map.hypoGroup.visible && map.hypoLosInfo) {
@@ -1644,7 +1670,7 @@ function handlePick(ud) {
     showTipAt(ud.name, ud.note, ud.src);
   } else if (ud.kind === 'datum') {
     showTipAt(`${ud.mark === '\u2022' ? '' : ud.mark + ' — '}${ud.label}`,
-      `${hms(ud.t)} · ${Math.round(ud.altFt).toLocaleString()} ft\nA point where the record says something. Between these, the track is interpolated.`,
+      `${ud.flight || ''} · ${hms(ud.t)} · ${Math.round(ud.altFt).toLocaleString()} ft\nA point where the recorder says something. Between these, the track is interpolated.`,
       ud.src);
   } else if (ud.kind === 'call') {
     showTipAt(`${ud.who} → ${ud.to}`,

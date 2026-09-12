@@ -31,7 +31,10 @@ export {
   CRITIC_NODES, CRITIC_CHAIN, CRITIC_SUMMARY, CRITIC_GLIMPSE,
   DISTRIBUTION, CRITIC_BACKGROUND, FOIA,
 } from './critic.js';
-export { CALLS, CALL_TOTALS, FARADAY, WHY_THEY_MATTER } from './calls.js';
+export {
+  CALLS, CALL_TOTALS, FARADAY, WHY_THEY_MATTER, PHONE_CONFLICTS, AUDIO,
+  durationStats, WHY_SHORT,
+} from './calls.js';
 
 export const T0 = 7 * 3600 + 55 * 60; // 07:55 EDT — timeline start
 export const T1 = 11 * 3600; // 11:00 EDT — must clear FOLLOW-UP-2 AND FINAL at 10:48
@@ -60,6 +63,7 @@ export const PLACES = {
   OTIS: { name: 'Otis ANGB, MA', short: 'Otis ANGB',       lat: 41.6584, lon: -70.5214, src: 'geo' },
   LFI:  { name: 'Langley AFB, VA', short: 'Langley AFB', lat: 37.0829, lon: -76.3605, src: 'geo' },
   ADW:  { name: 'Andrews AFB, MD', short: 'Andrews AFB', lat: 38.8108, lon: -76.8670, src: 'geo' },
+  KYNG: { name: 'Youngstown-Warren Regional, OH', short: 'Youngstown', lat: 41.2607, lon: -80.6791, src: 'geo' },
 };
 
 /* --- The four hijacked aircraft ------------------------------------------
@@ -136,29 +140,64 @@ export const FLIGHTS = [
     from: 'KIAD', to: 'KLAX',
     souls: 64,
     color: 0x6fd3ff,
-    src: 'recon',
+    src: 'ntsb',
+    pathNote: 'Altitudes and timings are FDR values from the NTSB Flight Path Study for American 77 (19 Feb 2002). The lateral track is not: the study publishes its ground track as a printed map, so the positions here are anchors traced from it — Dulles, the turn south, 35 mi west of the Pentagon, 3.5 mi west-southwest at 09:34 — joined by a track chosen so that every derived ground speed lands where a 757 can actually fly. The 330-degree turn is drawn as a 3.3-mile arc spiralling to the rollout point; the study gives its start, its end and its total heading change, not its shape. The study places rollout “about 4 miles southwest”, which is rendered here on bearing 250 so the final heading comes out near 070 — the heading the ground damage path shows.',
+
     path: [
-      [at(8, 20, 0), 38.9531, -77.4565, 0],
-      [at(8, 34, 0), 39.05, -79.10, 29000],
-      [at(8, 46, 0), 38.90, -80.90, 35000],
-      [at(8, 51, 0), 38.95, -81.30, 35000],
-      [at(8, 54, 0), 39.00, -81.50, 35000],
-      [at(8, 56, 0), 38.85, -81.80, 34000],
-      [at(9, 0, 0), 38.60, -81.00, 32000],
-      [at(9, 10, 0), 38.60, -79.90, 25000],
-      [at(9, 29, 0), 38.75, -77.90, 7000],
-      [at(9, 34, 0), 38.80, -77.20, 2200],
-      [at(9, 36, 0), 38.79, -77.12, 2000],
-      [at(9, 37, 46), 38.8719, -77.0563, 0],
+      [at(8, 20, 0), 38.9531, -77.4565, 0],       // A — departs Dulles
+      [at(8, 26, 0), 38.9900, -77.9000, 14000],
+      [at(8, 34, 0), 39.0500, -79.0500, 29000],
+      [at(8, 46, 0), 38.9900, -80.7500, 35000],   // B — reaches 35,000
+      [at(8, 51, 0), 38.9700, -81.5000, 35000],   // last routine radio contact
+      [at(8, 55, 0), 38.9400, -82.0500, 35000],   // C — deviates, turns south
+      [at(8, 56, 0), 38.8500, -82.0200, 35000],   // transponder returns cease
+      [at(9, 0, 0), 38.5500, -81.7000, 35000],    // D — heading east, descent begins
+      [at(9, 7, 0), 38.5000, -80.7300, 25000],    // E — levels at 25,000
+      [at(9, 9, 30), 38.5200, -80.4200, 22000],   // autopilot off, sags to 22,000
+      [at(9, 12, 0), 38.5500, -80.1000, 25250],   // re-engaged at 25,250
+      [at(9, 22, 0), 38.7000, -78.7000, 25250],   // descent resumes
+      [at(9, 29, 0), 38.8700, -77.7100, 7000],    // F — 35 mi west, levels near 7,000
+      [at(9, 32, 0), 38.8700, -77.3600, 7200],
+      [at(9, 34, 0), 38.8546, -77.1174, 6800],    // 330-degree descending right turn begins
+      [at(9, 34, 16), 38.8474, -77.0879, 6400],
+      [at(9, 34, 32), 38.8312, -77.0659, 6000],
+      [at(9, 34, 49), 38.8095, -77.0559, 5600],
+      [at(9, 35, 5), 38.7874, -77.0597, 5200],
+      [at(9, 35, 21), 38.7698, -77.0760, 4800],
+      [at(9, 35, 38), 38.7608, -77.1008, 4400],
+      [at(9, 35, 54), 38.7625, -77.1280, 4000],
+      [at(9, 36, 10), 38.7744, -77.1510, 3600],
+      [at(9, 36, 26), 38.7940, -77.1643, 3200],
+      [at(9, 36, 42), 38.8168, -77.1643, 2800],
+      [at(9, 36, 59), 38.8377, -77.1507, 2400],
+      [at(9, 37, 15), 38.8521, -77.1261, 2000],   // rollout, ~2,000 ft, ~4 mi out
+      [at(9, 37, 45), 38.8719, -77.0563, 0],      // impact, ~460 kt
+    ],
+    /* Where the record speaks, as against where the line is drawn between. */
+    dataPoints: [
+      { t: at(8, 20, 0), mark: 'A', label: 'Departs Dulles', src: 'ntsb' },
+      { t: at(8, 46, 0), mark: 'B', label: 'Reaches 35,000 ft', src: 'ntsb' },
+      { t: at(8, 55, 0), mark: 'C', label: 'Deviates, turns south', src: 'ntsb' },
+      { t: at(8, 56, 0), mark: '\u2022', label: 'Transponder returns cease', src: 'ntsb' },
+      { t: at(9, 0, 0), mark: 'D', label: 'Heading east, descent begins', src: 'ntsb' },
+      { t: at(9, 7, 0), mark: 'E', label: 'Levels at 25,000 ft', src: 'ntsb' },
+      { t: at(9, 9, 30), mark: '\u2022', label: 'Autopilot off 3 min — altitude sags to 22,000', src: 'ntsb' },
+      { t: at(9, 29, 0), mark: 'F', label: '35 mi west of the Pentagon, levels near 7,000 ft', src: 'ntsb' },
+      { t: at(9, 34, 0), mark: '\u2022', label: '330-degree descending right turn begins', src: 'ntsb' },
+      { t: at(9, 37, 15), mark: '\u2022', label: 'Rollout at ~2,000 ft; power to near maximum', src: 'ntsb' },
+      { t: at(9, 37, 45), mark: 'I', label: 'Impact, 460 kt (530 mph)', src: 'ntsb' },
     ],
     events: [
       [at(8, 20, 0), 'Departs Dulles for Los Angeles.', 'commission'],
+      [at(8, 46, 0), 'Reaches its assigned cruising altitude of 35,000 ft.', 'ntsb'],
       [at(8, 51, 0), 'Last routine radio contact.', 'commission'],
-      [at(8, 54, 0), 'Aircraft deviates from its assigned course.', 'commission'],
-      [at(8, 56, 0), 'Transponder switched off; the flight is lost to controllers.', 'commission'],
+      [at(8, 55, 0), 'Deviates from the assigned course and turns south. The autopilot stays engaged through the turn.', 'ntsb'],
+      [at(8, 56, 0), 'Transponder returns cease; the flight is lost to controllers.', 'ntsb'],
+      [at(9, 7, 0), 'Levels at 25,000 ft. A minute later the autopilot is disconnected for about three minutes and the altitude sags to 22,000 before it is re-engaged.', 'ntsb'],
+      [at(9, 29, 0), 'Thirty-five miles west of the Pentagon, the autopilot is disconnected for the last time and the aircraft levels near 7,000 ft.', 'ntsb'],
       [at(9, 32, 0), 'Dulles controllers spot a fast primary target tracking east.', 'commission'],
-      [at(9, 34, 0), 'Begins a 330-degree turn southwest of the Pentagon.', 'commission'],
-      [at(9, 37, 46), 'Impact, west face of the Pentagon.', 'commission'],
+      [at(9, 34, 0), 'Three and a half miles west-southwest of the Pentagon, begins a 330-degree descending right turn, rolling out at about 2,000 ft.', 'ntsb'],
+      [at(9, 37, 45), 'Impact, west face of the Pentagon, at about 460 knots — 530 mph — with power near maximum.', 'ntsb'],
     ],
   },
   {

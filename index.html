@@ -54208,22 +54208,39 @@ const MIL_FLIGHTS = [
     label: 'GOFER 06',
     type: 'C-130H Hercules',
     unit: '133rd Airlift Wing, Minnesota ANG',
-    base: 'Transiting — Andrews toward Minnesota',
+    base: 'Andrews to Youngstown, Ohio',
     armed: 'UNARMED cargo aircraft',
     color: 0x6fd3ff,
     src: 'recon',
+    /* Corrected. The first version of this track was traced from secondary
+       retellings and was wrong three ways: it launched at 09:30 rather than
+       the 1333Z on the Andrews tower strips, it continued west as though the
+       aircraft reached Minnesota, and it passed within three miles of United
+       93 — close enough to manufacture a contact that never happened.
+
+       The primary sources are the 9/11 Commission's interview with the pilot
+       and Miles Kara's radar reconstruction. O'Brien's own radio call put the
+       smoke "about 30 miles" off; Kara's radar puts him roughly 34 nautical
+       miles southeast of the crash site. Both are far outside the ten-mile
+       ring the app draws for an AIM-9, which the earlier track was not. */
     path: [
-      [at(9, 30, 0), 38.81, -76.87, 3000],
-      [at(9, 35, 0), 38.83, -77.00, 4500],
-      [at(9, 37, 46), 38.88, -77.10, 5000],
-      [at(9, 45, 0), 39.10, -77.60, 12000],
-      [at(10, 5, 0), 40.15, -79.15, 20000],
-      [at(10, 25, 0), 40.60, -80.60, 22000],
+      [at(9, 33, 0), 38.8108, -76.8670, 0],
+      [at(9, 36, 0), 38.85, -77.02, 4000],
+      [at(9, 37, 45), 38.88, -77.09, 5000],
+      [at(9, 45, 0), 39.15, -77.70, 14000],
+      [at(9, 55, 0), 39.45, -78.05, 21000],
+      [at(10, 2, 0), 39.66, -78.30, 24000],
+      [at(10, 6, 0), 39.83, -78.42, 24000],
+      [at(10, 20, 0), 40.55, -79.55, 23000],
+      [at(10, 34, 0), 41.2607, -80.6791, 0],
     ],
     events: [
-      [at(9, 33, 0), 'Controllers ask this cargo crew to identify an unknown aircraft. It is American 77.', 'commission'],
-      [at(9, 37, 46), 'Lt. Col. Steven O’Brien watches it strike the Pentagon: "Looks like that aircraft crashed into the Pentagon, sir."', 'press'],
-      [at(10, 5, 0), 'Asked to look for United 93, the crew sees black smoke from an open field about 17 miles off — roughly 100 seconds after impact.', 'press'],
+      [at(9, 33, 0), 'Wheels up from Andrews at 1333Z, three minutes late behind a 747 held for wake turbulence. Those three minutes put him where he was.', 'commission'],
+      [at(9, 35, 0), 'Controllers ask this cargo crew to identify an unknown aircraft. It is American 77.', 'commission'],
+      [at(9, 37, 45), 'Lt. Col. Steven O’Brien watches it strike the Pentagon: "Looks like that aircraft crashed into the Pentagon, sir." He asks to orbit; ATC refuses and sends him west.', 'press'],
+      [at(10, 2, 0), 'Turned north onto heading 030, away from United 93’s projected path.', 'press'],
+      [at(10, 6, 0), 'Reports "black smoke at our nine o’clock, looks like about 30 miles". It is the Flight 93 crash site.', 'commission'],
+      [at(10, 34, 0), 'Diverts and lands at Youngstown, Ohio. He never reaches Minneapolis.', 'commission'],
     ],
   },
   {
@@ -54257,8 +54274,8 @@ const CALLSIGNS = [
     note: 'Gibney’s parent wing. QUIT 27 was the Supervisor of Flying, who launched in trail as a third aircraft.', src: 'press' },
   { cs: 'BULLY / WILD / CAPS', what: 'F-16C — 113th Wing, DC ANG, Andrews',
     note: 'Launched after United 93 was already down. Source wording on these varies.', src: 'press' },
-  { cs: 'GOFER 06', what: 'C-130H — 133rd AW, Minnesota ANG',
-    note: 'Witnessed the Pentagon impact and the Shanksville smoke. Some accounts render it "Gofer 86".', src: 'press' },
+  { cs: 'GOFER 06', what: 'C-130H3 — 133rd AW, Minnesota ANG',
+    note: 'Witnessed the Pentagon impact and the Shanksville smoke, then diverted to Youngstown. Some accounts render it "Gofer 86".', src: 'press' },
   { cs: 'VENUS 77', what: 'E-4B National Airborne Operations Center',
     note: 'Frequently cited in shootdown claims. A flying command post, not an armed aircraft.', src: 'press' },
   { cs: 'ANGEL', what: 'F/A-18 — VMFA-321, Marine Reserve, Andrews',
@@ -54429,7 +54446,7 @@ const CRITIC_GLIMPSE = {
     },
     {
       text: 'Confusion over the location of American Airlines Flight 77.',
-      note: 'Flight 77 had struck the Pentagon at 09:37:46 — twelve minutes before the CRITIC was originated.',
+      note: 'Flight 77 had struck the Pentagon at 09:37:45 — twelve minutes before the CRITIC was originated.',
       src: 'foia',
     },
   ],
@@ -54553,37 +54570,90 @@ const CALL_TOTALS = {
    records, and many of the 37 are repeat calls by the same people. Times are
    approximate. */
 const CALLS = [
-  { t: at(9, 30), who: 'Tom Burnett', to: 'his wife Deena', type: 'airfone',
+  { t: at(9, 30), row: 24, who: 'Tom Burnett', to: 'his wife Deena', type: 'airfone', dur: '28 s', durS: 28,
     note: 'First of four. He told her the hijackers claimed a bomb, and that he believed it was a ruse.' },
-  { t: at(9, 32), who: 'Mark Bingham', to: 'his mother Alice Hoagland', type: 'airfone',
+  { t: at(9, 31), row: null, who: 'A flight attendant', to: 'United maintenance', type: 'airfone', dur: '2 s', durS: 2,
+    note: 'Speed-dial to the maintenance desk. Two seconds — it did not take.' },
+  { t: at(9, 32), row: 34, who: 'A flight attendant', to: 'United maintenance', type: 'airfone', dur: '95 s', durS: 95,
+    note: 'The same speed-dial, this time connecting.' },
+  { t: at(9, 35), row: 33, who: 'Sandy Bradshaw', to: 'United maintenance, San Francisco', type: 'airfone', dur: '5 min 53 s', durS: 353,
+    note: 'A flight attendant reporting the hijacking to her own airline.' },
+  { t: at(9, 36), row: 25, who: 'Mark Bingham', to: 'his aunt’s house in California', type: 'airfone', dur: '5 s', durS: 5,
+    note: 'Did not connect.' },
+  { t: at(9, 37), row: 25, who: 'Mark Bingham', to: 'his mother Alice Hoagland', type: 'airfone', dur: '2 min 46 s', durS: 166,
     note: '"I want you to know that I love you. I am on a flight from Newark to San Francisco and there are three guys who have taken over the plane."' },
-  { t: at(9, 35), who: 'Jeremy Glick', to: 'his wife Lyz', type: 'airfone',
-    note: 'A long call. Lyz told him about the World Trade Center. This is one of the moments the script breaks.' },
-  { t: at(9, 37), who: 'Tom Burnett', to: 'Deena', type: 'airfone',
+  { t: at(9, 37), row: 27, who: 'Jeremy Glick', to: 'his wife Lyz', type: 'airfone', dur: '20 min', durS: 1200,
+    note: 'The longest call. Lyz told him about the World Trade Center — one of the moments the hijackers’ script breaks.' },
+  { t: at(9, 37), row: 24, who: 'Tom Burnett', to: 'Deena', type: 'airfone', dur: '62 s', durS: 62,
     note: 'Learns of the World Trade Center. "They are talking about crashing this plane into the ground."' },
-  { t: at(9, 39), who: 'Sandy Bradshaw', to: 'her husband Phil', type: 'airfone',
-    note: 'A flight attendant. She told him the crew were boiling water to throw at the hijackers.' },
-  { t: at(9, 42), who: 'Lauren Grandcolas', to: 'her husband Jack', type: 'airfone',
-    note: 'Reached his voicemail. "We have a little problem with the plane. I am totally fine. I just love you more than anything."' },
-  { t: at(9, 44), who: 'Todd Beamer', to: 'GTE operator Lisa Jefferson', type: 'airfone',
-    note: 'About thirteen minutes. He described the hijacking, recited the Lord’s Prayer with her, and asked her to call his family.' },
-  { t: at(9, 45), who: 'Tom Burnett', to: 'Deena', type: 'airfone',
-    note: '"A group of us are going to do something."' },
-  { t: at(9, 47), who: 'Linda Gronlund', to: 'her sister Elsa', type: 'airfone',
+  { t: at(9, 39), row: 23, who: 'Lauren Grandcolas', to: 'her husband Jack’s answering machine', type: 'airfone', dur: '46 s', durS: 46,
+    note: '"We have a little problem with the plane. I am totally fine. I just love you more than anything."' },
+  { t: at(9, 41), row: 23, who: 'Lauren Grandcolas', to: 'a residence', type: 'airfone', dur: '4 s', durS: 4,
+    note: 'One of several short attempts that did not hold.' },
+  { t: at(9, 41), row: 25, who: 'Mark Bingham', to: 'a wrong number', type: 'airfone', dur: '3 s', durS: 3,
+    note: 'Misdialled. Three seconds.' },
+  { t: at(9, 42), row: 23, who: 'Lauren Grandcolas', to: 'a residence, three times', type: 'airfone', dur: '2 s, 3 s, 2 s', durS: 7,
+    note: 'Three consecutive failures, billed separately. This is what a real call log looks like.' },
+  { t: at(9, 42), row: 26, who: 'Joseph DeLuca', to: 'his father', type: 'airfone', dur: '14 s', durS: 14 , note: 'Brief.' },
+  { t: at(9, 43), row: 26, who: 'Joseph DeLuca', to: 'his father', type: 'airfone', dur: '2 min 10 s', durS: 130,
+    note: 'Reports the hijacking.' },
+  { t: at(9, 43), row: 32, who: 'Todd Beamer', to: 'GTE operator Lisa Jefferson', type: 'airfone', dur: 'remainder of the flight',
+    note: 'Held open to the end. He described the hijacking, recited the Lord’s Prayer with her, and asked her to call his family.' },
+  { t: at(9, 44), row: 25, who: 'Tom Burnett', to: 'Deena', type: 'airfone', dur: '54 s', durS: 54,
+    note: '"A group of us are getting ready to do something." Note the row: 25, not the 24 he used earlier.' },
+  { t: at(9, 45), row: 34, who: 'Waleska Martinez', to: 'a friend’s office in Manhattan', type: 'airfone', dur: 'terminated',
+    note: 'Did not hold.' },
+  { t: at(9, 46), row: 26, who: 'Linda Gronlund', to: 'her sister’s answering machine', type: 'airfone', dur: '71 s', durS: 71,
     note: 'Left a message giving the location of her safe deposit box.' },
-  { t: at(9, 49), who: 'Marion Britton', to: 'her friend Fred Fiumano', type: 'airfone',
-    note: 'Told him the plane had been hijacked and two people had been killed.' },
-  { t: at(9, 53), who: 'Elizabeth Wainio', to: 'her stepmother Esther', type: 'airfone',
+  { t: at(9, 47), row: 32, who: 'CeeCee Lyles', to: 'her husband’s answering machine', type: 'airfone', dur: '56 s', durS: 56,
+    note: 'A flight attendant. Her first call, on an Airfone.' },
+  { t: at(9, 49), row: 33, who: 'Marion Britton', to: 'her friend Fred Fiumano', type: 'airfone', dur: '3 min 52 s', durS: 232,
+    note: 'Told him the plane had been hijacked and people had been killed. The line went dead.' },
+  { t: at(9, 50), row: 33, who: 'Sandy Bradshaw', to: 'her husband Phil', type: 'airfone', dur: '7 min 50 s', durS: 470,
+    note: 'Described the hijackers and the plan to rush them. The crew were boiling water.' },
+  { t: at(9, 53), row: 33, who: 'Honor Elizabeth Wainio', to: 'her stepmother Esther', type: 'airfone', dur: '4 min 29 s', durS: 269,
     note: '"They are getting ready to break into the cockpit. I have to go. I love you."' },
-  { t: at(9, 54), who: 'Tom Burnett', to: 'Deena', type: 'airfone',
-    note: 'The last of his four. "We are going to do something."' },
-  { t: at(9, 57), who: 'Todd Beamer', to: 'Lisa Jefferson (same call)', type: 'airfone',
-    note: '"Are you guys ready? Okay. Let’s roll." The revolt begins.' },
-  { t: at(9, 58), who: 'Edward Felt', to: '911, Westmoreland County', type: 'cellular',
-    note: 'From a lavatory. Dispatcher Glenn Cramer took the call. One of only two cellular calls from the aircraft — placed at about 5,000 ft.' },
-  { t: at(9, 58), who: 'CeeCee Lyles', to: 'her husband Lorne', type: 'cellular',
-    note: 'A flight attendant. The second and last cellular call, also at low altitude. She had reached him earlier on an Airfone.' },
+  { t: at(9, 58), row: null, who: 'Edward Felt', to: '911, Westmoreland County', type: 'cellular', dur: '70 s', durS: 70,
+    note: 'From a rear lavatory. Dispatcher Glenn Cramer took the call. One of only two cellular calls — placed at about 5,000 ft.' },
+  { t: at(9, 58), row: null, who: 'CeeCee Lyles', to: 'her husband Lorne', type: 'cellular', dur: 'line went dead',
+    note: 'The second cellular call, also at low altitude. "The plane is going down."' },
 ];
+
+/* How long the calls actually lasted, computed from the durations above
+   rather than characterised. The shape of the distribution is the point. */
+function durationStats() {
+  const timed = CALLS.filter((c) => typeof c.durS === 'number').map((c) => c.durS);
+  const sorted = [...timed].sort((a, b) => a - b);
+  const sum = timed.reduce((a, b) => a + b, 0);
+  const failed = timed.filter((d) => d <= 5);
+  const held = timed.filter((d) => d > 5);
+  const med = (xs) => xs.length % 2
+    ? xs[(xs.length - 1) / 2]
+    : (xs[xs.length / 2 - 1] + xs[xs.length / 2]) / 2;
+  return {
+    n: timed.length,
+    meanS: sum / timed.length,
+    medianS: med(sorted),
+    failedN: failed.length,
+    failedPct: (failed.length / timed.length) * 100,
+    heldN: held.length,
+    heldMedianS: med([...held].sort((a, b) => a - b)),
+    longestS: sorted[sorted.length - 1],
+    shortestS: sorted[0],
+  };
+}
+
+const WHY_SHORT = {
+  title: 'Why the calls were so short',
+  reasons: [
+    'A third of them simply failed. Nine of the timed calls lasted five seconds or less — misdials, drops, numbers that never picked up. That is Airfone and the 2001 network, not reticence.',
+    'Several reached answering machines, which are short by nature. Grandcolas, Gronlund and Lyles all left messages rather than speaking to anyone.',
+    'People made several short calls instead of one long one, working through numbers until something answered. Lauren Grandcolas tried a residence three times in a row and got two, three and two seconds.',
+    'There was not much time to begin with. Thirty-five minutes separate the hijacking from impact, and the last calls run into the roll sequence at 09:59, when the aircraft was being thrown about.',
+  ],
+  reading: 'The distribution is itself an argument for authenticity. A fabricated set would not be mostly failures and voicemail. It would not contain a misdial to a wrong number lasting three seconds, or three consecutive two-second attempts to the same house. That is the texture of real telephony under stress, and it is tedious in a way inventions are not.',
+  src: 'derived',
+};
 
 const FARADAY = {
   title: 'The Faraday cage argument',
@@ -54626,6 +54696,101 @@ const WHY_THEY_MATTER = {
   src: 'commission',
 };
 
+/* =============================================================================
+   Inconsistencies in the phone record
+
+   These are small, and none of them touches the substance. They are recorded
+   because an app that grades other people's sources has no business quietly
+   reconciling its own, and because anyone checking this against the National
+   Park Service log will hit them within a minute and deserves to know they
+   were seen rather than missed.
+   ========================================================================== */
+
+const PHONE_CONFLICTS = [
+  {
+    id: 'airfone-rows',
+    subject: 'How many rows carried Airfones — nine, or twelve?',
+    readings: [
+      { v: '"The last nine rows"', who: 'National Park Service, Flight 93 Memorial', src: 'commission',
+        weight: 'The summary sentence used everywhere, including in this app until now.' },
+      { v: 'Rows 23 to 34 — twelve rows', who: 'The row numbers in the NPS call log itself', src: 'commission',
+        weight: 'The same page. Calls are logged from rows 23, 24, 25, 26, 27, 32, 33 and 34.' },
+    ],
+    reading: 'A single source disagreeing with itself on the same page. The per-call rows are the harder datum — they come from billing records — so the installation evidently reached further forward than "the last nine rows" suggests. Nothing turns on it, but the summary is loose.',
+  },
+  {
+    id: 'cell-count',
+    subject: 'Two cellular calls, or three?',
+    readings: [
+      { v: 'Two — Edward Felt and CeeCee Lyles', who: 'FBI evidence, Moussaoui sentencing trial', src: 'commission',
+        weight: 'From carrier records. The figure normally cited, and the one this app uses.' },
+      { v: 'Three — the above plus Andrew "Sonny" Garcia', who: 'NPS call log', src: 'commission',
+        weight: 'Listed with an unknown time and a single word before disconnect.' },
+    ],
+    reading: 'Most likely connected-versus-attempted: Garcia’s may never have completed, and an incomplete call would not appear in a billing total. That is a guess, and it is labelled as one. Either way the argument is unaffected — the question is whether cellular calls happened at low altitude, and two or three both answer it the same way.',
+  },
+  {
+    id: 'cell-success-rate',
+    subject: 'How often did air-to-ground cell calls actually succeed in 2001?',
+    readings: [
+      { v: 'No measured rate exists that is worth quoting', who: 'Searched and not found', src: 'derived',
+        weight: 'NASA-era studies address avionics interference, not call completion. The 2004 Qualcomm/American test was an onboard picocell, which is the opposite mechanism.' },
+      { v: 'About 1% at 20,000 ft; 0% at 7,000 ft in a twin', who: 'A. K. Dewdney, "Project Achilles"', src: 'claim',
+        weight: 'The only figure in circulation. From an advocacy source, small sample, and flown in light aircraft rather than airliners.' },
+    ],
+    reading: 'The qualitative claim — unreliable, degrading sharply with altitude — is well founded on engineering grounds: tower antennas are downtilted, handover was built for road speeds, and at altitude a handset sees too many cells. The quantitative claim is not. This app states the first and refuses the second, including where the second would suit its own argument.',
+  },
+];
+
+/* =============================================================================
+   Which calls have audio, and why that answers a question worth asking
+
+   A reasonable objection: if recordings of these calls exist, does that not
+   imply somebody was already collecting them?
+
+   No — and the pattern of what exists is the reason. Audio survives from
+   exactly those endpoints where recording was already routine for an ordinary
+   institutional reason, and from nowhere else:
+
+     - domestic answering machines, which record by design;
+     - 911 dispatch centres, which record by law;
+     - airline reservations and operations lines, recorded for training;
+     - air traffic control and the cockpit voice recorder, recorded by
+       regulation.
+
+   And the inverse is the stronger half. Person-to-person calls answered by a
+   human at home have NO audio. Tom Burnett to Deena, Jeremy Glick to Lyz,
+   Mark Bingham to his mother — all known only from the recipients' accounts.
+
+   If there had been pre-existing blanket collection, there would be audio of
+   all of them. There is not. The gaps fall precisely where an absence of
+   collection predicts they should.
+
+   The sharpest case is the most famous line of the day. "Let's roll" is not on
+   any tape. It comes from GTE operator Lisa Jefferson's recollection of a call
+   that was not recorded. A fabrication with collection behind it is the one
+   scenario in which that line would certainly exist as audio.
+   ========================================================================== */
+
+const AUDIO = {
+  title: 'Which calls have audio',
+  exists: [
+    { what: 'Betty Ong, American 11', why: 'Called American Airlines reservations, a line recorded as a matter of business practice. About four minutes were played at the 9/11 Commission hearing on 27 January 2004.', src: 'commission' },
+    { what: 'CeeCee Lyles’ voicemail', why: 'Left on her husband’s home answering machine. Lorne Lyles has played it publicly.', src: 'press' },
+    { what: 'Lauren Grandcolas, Linda Gronlund', why: 'Also answering machines. Recording is what the device is for.', src: 'press' },
+    { what: 'Edward Felt’s 911 call', why: 'Emergency dispatch centres record every call by law. Taken by Westmoreland County dispatcher Glenn Cramer.', src: 'press' },
+    { what: 'Cockpit voice recorder, United 93', why: 'Required equipment. Recovered at the crash site, played to families and at the Moussaoui trial.', src: 'ntsb' },
+  ],
+  absent: [
+    { what: 'Tom Burnett to his wife Deena — four calls', why: 'Answered by a person. Known from her account.' },
+    { what: 'Jeremy Glick to his wife Lyz — twenty minutes', why: 'Answered by a person. The longest call of the morning, and there is no tape of it.' },
+    { what: 'Mark Bingham to his mother', why: 'Answered by a person.' },
+    { what: 'Todd Beamer to GTE operator Lisa Jefferson', why: 'Airfone operator calls were not routinely recorded. "Let’s roll" is her recollection, not a recording.' },
+  ],
+  reading: 'Audio exists where recording was already ordinary, and is missing everywhere else. That is the signature of no collection, not of collection. Blanket interception would have produced a complete set; what survives is a partial set shaped exactly by which endpoint happened to have a tape running.',
+  src: 'derived',
+};
+
 function callEvents() {
   return CALLS.map((c) => ({
     t: c.t,
@@ -54640,8 +54805,12 @@ function callEvents() {
   return {
     CALL_TOTALS,
     CALLS,
+    durationStats,
+    WHY_SHORT,
     FARADAY,
     WHY_THEY_MATTER,
+    PHONE_CONFLICTS,
+    AUDIO,
     callEvents
   };
 })();
@@ -54649,7 +54818,7 @@ function callEvents() {
 __m["data"] = (function () {
   const { MIL_FLIGHTS, CALLSIGNS, KERNEL } = __m["military"];
   const { CRITIC_NODES, CRITIC_CHAIN, CRITIC_SUMMARY, CRITIC_GLIMPSE, DISTRIBUTION, CRITIC_BACKGROUND, FOIA, criticEvents } = __m["critic"];
-  const { CALLS, CALL_TOTALS, FARADAY, WHY_THEY_MATTER, callEvents } = __m["calls"];
+  const { CALLS, CALL_TOTALS, FARADAY, WHY_THEY_MATTER, PHONE_CONFLICTS, AUDIO, durationStats, WHY_SHORT, callEvents } = __m["calls"];
 /* =============================================================================
    data.js — 9/11 timeline, flight tracks, debris field, and the Gibney claim.
 
@@ -54705,6 +54874,7 @@ const PLACES = {
   OTIS: { name: 'Otis ANGB, MA', short: 'Otis ANGB',       lat: 41.6584, lon: -70.5214, src: 'geo' },
   LFI:  { name: 'Langley AFB, VA', short: 'Langley AFB', lat: 37.0829, lon: -76.3605, src: 'geo' },
   ADW:  { name: 'Andrews AFB, MD', short: 'Andrews AFB', lat: 38.8108, lon: -76.8670, src: 'geo' },
+  KYNG: { name: 'Youngstown-Warren Regional, OH', short: 'Youngstown', lat: 41.2607, lon: -80.6791, src: 'geo' },
 };
 
 /* --- The four hijacked aircraft ------------------------------------------
@@ -54781,29 +54951,64 @@ const FLIGHTS = [
     from: 'KIAD', to: 'KLAX',
     souls: 64,
     color: 0x6fd3ff,
-    src: 'recon',
+    src: 'ntsb',
+    pathNote: 'Altitudes and timings are FDR values from the NTSB Flight Path Study for American 77 (19 Feb 2002). The lateral track is not: the study publishes its ground track as a printed map, so the positions here are anchors traced from it — Dulles, the turn south, 35 mi west of the Pentagon, 3.5 mi west-southwest at 09:34 — joined by a track chosen so that every derived ground speed lands where a 757 can actually fly. The 330-degree turn is drawn as a 3.3-mile arc spiralling to the rollout point; the study gives its start, its end and its total heading change, not its shape. The study places rollout “about 4 miles southwest”, which is rendered here on bearing 250 so the final heading comes out near 070 — the heading the ground damage path shows.',
+
     path: [
-      [at(8, 20, 0), 38.9531, -77.4565, 0],
-      [at(8, 34, 0), 39.05, -79.10, 29000],
-      [at(8, 46, 0), 38.90, -80.90, 35000],
-      [at(8, 51, 0), 38.95, -81.30, 35000],
-      [at(8, 54, 0), 39.00, -81.50, 35000],
-      [at(8, 56, 0), 38.85, -81.80, 34000],
-      [at(9, 0, 0), 38.60, -81.00, 32000],
-      [at(9, 10, 0), 38.60, -79.90, 25000],
-      [at(9, 29, 0), 38.75, -77.90, 7000],
-      [at(9, 34, 0), 38.80, -77.20, 2200],
-      [at(9, 36, 0), 38.79, -77.12, 2000],
-      [at(9, 37, 46), 38.8719, -77.0563, 0],
+      [at(8, 20, 0), 38.9531, -77.4565, 0],       // A — departs Dulles
+      [at(8, 26, 0), 38.9900, -77.9000, 14000],
+      [at(8, 34, 0), 39.0500, -79.0500, 29000],
+      [at(8, 46, 0), 38.9900, -80.7500, 35000],   // B — reaches 35,000
+      [at(8, 51, 0), 38.9700, -81.5000, 35000],   // last routine radio contact
+      [at(8, 55, 0), 38.9400, -82.0500, 35000],   // C — deviates, turns south
+      [at(8, 56, 0), 38.8500, -82.0200, 35000],   // transponder returns cease
+      [at(9, 0, 0), 38.5500, -81.7000, 35000],    // D — heading east, descent begins
+      [at(9, 7, 0), 38.5000, -80.7300, 25000],    // E — levels at 25,000
+      [at(9, 9, 30), 38.5200, -80.4200, 22000],   // autopilot off, sags to 22,000
+      [at(9, 12, 0), 38.5500, -80.1000, 25250],   // re-engaged at 25,250
+      [at(9, 22, 0), 38.7000, -78.7000, 25250],   // descent resumes
+      [at(9, 29, 0), 38.8700, -77.7100, 7000],    // F — 35 mi west, levels near 7,000
+      [at(9, 32, 0), 38.8700, -77.3600, 7200],
+      [at(9, 34, 0), 38.8546, -77.1174, 6800],    // 330-degree descending right turn begins
+      [at(9, 34, 16), 38.8474, -77.0879, 6400],
+      [at(9, 34, 32), 38.8312, -77.0659, 6000],
+      [at(9, 34, 49), 38.8095, -77.0559, 5600],
+      [at(9, 35, 5), 38.7874, -77.0597, 5200],
+      [at(9, 35, 21), 38.7698, -77.0760, 4800],
+      [at(9, 35, 38), 38.7608, -77.1008, 4400],
+      [at(9, 35, 54), 38.7625, -77.1280, 4000],
+      [at(9, 36, 10), 38.7744, -77.1510, 3600],
+      [at(9, 36, 26), 38.7940, -77.1643, 3200],
+      [at(9, 36, 42), 38.8168, -77.1643, 2800],
+      [at(9, 36, 59), 38.8377, -77.1507, 2400],
+      [at(9, 37, 15), 38.8521, -77.1261, 2000],   // rollout, ~2,000 ft, ~4 mi out
+      [at(9, 37, 45), 38.8719, -77.0563, 0],      // impact, ~460 kt
+    ],
+    /* Where the record speaks, as against where the line is drawn between. */
+    dataPoints: [
+      { t: at(8, 20, 0), mark: 'A', label: 'Departs Dulles', src: 'ntsb' },
+      { t: at(8, 46, 0), mark: 'B', label: 'Reaches 35,000 ft', src: 'ntsb' },
+      { t: at(8, 55, 0), mark: 'C', label: 'Deviates, turns south', src: 'ntsb' },
+      { t: at(8, 56, 0), mark: '\u2022', label: 'Transponder returns cease', src: 'ntsb' },
+      { t: at(9, 0, 0), mark: 'D', label: 'Heading east, descent begins', src: 'ntsb' },
+      { t: at(9, 7, 0), mark: 'E', label: 'Levels at 25,000 ft', src: 'ntsb' },
+      { t: at(9, 9, 30), mark: '\u2022', label: 'Autopilot off 3 min — altitude sags to 22,000', src: 'ntsb' },
+      { t: at(9, 29, 0), mark: 'F', label: '35 mi west of the Pentagon, levels near 7,000 ft', src: 'ntsb' },
+      { t: at(9, 34, 0), mark: '\u2022', label: '330-degree descending right turn begins', src: 'ntsb' },
+      { t: at(9, 37, 15), mark: '\u2022', label: 'Rollout at ~2,000 ft; power to near maximum', src: 'ntsb' },
+      { t: at(9, 37, 45), mark: 'I', label: 'Impact, 460 kt (530 mph)', src: 'ntsb' },
     ],
     events: [
       [at(8, 20, 0), 'Departs Dulles for Los Angeles.', 'commission'],
+      [at(8, 46, 0), 'Reaches its assigned cruising altitude of 35,000 ft.', 'ntsb'],
       [at(8, 51, 0), 'Last routine radio contact.', 'commission'],
-      [at(8, 54, 0), 'Aircraft deviates from its assigned course.', 'commission'],
-      [at(8, 56, 0), 'Transponder switched off; the flight is lost to controllers.', 'commission'],
+      [at(8, 55, 0), 'Deviates from the assigned course and turns south. The autopilot stays engaged through the turn.', 'ntsb'],
+      [at(8, 56, 0), 'Transponder returns cease; the flight is lost to controllers.', 'ntsb'],
+      [at(9, 7, 0), 'Levels at 25,000 ft. A minute later the autopilot is disconnected for about three minutes and the altitude sags to 22,000 before it is re-engaged.', 'ntsb'],
+      [at(9, 29, 0), 'Thirty-five miles west of the Pentagon, the autopilot is disconnected for the last time and the aircraft levels near 7,000 ft.', 'ntsb'],
       [at(9, 32, 0), 'Dulles controllers spot a fast primary target tracking east.', 'commission'],
-      [at(9, 34, 0), 'Begins a 330-degree turn southwest of the Pentagon.', 'commission'],
-      [at(9, 37, 46), 'Impact, west face of the Pentagon.', 'commission'],
+      [at(9, 34, 0), 'Three and a half miles west-southwest of the Pentagon, begins a 330-degree descending right turn, rolling out at about 2,000 ft.', 'ntsb'],
+      [at(9, 37, 45), 'Impact, west face of the Pentagon, at about 460 knots — 530 mph — with power near maximum.', 'ntsb'],
     ],
   },
   {
@@ -55095,7 +55300,11 @@ const SRC_META = {
     CALLS,
     CALL_TOTALS,
     FARADAY,
-    WHY_THEY_MATTER
+    WHY_THEY_MATTER,
+    PHONE_CONFLICTS,
+    AUDIO,
+    durationStats,
+    WHY_SHORT
   };
 })();
 
@@ -55133,10 +55342,12 @@ const CONFLICTS = [
     id: 'gofer-distance',
     subject: 'GOFER 06 — distance from the Flight 93 crash site',
     tags: ['GOFER'],
-    status: 'todo',
+    status: 'resolved',
     why: 'This is the number that decides whether the one aircraft near both crash sites was near enough to matter. It is load-bearing for the shootdown claim, so the spread matters.',
     readings: [
-      { v: '"about 30 miles"', who: 'O’Brien’s own radio call to Cleveland Center at 10:06', src: 'commission', weight: 'Contemporaneous. Spoken while looking at it.' },
+      { v: '"about 30 miles"', who: 'O’Brien’s own radio call to Cleveland Center at 10:06', src: 'commission', weight: 'Contemporaneous. Spoken while looking at it.',
+    appSays: 'Corrected. The track now places GOFER 06 30 miles from the crash site at 10:06, matching his own radio call, with a closest approach to United 93 of 38 miles.',
+  },
       { v: '~34 nautical miles', who: 'Miles Kara, radar reconstruction', src: 'press', weight: 'Instrument-derived, by the Commission’s own radar analyst.' },
       { v: '"about 20 miles off the left wing"', who: 'O’Brien, 9/11 Commission interview, 6 May 2004', src: 'commission', weight: 'Recollection, 32 months after the fact.' },
       { v: '~17 miles', who: 'Secondary retellings', src: 'press', weight: 'No stated basis. Weakest reading.' },
@@ -55148,10 +55359,12 @@ const CONFLICTS = [
     id: 'gofer-takeoff',
     subject: 'GOFER 06 — time off the ground at Andrews',
     tags: ['GOFER'],
-    status: 'todo',
+    status: 'resolved',
     why: 'O’Brien was held three minutes for wake turbulence behind a 747. Those three minutes are the reason he was where he was when Flight 77 came down, so the exact time is not trivia.',
     readings: [
-      { v: '1333Z — 09:33 EDT', who: 'Andrews tower flight strips, cited in the Commission interview; O’Brien confirmed it', src: 'commission', weight: 'Documentary. A written record made at the time.' },
+      { v: '1333Z — 09:33 EDT', who: 'Andrews tower flight strips, cited in the Commission interview; O’Brien confirmed it', src: 'commission', weight: 'Documentary. A written record made at the time.',
+    appSays: 'Corrected. The track begins at 09:33, the 1333Z on the Andrews tower strips.',
+  },
       { v: '"about 9:30"', who: 'Secondary accounts', src: 'press', weight: 'Rounded.' },
       { v: 'Scheduled for 10:00', who: 'Original flight plan', src: 'press', weight: 'Not a conflict — context. He departed early.' },
     ],
@@ -55162,10 +55375,12 @@ const CONFLICTS = [
     id: 'gofer-destination',
     subject: 'GOFER 06 — where it ended up',
     tags: ['GOFER'],
-    status: 'todo',
+    status: 'resolved',
     why: 'A wrong endpoint puts a line on the map that no aircraft ever flew.',
     readings: [
-      { v: 'Diverted and landed at Youngstown, Ohio', who: 'O’Brien, 9/11 Commission interview', src: 'commission', weight: 'First-hand, and he describes being debriefed there.' },
+      { v: 'Diverted and landed at Youngstown, Ohio', who: 'O’Brien, 9/11 Commission interview', src: 'commission', weight: 'First-hand, and he describes being debriefed there.',
+    appSays: 'Corrected. The track diverts and lands at Youngstown, Ohio, instead of continuing west.',
+  },
       { v: 'Continued to Minneapolis', who: 'Secondary accounts', src: 'press', weight: 'Describes the intent, not the outcome. The crew decided to press on for Minneapolis and were then diverted.' },
     ],
     reading: 'Both are true of different moments. He intended Minneapolis and landed at Youngstown.',
@@ -55301,19 +55516,82 @@ const CONFLICTS = [
     id: 'track-provenance',
     subject: 'This app’s flight tracks are not radar data',
     tags: ['DATA'],
-    status: 'todo',
-    why: 'A smooth line on a 3D map reads as measurement. Three of these four are not.',
+    status: 'open',
+    why: 'A smooth line on a 3D map reads as measurement. Two of these four are not.',
     readings: [
-      { v: '~4.8-second sweeps, several hundred points per flight', who: 'What real 84th RADES data looks like', src: 'press', weight: 'The standard this app does not meet.' },
-      { v: '9–12 hand-placed waypoints, one per ~6 minutes', who: 'AA11, UA175 and AA77 in this app', src: 'derived', weight: 'Interpolated with great circles between anchors.' },
-      { v: 'FDR altitudes; lateral track traced by eye from a printed map', who: 'UA93 in this app', src: 'ntsb', weight: 'Vertically sound, laterally approximate.' },
+      { v: '~4.8-second sweeps, several hundred points per flight', who: 'What real 84th RADES data looks like', src: 'press', weight: 'The standard this app does not meet, and will not.' },
+      { v: '9–12 hand-placed waypoints, one per ~6 minutes', who: 'AA11 and UA175 in this app', src: 'derived', weight: 'Interpolated with great circles between anchors. Neither recorder was ever recovered, so nothing better exists to use.' },
+      { v: 'FDR altitudes and timings; lateral track traced by eye from a printed map', who: 'UA93 and AA77 in this app', src: 'ntsb', weight: 'Vertically sound, laterally approximate.' },
     ],
-    reading: 'No RADES file is plotted anywhere in this app. AA77 has an NTSB Flight Path Study of its own that has not been incorporated yet; AA11 and UA175 have no FDR at all, since their recorders were never recovered.',
-    appSays: 'Tracks are badged RECONSTRUCTED. UA93 is badged NTSB / FDR for altitude only.',
+    reading: 'No RADES file is plotted anywhere in this app, and none will be until someone reads the files. What has changed is the split: AA77 was rebuilt from its own NTSB Flight Path Study, so the two flights whose recorders survived now carry recorder altitudes — the 25,000 ft level-off, the three-minute autopilot disconnect that sags to 22,000, the final 330-degree turn. AA11 and UA175 remain what they always were, and are badged accordingly. This entry stays open permanently: it is a standing caveat about the medium, not a task anyone can finish.',
+    appSays: 'AA11 and UA175 are badged RECONSTRUCTED. UA93 and AA77 are badged NTSB / FDR, for the vertical profile only — both lateral tracks are still traced by eye.',
   },
 ];
 
 CONFLICTS.push(
+  {
+    id: 'pentagon-second',
+    subject: 'The Pentagon impact — 09:37:45 or 09:37:46?',
+    tags: ['DATA'],
+    status: 'resolved',
+    why: 'It changes nothing. It is here because an app that grades other people to the second should be willing to be graded to the second itself.',
+    readings: [
+      { v: '09:37:46', who: '9/11 Commission Report', src: 'commission', weight: 'The figure this app used until now, and the one most often quoted.' },
+      { v: '09:37:45', who: 'NTSB Flight Path Study, American 77', src: 'ntsb', weight: 'From the recorder. The last FDR subframe.' },
+    ],
+    reading: 'One second, between two primary sources that agree on everything else. The recorder is the closer instrument, so the app now uses 09:37:45 everywhere — including in GOFER 06’s track, where the C-130 crew watched it happen. Recorded rather than quietly harmonised, because harmonising small disagreements without saying so is how a record stops being checkable.',
+    appSays: 'The app uses 09:37:45. The Commission’s 09:37:46 is not wrong, merely coarser.',
+  },
+  {
+    id: 'gofer-track-fixed',
+    subject: 'GOFER 06 — the track that manufactured a contact',
+    tags: ['GOFER'],
+    status: 'resolved',
+    why: 'The app drew an unarmed C-130 passing within three miles of United 93. That is inside the ring it draws for an AIM-9, so the app was generating the exact false signal it exists to test for.',
+    readings: [
+      { v: '"About 30 miles" — his own radio call at 10:06', who: 'ATC transcript', src: 'commission', weight: 'Contemporaneous. The figure now plotted.' },
+      { v: '~34 nautical miles southeast', who: 'Miles Kara, radar reconstruction', src: 'press', weight: 'Instrument-derived, and consistent with the radio call.' },
+      { v: '~3 miles', who: 'This app, until corrected', src: 'derived', weight: 'Traced from secondary retellings. Wrong, and wrong in the direction that creates a story.' },
+    ],
+    reading: 'Three errors in one track: a 09:30 departure against the 1333Z on the Andrews tower strips, a westward continuation as though he reached Minnesota, and a closest approach of three miles.',
+    appSays: 'Corrected. Departure 09:33, diversion and landing at Youngstown, Ohio, and a closest approach to United 93 of 38 miles — 3.4x outside the AIM-9 ring. The false contact is gone.',
+  },
+  {
+    id: 'airfone-rows',
+    subject: 'Airfone installation — nine rows, or twelve?',
+    tags: ['CALLS'],
+    status: 'open',
+    why: 'It bears on how many separate handsets the 37 calls came from, which is what makes the call log hard to fabricate.',
+    readings: [
+      { v: 'Rows 23 to 34 — twelve rows', who: 'The per-call row numbers in the NPS log', src: 'commission', weight: 'From billing records. The harder datum.' },
+      { v: '"The last nine rows"', who: 'National Park Service summary, same page', src: 'commission', weight: 'A single source disagreeing with itself.' },
+    ],
+    reading: 'Nothing turns on it, but the summary sentence is looser than the data underneath it. The app follows the row numbers.',
+  },
+  {
+    id: 'cell-count',
+    subject: 'Cellular calls from United 93 — two, or three?',
+    tags: ['CALLS'],
+    status: 'open',
+    why: 'The cellular count is the whole target of the Faraday-cage argument.',
+    readings: [
+      { v: 'Two — Edward Felt and CeeCee Lyles', who: 'FBI evidence, Moussaoui sentencing trial', src: 'commission', weight: 'Carrier records. The figure the app uses.' },
+      { v: 'Three — plus Andrew "Sonny" Garcia', who: 'NPS call log', src: 'commission', weight: 'Unknown time, a single word before disconnect.' },
+    ],
+    reading: 'Probably connected-versus-attempted, since an incomplete call would not reach a billing total. That is a guess and is labelled as one. The argument is unaffected either way.',
+  },
+  {
+    id: 'cell-success-rate',
+    subject: 'Air-to-ground cell call success rate in 2001',
+    tags: ['CALLS', 'DATA'],
+    status: 'open',
+    why: 'A percentage here would be the most quotable number in the whole dispute, which is exactly why it should not be invented.',
+    readings: [
+      { v: 'No measured rate worth quoting exists', who: 'Searched and not found', src: 'derived', weight: 'NASA-era work covers avionics interference, not call completion. The 2004 Qualcomm test used an onboard picocell — the opposite mechanism.' },
+      { v: '~1% at 20,000 ft, 0% at 7,000 ft in a twin', who: 'A. K. Dewdney, Project Achilles', src: 'claim', weight: 'The only figure in circulation. Advocacy source, small sample, light aircraft rather than airliners.' },
+    ],
+    reading: 'The qualitative claim stands on engineering grounds — downtilted antennas, handover built for road speeds, too many cells visible at altitude. The quantitative one does not. The app refuses the number even though quoting it would suit its own argument.',
+  },
   {
     id: 'fuel-yardstick',
     subject: 'Fuel as a constraint on the Pennsylvania leg — this app overstated it',
@@ -56171,6 +56449,45 @@ function wezWindow(track, targetAt, rMaxMi) {
   };
 }
 
+/* =============================================================================
+   The line-of-sight horizon
+
+   Distinct from the sight LINE, and worth drawing separately. An aircraft can
+   see — and be seen by — everything inside its radio horizon, which is set by
+   altitude and the curvature of the Earth, not by any weapon:
+
+       d (nautical miles) ~ 1.23 * sqrt(height in feet)
+
+   Two aircraft see each other at the sum of their own horizons. At 31,000 ft
+   with a target at 5,000, that is roughly 350 statute miles.
+
+   Put that beside an AIM-9's eleven and the gap is the whole argument. Line of
+   sight is not the constraint and never was. Being able to see an airliner
+   from three hundred miles away buys nothing; the weapon still requires being
+   inside a ring twenty-two miles across at one particular minute. Seeing is
+   not shooting, and the horizon is drawn to make the ratio visible.
+   ========================================================================== */
+
+const LOS_HORIZON = {
+  title: 'Line-of-sight horizon',
+  color: 0x74c7ff,
+  note: 'Everything inside this is in view. Almost none of it is in range.',
+  src: 'derived',
+};
+
+/* Radio/visual horizon in statute miles for a given altitude. */
+const horizonSmi = (ft) => 1.23 * Math.sqrt(Math.max(0, ft)) * 1.15078;
+
+/* Mutual horizon: the range at which two aircraft can see each other. */
+function mutualHorizonSmi(ftA, ftB) {
+  return horizonSmi(ftA) + horizonSmi(ftB);
+}
+
+function losVsWez(hypoAltFt, targetAltFt, rMaxMi) {
+  const los = mutualHorizonSmi(hypoAltFt, targetAltFt);
+  return { losMi: los, wezMi: rMaxMi, ratio: los / rMaxMi };
+}
+
   return {
     HYPO,
     CONCESSIONS,
@@ -56183,7 +56500,11 @@ function wezWindow(track, targetAt, rMaxMi) {
     foreknowledgeVerdict,
     losRange,
     trackSampleLL,
-    wezWindow
+    wezWindow,
+    LOS_HORIZON,
+    horizonSmi,
+    mutualHorizonSmi,
+    losVsWez
   };
 })();
 
@@ -56193,7 +56514,7 @@ __m["map3d"] = (function () {
   const { FLIGHTS, MIL_FLIGHTS, PLACES, DEBRIS, GIBNEY, CLAIM_ROUTE, CRITIC_NODES, CRITIC_CHAIN, DISTRIBUTION } = __m["data"];
   const { samplePath, gcPoints, haversineMi, destinationPoint } = __m["geo"];
   const { BANDS, FUEL_RING, FERRY_RING, HALF_FERRY_RING, ringPoints, reachMi, MAX_DRAW_MI, AIM9, bandRadii, evidenceCeilingMi, DEPARTURE_BOUNDS } = __m["reachability"];
-  const { HYPO, FOREKNOWLEDGE } = __m["steelman"];
+  const { HYPO, FOREKNOWLEDGE, LOS_HORIZON, horizonSmi } = __m["steelman"];
   const { CALLS } = __m["calls"];
 /* =============================================================================
    map3d.js — the 3D map.
@@ -56731,45 +57052,54 @@ class Map3D {
     this.scene.add(this.trailGroup);
     this.trailDots = [];
 
-    const f = FLIGHTS.find((x) => x.id === 'UA93');
-    if (!f || !f.dataPoints) return;
+    /* Both flights whose recorders were recovered, not just United 93.
+       American 77 now carries the same treatment off its own NTSB study, and
+       the contrast is the point: American 11 and United 175 get no dots at
+       all, because there is nothing to put down. An empty track is the
+       honest rendering of a recorder that was never found. */
+    for (const f of FLIGHTS) {
+      if (!f.dataPoints) continue;
+      const tEnd = f.path[f.path.length - 1][0];
 
-    for (const d of f.dataPoints) {
-      const sm = samplePath(f.path, Math.min(d.t, f.path[f.path.length - 1][0]));
-      if (!sm) continue;
-      const [x, z] = projectLL(sm);
-      const lettered = d.mark !== '\u2022';
-      const m = new THREE.Mesh(
-        new THREE.SphereGeometry(lettered ? 0.34 : 0.22, 12, 10),
-        new THREE.MeshBasicMaterial({ color: lettered ? 0x8cf27a : 0xdfe8f2 }),
-      );
-      m.position.set(x, altToY(sm.altFt) + STATE_DEPTH + 0.05, z);
-      m.visible = false;
-      m.userData = {
-        kind: 'datum', mark: d.mark, label: d.label, t: d.t, src: d.src,
-        altFt: sm.altFt,
-      };
-      this.trailGroup.add(m);
+      for (const d of f.dataPoints) {
+        const sm = samplePath(f.path, Math.min(d.t, tEnd));
+        if (!sm) continue;
+        const [x, z] = projectLL(sm);
+        const lettered = d.mark !== '\u2022';
+        const m = new THREE.Mesh(
+          new THREE.SphereGeometry(lettered ? 0.34 : 0.22, 12, 10),
+          new THREE.MeshBasicMaterial({ color: lettered ? 0x8cf27a : 0xdfe8f2 }),
+        );
+        m.position.set(x, altToY(sm.altFt) + STATE_DEPTH + 0.05, z);
+        m.visible = false;
+        m.userData = {
+          kind: 'datum', mark: d.mark, label: d.label, t: d.t, src: d.src,
+          altFt: sm.altFt, fid: f.id, flight: f.label,
+        };
+        this.trailGroup.add(m);
 
-      // A stem down to the ground so the altitude of each datum reads.
-      const stem = new THREE.Line(
-        new THREE.BufferGeometry().setFromPoints([
-          new THREE.Vector3(x, altToY(sm.altFt) + STATE_DEPTH + 0.05, z),
-          new THREE.Vector3(x, STATE_DEPTH + 0.02, z),
-        ]),
-        new THREE.LineBasicMaterial({ color: 0x8cf27a, transparent: true, opacity: 0.3 }),
-      );
-      stem.visible = false;
-      this.trailGroup.add(stem);
+        // A stem down to the ground so the altitude of each datum reads.
+        const stem = new THREE.Line(
+          new THREE.BufferGeometry().setFromPoints([
+            new THREE.Vector3(x, altToY(sm.altFt) + STATE_DEPTH + 0.05, z),
+            new THREE.Vector3(x, STATE_DEPTH + 0.02, z),
+          ]),
+          new THREE.LineBasicMaterial({ color: 0x8cf27a, transparent: true, opacity: 0.3 }),
+        );
+        stem.visible = false;
+        this.trailGroup.add(stem);
 
-      this.trailDots.push({ d, mesh: m, stem });
+        this.trailDots.push({ d, mesh: m, stem, fid: f.id });
+      }
     }
   }
 
   setTrail(t) {
     if (!this.trailGroup || !this.trailGroup.visible) return;
-    for (const { d, mesh, stem } of this.trailDots) {
-      const on = t >= d.t;
+    for (const { d, mesh, stem, fid } of this.trailDots) {
+      // A datum belongs to its flight: hide the track, hide its record.
+      const fo = this.flightObjs.get(fid);
+      const on = t >= d.t && (!fo || fo.visible);
       mesh.visible = on;
       stem.visible = on;
       mesh.scale.setScalar(this._markerScale);
@@ -56935,6 +57265,19 @@ class Map3D {
     };
     this.hypoWezOuter = mkWez(0.95, false);
     this.hypoWezInner = mkWez(0.5, true);
+
+    /* The line-of-sight horizon: everything the aircraft can see, bounded by
+       altitude and the curvature of the Earth. Drawn beside the engagement
+       rings so the ratio between them is visible — about thirty to one. */
+    const hg = new THREE.BufferGeometry();
+    hg.setAttribute('position', new THREE.BufferAttribute(new Float32Array(121 * 3), 3));
+    this.hypoHorizon = new THREE.Line(hg, new THREE.LineBasicMaterial({
+      color: LOS_HORIZON.color, transparent: true, opacity: 0.4,
+    }));
+    this.hypoHorizon.frustumCulled = false;
+    this.hypoHorizon.visible = false;
+    this.hypoGroup.add(this.hypoHorizon);
+    this.hypoHorizonInfo = null;
     this.hypoLosInfo = null;
   }
 
@@ -56976,6 +57319,15 @@ class Map3D {
       this.hypoWezOuter.visible = true;
       this.hypoWezInner.visible = true;
 
+      // And the horizon it can see to, which is a different thing entirely.
+      const hz = horizonSmi(s.altFt);
+      const hzPts = ringPoints(s, hz, 120);
+      this._writeRing(this.hypoHorizon, hzPts);
+      this.hypoHorizon.visible = true;
+      this.hypoHorizonInfo = {
+        miles: hz, ringLL: hzPts, order: searchOrder(hzPts.length),
+      };
+
       if (targetLL) {
         const [tx, tz] = projectLL(targetLL);
         const ty = altToY(targetLL.altFt ?? s.altFt) + STATE_DEPTH + 0.05;
@@ -57005,8 +57357,10 @@ class Map3D {
       this.hypoLos.visible = false;
       this.hypoWezOuter.visible = false;
       this.hypoWezInner.visible = false;
+      this.hypoHorizon.visible = false;
       this._hypoSample = null;
       this.hypoLosInfo = null;
+      this.hypoHorizonInfo = null;
     }
   }
 
@@ -57285,6 +57639,7 @@ class Map3D {
   setFlightVisible(id, v) {
     const o = this.flightObjs.get(id);
     if (o) o.visible = v;
+    if (this.trailGroup && this.trailGroup.visible) this.setTrail(this._t ?? 0);
   }
 
   setDebrisVisible(v) { this.debrisGroup.visible = v; }
@@ -57476,7 +57831,7 @@ __m["main"] = (function () {
   const { analyseClaim, analyseDocumented, ASSUMPTIONS, COMMAND_CHECK, classify, legAnalysis } = __m["analysis"];
   const { CONFLICTS, STATUS_META, conflictsFor, openCount } = __m["conflicts"];
   const { BANDS, FUEL_RING, FERRY_RING, HALF_FERRY_RING, AIM9, shanksvilleTest, reachMi, scaleComparison, TOLERANCES, DEPARTURE_BOUNDS, bandRadii, evidenceCeilingMi, CONFIG_TRADE } = __m["reachability"];
-  const { HYPO, CONCESSIONS, VERDICT, buildHypoTrack, FOREKNOWLEDGE, HIJACK_T, foreknowledgeVerdict, wezWindow } = __m["steelman"];
+  const { HYPO, CONCESSIONS, VERDICT, buildHypoTrack, FOREKNOWLEDGE, HIJACK_T, foreknowledgeVerdict, wezWindow, LOS_HORIZON, losVsWez, mutualHorizonSmi } = __m["steelman"];
   const { CALLS, CALL_TOTALS, FARADAY, WHY_THEY_MATTER } = __m["calls"];
 /* =============================================================================
    main.js — app wiring: playback clock, scrubber, panels, labels.
@@ -57546,6 +57901,7 @@ async function loadTopology() {
     map.onPick = handlePick;
     // Panning or zooming by hand is the user taking the wheel.
     map.onManualCamera = () => setFollow(false);
+    window.__map = map;
 
     buildTimelineUI();
     buildFlightStrip();
@@ -58230,6 +58586,8 @@ function renderLosPanel(h) {
   if (!out || !h) return;
   const w = wezWindow(h, (t) => ua93StateAt(t) || ua93Position(), AIM9.rMaxMi);
   const now = map.hypoLosInfo;
+  const tgt = ua93StateAt(state.interceptT);
+  const lv = losVsWez(31000, tgt ? tgt.altFt : 5000, AIM9.rMaxMi);
 
   out.innerHTML = `
     <div class="leg ${now && now.inWez ? 'los-hot' : ''}">
@@ -58249,6 +58607,14 @@ function renderLosPanel(h) {
         this track was <em>built</em> to arrive there. The record has to put a specific aircraft
         inside it, to the minute. Nothing does.
       </p>
+    </div>
+    <div class="cmd-row">
+      <div class="t" style="color:${hex(LOS_HORIZON.color)}">${Math.round(lv.losMi)} mi</div>
+      <div class="x"><strong style="color:var(--ink)">Line-of-sight horizon</strong> — what it can
+        <em>see</em>, from 31,000 ft against a target at 5,000. Against
+        <strong>${lv.wezMi} mi</strong> of weapon, that is a ratio of
+        <strong class="v-impossible">${Math.round(lv.ratio)}:1</strong>.
+        ${esc(LOS_HORIZON.note)} Seeing was never the constraint.</div>
     </div>`;
 }
 
@@ -58806,20 +59172,26 @@ function jumpToConflict(tag) {
    ========================================================================== */
 
 function renderLayersTab() {
+  /* A flight carrying a pathNote gets it printed under its own toggle. The
+     note is the difference between what the recorder says and what this app
+     drew, and a caveat nobody can read is not a caveat. */
   const fl = FLIGHTS.map((f) => `
     <label class="toggle">
       <input type="checkbox" data-layer="${f.id}" ${state.layers[f.id] ? 'checked' : ''}>
       <span class="swatch" style="background:${hex(f.color)}"></span>
       <span>${esc(f.label)}</span>
       <span class="meta">${esc(f.type.replace('Boeing ', 'B'))}</span>
-    </label>`).join('');
+    </label>
+    ${f.pathNote ? `<p style="font-size:11px;color:var(--ink-faint);line-height:1.55;
+        margin:2px 0 10px 26px;border-left:2px solid var(--rule);padding-left:8px">
+        ${esc(f.pathNote)} ${srcTag(f.src)}</p>` : ''}`).join('');
 
   $('#layers-body').innerHTML = `
     <div class="card">
       <h3>Hijacked aircraft</h3>
       ${fl}
       <p style="font-size:11.5px;color:var(--ink-faint);margin-top:8px">
-        Tracks are reconstructions: documented positions and times, with the segments between them interpolated. The shape is indicative, not radar data. ${srcTag('recon')}
+        Tracks are reconstructions: documented positions and times, with the segments between them interpolated. The shape is indicative, not radar data. United 93 and American 77 are the two whose recorders were recovered, so their altitudes and timings are FDR values and their notes say where the drawing starts and the record stops. American 11 and United 175 have no recorder at all. ${srcTag('recon')}
       </p>
     </div>
 
@@ -58866,7 +59238,7 @@ function renderLayersTab() {
       <label class="toggle">
         <input type="checkbox" data-layer="trail" ${state.layers.trail ? 'checked' : ''}>
         <span class="swatch" style="background:var(--ua93)"></span>
-        <span>United 93 — recorded data trail</span><span class="meta">FDR points</span>
+        <span>Recorded-data trail</span><span class="meta">UA93 + AA77 · FDR</span>
       </label>
       <label class="toggle">
         <input type="checkbox" data-layer="calls" ${state.layers.calls ? 'checked' : ''}>
@@ -58975,6 +59347,15 @@ function drawLabels() {
     } else if (o.impact.visible) {
       wanted.set(`f:${id}`, { pos: o.impact.position, text: `${id} impact`, cls: 'flight', color: hex(o.f.color), rank: 1 });
     }
+  }
+
+  if (map.hypoGroup && map.hypoGroup.visible && map.hypoHorizonInfo) {
+    const hz = map.hypoHorizonInfo;
+    wanted.set('horizon', {
+      ringLL: hz.ringLL, order: hz.order,
+      text: `Line-of-sight horizon · ${Math.round(hz.miles)} mi`,
+      cls: 'ring', color: hex(LOS_HORIZON.color), rank: 2.4,
+    });
   }
 
   if (map.hypoGroup && map.hypoGroup.visible && map.hypoLosInfo) {
@@ -59109,7 +59490,7 @@ function handlePick(ud) {
     showTipAt(ud.name, ud.note, ud.src);
   } else if (ud.kind === 'datum') {
     showTipAt(`${ud.mark === '\u2022' ? '' : ud.mark + ' — '}${ud.label}`,
-      `${hms(ud.t)} · ${Math.round(ud.altFt).toLocaleString()} ft\nA point where the record says something. Between these, the track is interpolated.`,
+      `${ud.flight || ''} · ${hms(ud.t)} · ${Math.round(ud.altFt).toLocaleString()} ft\nA point where the recorder says something. Between these, the track is interpolated.`,
       ud.src);
   } else if (ud.kind === 'call') {
     showTipAt(`${ud.who} → ${ud.to}`,

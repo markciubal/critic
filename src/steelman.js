@@ -317,3 +317,42 @@ export function wezWindow(track, targetAt, rMaxMi) {
     durationS: enter !== null ? exit - enter : 0,
   };
 }
+
+/* =============================================================================
+   The line-of-sight horizon
+
+   Distinct from the sight LINE, and worth drawing separately. An aircraft can
+   see — and be seen by — everything inside its radio horizon, which is set by
+   altitude and the curvature of the Earth, not by any weapon:
+
+       d (nautical miles) ~ 1.23 * sqrt(height in feet)
+
+   Two aircraft see each other at the sum of their own horizons. At 31,000 ft
+   with a target at 5,000, that is roughly 350 statute miles.
+
+   Put that beside an AIM-9's eleven and the gap is the whole argument. Line of
+   sight is not the constraint and never was. Being able to see an airliner
+   from three hundred miles away buys nothing; the weapon still requires being
+   inside a ring twenty-two miles across at one particular minute. Seeing is
+   not shooting, and the horizon is drawn to make the ratio visible.
+   ========================================================================== */
+
+export const LOS_HORIZON = {
+  title: 'Line-of-sight horizon',
+  color: 0x74c7ff,
+  note: 'Everything inside this is in view. Almost none of it is in range.',
+  src: 'derived',
+};
+
+/* Radio/visual horizon in statute miles for a given altitude. */
+export const horizonSmi = (ft) => 1.23 * Math.sqrt(Math.max(0, ft)) * 1.15078;
+
+/* Mutual horizon: the range at which two aircraft can see each other. */
+export function mutualHorizonSmi(ftA, ftB) {
+  return horizonSmi(ftA) + horizonSmi(ftB);
+}
+
+export function losVsWez(hypoAltFt, targetAltFt, rMaxMi) {
+  const los = mutualHorizonSmi(hypoAltFt, targetAltFt);
+  return { losMi: los, wezMi: rMaxMi, ratio: los / rMaxMi };
+}

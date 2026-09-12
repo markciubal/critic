@@ -138,7 +138,7 @@ export const CRITIC_GLIMPSE = {
     },
     {
       text: 'Confusion over the location of American Airlines Flight 77.',
-      note: 'Flight 77 had struck the Pentagon at 09:37:46 — twelve minutes before the CRITIC was originated.',
+      note: 'Flight 77 had struck the Pentagon at 09:37:45 — twelve minutes before the CRITIC was originated.',
       src: 'foia',
     },
   ],
