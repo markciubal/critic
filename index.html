@@ -55871,7 +55871,7 @@ CONFLICTS.push(
       { v: 'The full itinerary is 4,522 miles, about 1.85x maximum ferry range.', who: 'Computed here', src: 'derived', weight: 'This part survives: the whole day needs at least one refuelling stop.' },
     ],
     reading: 'Fuel does not rule out the flight to Pennsylvania. It only rules out doing the entire claimed itinerary without refuelling — and refuelling is possible, though a tanker rendezvous leaves scheduling and crew records. The load-bearing arguments are the geometric and evidentiary ones: a 22-mile engagement zone at one instant, NEADS not knowing United 93 existed until 10:07, no order having reached any pilot, and the unit and passenger placing him over Montana.',
-    appSays: 'Corrected. The map now draws two fuel rings — combat radius and ferry range with tanks — both labelled, instead of only the restrictive one. The fastest speed band dropped from Mach 2.0 (a clean-configuration number) to Mach 1.6, the placarded limit with tanks fitted. A related overclaim, that tanks would preclude carrying Sidewinders, was never made and would have been wrong: tanks sit on the wing and centreline stations, Sidewinders on the wingtip rails.',
+    appSays: 'Corrected twice. First the map drew both rings instead of only the restrictive one. Then the combat-radius ring was removed altogether, because a combat radius presumes no external tanks and the documented Montana-to-Albany leg proves the tanks were fitted — so it was a limit for a configuration the record rules out. What remains is ferry range with tanks and its half-radius. The fastest speed band also dropped from Mach 2.0 (a clean-configuration number, now marked unavailable for the same reason) to Mach 1.6, the placarded limit with tanks. A related overclaim, that tanks would preclude carrying Sidewinders, was never made and would have been wrong: tanks sit on the wing and centreline stations, Sidewinders on the wingtip rails.',
   },
   {
     id: 'critic-substance',
@@ -55978,7 +55978,7 @@ function legAnalysis(fromKey, toKey, seconds) {
     mach: machAt(mph, 35000),
     verdict: classify(mph),
     // How many unrefuelled combat radii this leg spends.
-    radiiSpent: miles / F16.combatRadiusMi,
+    ferrySpent: miles / F16.ferryRangeMi,
     overFerry: miles > F16.ferryRangeMi,
   };
 }
@@ -56004,7 +56004,7 @@ function analyseClaim(departEDT, interceptEDT) {
     dash,
     untimed: [back, deliver],
     totalMi,
-    radiiSpent: totalMi / F16.combatRadiusMi,
+    ferrySpent: totalMi / F16.ferryRangeMi,
     findings: claimFindings(dash, back, deliver, totalMi),
   };
 }
@@ -56149,49 +56149,49 @@ const BANDS = [
     note: 'About Mach 1.2 down low. Sustainable for minutes, not hours.' },
   { key: 'dash', label: 'Max with tanks', mph: F16.maxWithTanksMph, color: 0xff8a5c,
     note: 'About Mach 1.6 — the placarded limit with two wing tanks, a centreline tank and wingtip Sidewinders.' },
-  { key: 'clean', label: 'Max clean', mph: F16.maxAltitudeMph, color: 0xffffff,
-    note: 'Mach 2.0 at altitude, and nobody saw anything, so it cannot be excluded on observation. But it is a CLEAN number: clean means no external tanks, which means the 340-mile ring is the one that applies. The speed and the range are bought with the same stations. You can have either.' },
+  { key: 'clean', label: 'Max clean — NOT AVAILABLE HERE', mph: F16.maxAltitudeMph, color: 0xffffff,
+    unavailable: true,
+    note: 'Mach 2.0 at altitude, and drawn only so the ceiling is visible. It is not available to this claim: Mach 2.0 is a CLEAN figure, clean means no external tanks, and the tanks are established by the Montana-to-Albany leg rather than assumed. An aircraft that flew that leg was carrying them, so its ceiling is the placarded Mach 1.6 above.' },
 ];
 
 /* The trade the two fastest bands describe, stated once so it is not buried
    in a tooltip. It is the most useful single fact about the airframe here. */
 const CONFIG_TRADE = {
-  title: 'Speed and range are the same stations',
+  title: 'The configuration is settled, and it costs the claim its top speed',
   clean: {
-    label: 'Clean',
+    label: 'Clean — ruled out',
     topMph: F16.maxAltitudeMph,
     radiusMi: F16.combatRadiusMi,
-    note: 'Mach 2.0 available. No external fuel, so the 340-mile combat radius applies and Somerset County is 3.0x it.',
+    note: 'Mach 2.0 available, but no external fuel — and the documented Montana-to-Albany leg cannot be flown without external fuel. This configuration is not open to the claim.',
   },
   tanked: {
-    label: 'With tanks',
+    label: 'With tanks — what he had',
     topMph: F16.maxWithTanksMph,
     radiusMi: F16.combatRadiusTanksMi,
-    note: 'Ferry range near 2,450 miles, so the distance is easy. Placarded to Mach 1.6, so the top band is not available.',
+    note: 'Ferry range near 2,450 miles, so the distance is easy. Placarded to Mach 1.6, which is therefore the ceiling for every version of this claim.',
   },
-  reading: 'No single configuration gives both. The claim needs the range of a tanked jet and, if it is to outrun anything, the speed of a clean one. Nobody observed the aircraft, so neither can be excluded by eyewitness — but they cannot both be true of the same airframe on the same sortie.',
+  reading: 'This used to be presented as an open trade — range or speed, pick one, and nobody observed the aircraft so neither could be excluded. It is not open any more. The Montana leg settles the configuration: he was carrying tanks, so he had the range and did not have Mach 2.0. Granting the fuel is not a favour to the claim, and it costs the claim its fastest option.',
   src: 'derived',
 };
 
-/* Two fuel limits, because one of them was the wrong yardstick.
+/* The fuel limits that actually apply.
 
-   An earlier version of this app drew only the combat radius and said Somerset
-   County "never enters it, however long you wait". True of a combat radius —
-   out, fight, and back — and misleading about a one-way transit by a fighter
-   carrying drop tanks, which is what the claim actually needs. Both are drawn
-   now so the reader picks the right one rather than being handed the
-   restrictive one by default.
+   The 340-mile combat-radius ring used to be drawn here and is gone. Two
+   reasons, in order of weight.
 
-   Neither grows with the clock. That remains the point of them: time buys
+   It was the wrong yardstick. A combat radius is out, fight, and back; the
+   claim needs a one-way transit with no fight. An earlier version of this app
+   drew only that ring and said Somerset County "never enters it, however long
+   you wait", which was true of the ring and misleading about the claim. That
+   error is logged in the discrepancy register.
+
+   And it describes an aircraft this one demonstrably was not. Combat radius
+   with no tanks presumes no tanks; the Montana-to-Albany leg proves the tanks
+   were fitted. Drawing a limit for a configuration the record rules out is not
+   being cautious, it is being wrong in a way that flatters the argument.
+
+   What remains grows with nothing. That is the point of these: time buys
    distance, fuel does not. */
-const FUEL_RING = {
-  key: 'fuel',
-  label: 'Combat radius, no tanks',
-  miles: F16.combatRadiusMi,
-  color: 0xff5964,
-  note: 'Out and back with no external fuel. About 578 miles with tanks fitted.',
-};
-
 const FERRY_RING = {
   key: 'ferry',
   label: 'Ferry range with tanks, one way',
@@ -56320,9 +56320,8 @@ function shanksvilleTest(departEDT) {
       minutes: (miles / b.mph) * 60,
     })),
     fuel: {
-      reachable: miles <= FUEL_RING.miles,
-      radii: miles / FUEL_RING.miles,
-      radiiWithTanks: miles / F16.combatRadiusTanksMi,
+      reachable: miles <= HALF_FERRY_RING.miles,
+      halfFerryFraction: miles / HALF_FERRY_RING.miles,
       ferryFraction: miles / FERRY_RING.miles,
       insideFerry: miles <= FERRY_RING.miles,
     },
@@ -56377,7 +56376,6 @@ function scaleComparison(departEDT, nowEDT) {
   return {
     BANDS,
     CONFIG_TRADE,
-    FUEL_RING,
     FERRY_RING,
     HALF_FERRY_RING,
     ringPoints,
@@ -56410,7 +56408,7 @@ __m["steelman"] = (function () {
    which were decoration. Granting every favourable assumption at once and
    seeing what still fails is a better test than any of them separately.
 
-   THE AIRCRAFT IS NOT REAL. Callsign HYPO 01 is a construct. It corresponds to
+   THE AIRCRAFT IS NOT REAL. Callsign STEELMAN is a construct. It corresponds to
    no aircraft, no sortie and no record; it is drawn dashed, in white, and
    labelled as constructed at every appearance. No F-16 flew this track. The point of drawing it is to show what would have had to be
    true, not to suggest that it was.
@@ -56450,7 +56448,11 @@ __m["steelman"] = (function () {
 const at = (h, m, s = 0) => h * 3600 + m * 60 + s;
 
 const HYPO = {
-  callsign: 'HYPO 01',
+  /* Named STEELMAN rather than a plausible-looking military callsign. "STEELMAN"
+     read like a real tail on a real sortie, which is precisely the confusion a
+     constructed aircraft on a map of real ones must not create. The name should
+     say what the thing is every time it is spoken. */
+  callsign: 'STEELMAN',
   status: 'CONSTRUCTED — NOT A RECORD',
   type: 'F-16 (hypothetical)',
   disclaimer: 'A construct, not a sortie. No aircraft flew this track. It is drawn to show what the claim requires, not to suggest it happened.',
@@ -56827,7 +56829,7 @@ function foreknowledgeVerdict(distMi, interceptT, bands) {
 /* =============================================================================
    Line of sight and the engagement window
 
-   HYPO 01 is built to arrive where United 93 is at 09:58, so the range between
+   STEELMAN is built to arrive where United 93 is at 09:58, so the range between
    them collapses to nothing at that moment by construction. What is worth
    measuring is the shape of that approach: how long the two are inside AIM-9
    range of each other, and how briefly.
@@ -56846,7 +56848,7 @@ function losRange(track, targetAt, t) {
   return { from: a, to: b, miles: haversineMi(a, b) };
 }
 
-/* Sample HYPO 01's own path — it is stored in the same [t,lat,lon,alt] shape
+/* Sample STEELMAN's own path — it is stored in the same [t,lat,lon,alt] shape
    as every other track here. */
 function trackSampleLL(track, t) {
   const p = track.path;
@@ -57006,7 +57008,7 @@ const GLOSSARY = {
   combatRadius: {
     term: 'Combat radius',
     plain: 'How far out the aircraft can go, fight, and still get home — so it is much less than half the ferry range.',
-    more: 'Fighting burns fuel fast, so a large slice is set aside for it. For a one-way trip with no fight and no return, combat radius is the wrong yardstick, and an earlier version of this app used it wrongly. That error is logged in the discrepancy register.',
+    more: 'Fighting burns fuel fast, so a large slice is set aside for it. For a one-way trip with no fight and no return it is the wrong yardstick, and an earlier version of this app used it wrongly. The ring has since been removed from the map entirely, because a combat radius also presumes no external fuel tanks — and the documented Montana leg proves this aircraft had them. Both errors are logged in the discrepancy register.',
     src: 'press',
   },
 
@@ -57062,7 +57064,7 @@ const GLOSSARY = {
   dtg: {
     term: 'Date-time group',
     plain: 'The military timestamp on a message — day, hour, minute, and a letter for the time zone.',
-    more: '111349ZSEP01 means the 11th day, 13:49, zone Z (which is GMT), September 2001. Zulu time is five hours ahead of New York that month, so 13:49Z is 09:49 in the morning in New York.',
+    more: '111349ZSEP01 means the 11th day, 13:49, zone Z (which is GMT), September 2001. In September New York is on daylight saving time, four hours behind Zulu, so 13:49Z is 09:49 in the morning in New York.',
     src: 'derived',
   },
 
@@ -57157,7 +57159,7 @@ __m["tour"] = (function () {
      reset                  the whole country
      place:<KEY>            a named place from PLACES
      ua93                   United 93 at the current clock
-     hypo                   HYPO 01 at the current clock
+     hypo                   STEELMAN at the current clock
      fit:<KEY>,<KEY>        frame several places at once
    ========================================================================== */
 
@@ -57248,6 +57250,15 @@ const TOUR_STEPS = [
       <p>He would also have had the missiles. They are short-range heat-seekers
       ${i('sidewinder')} that hang on the wingtips, and the tanks hang underneath, so carrying
       both at once is completely normal.</p>
+      <p>So from here on, <strong>every version of the story assumes a tanked jet</strong> and
+      fuel is never the objection. The app used to draw a 340-mile "combat radius" ring for a
+      fighter carrying nothing; that ring is gone, because this aircraft demonstrably was not
+      carrying nothing.</p>
+      <p>There is a price, though, and it is charged to the story rather than to us. Tanks are
+      draggy. A tanked F-16 is limited to about
+      ${F16.maxWithTanksMph.toLocaleString()} mph ${i('placard')} — the famous "Mach 2" belongs
+      to a clean jet with nothing hanging off it. Proving he had the fuel proves he did not have
+      his top speed.</p>
       <p><em>Remember the fuel. It comes back later, and not in the way you would expect.</em></p>`,
     t: at(8, 46, 40),
     tab: 'claim',
@@ -57545,7 +57556,7 @@ __m["map3d"] = (function () {
   const { projectForState, projectLL, altToY, OMITTED_FIPS, UNITS_PER_MILE, setAltExaggeration } = __m["projection"];
   const { FLIGHTS, MIL_FLIGHTS, PLACES, DEBRIS, GIBNEY, CLAIM_ROUTE, CRITIC_NODES, CRITIC_CHAIN, DISTRIBUTION, hms } = __m["data"];
   const { samplePath, gcPoints, haversineMi, destinationPoint } = __m["geo"];
-  const { BANDS, FUEL_RING, FERRY_RING, HALF_FERRY_RING, ringPoints, reachMi, MAX_DRAW_MI, AIM9, bandRadii, evidenceCeilingMi, DEPARTURE_BOUNDS } = __m["reachability"];
+  const { BANDS, FERRY_RING, HALF_FERRY_RING, ringPoints, reachMi, MAX_DRAW_MI, AIM9, bandRadii, evidenceCeilingMi, DEPARTURE_BOUNDS } = __m["reachability"];
   const { HYPO, LOS_HORIZON, horizonSmi } = __m["steelman"];
   const { CALLS } = __m["calls"];
 /* =============================================================================
@@ -58007,16 +58018,22 @@ class Map3D {
 
     // Outer edge solid, inner edge dashed: the pair reads as one band whose
     // thickness is the departure-time tolerance.
+    /* A band flagged `unavailable` is a configuration the record rules out —
+       Mach 2.0 needs a clean jet, and the documented Montana leg proves this
+       one was carrying tanks. It is still drawn, because deleting a ceiling
+       hides a bound the reader may want to check, but it is drawn faint so it
+       reads as a reference line rather than an option still on the table. */
     this.reachRings = BANDS.map((b) => ({
       band: b,
-      outer: mkRing(b.color, 0.85, false),
-      inner: mkRing(b.color, 0.45, true),
+      outer: mkRing(b.color, b.unavailable ? 0.28 : 0.85, false),
+      inner: mkRing(b.color, b.unavailable ? 0.15 : 0.45, true),
     }));
     // The hard limit set by first knowledge, drawn once, brightly.
     this.ceilingRing = mkRing(0xffffff, 0.32, true);
-    this.fuelRing = mkRing(FUEL_RING.color, 0.95, true);
-    // The one-way limit with drop tanks, which is the yardstick the claim
-    // actually needs. Drawn alongside the combat radius, not instead of it.
+    /* The one-way limit with drop tanks, which is the yardstick the claim
+       actually needs. It used to be drawn alongside a 340-mile combat-radius
+       ring; that ring is gone, because a combat radius presumes no external
+       tanks and the documented Montana leg proves the tanks were fitted. */
     this.ferryRing = mkRing(FERRY_RING.color, 0.55, true);
     this.halfFerryRing = mkRing(HALF_FERRY_RING.color, 0.6, true);
     this.reachLabelAnchors = [];
@@ -58089,13 +58106,6 @@ class Map3D {
       const pts = ringPoints(anchor, ceil, 120);
       this._writeRing(this.ceilingRing, pts);
       anchorAt(pts, `Evidence ceiling · earliest possible departure ${Math.round(ceil)} mi`, 0xffffff);
-    }
-
-    this.fuelRing.visible = showEnvelope;
-    if (showEnvelope) {
-      const pts = ringPoints(anchor, FUEL_RING.miles, 120);
-      this._writeRing(this.fuelRing, pts);
-      anchorAt(pts, `${FUEL_RING.label} · ${FUEL_RING.miles} mi`, FUEL_RING.color);
     }
 
     const halfOn = showEnvelope && HALF_FERRY_RING.miles < MAX_DRAW_MI;
@@ -58241,7 +58251,7 @@ class Map3D {
     if (v && this._callPos) this.setCalls(this._callPos, this._t ?? 0);
   }
 
-  /* HYPO 01 — the steelman. Drawn dashed and white because it is a construct,
+  /* STEELMAN — the steelman. Drawn dashed and white because it is a construct,
      and labelled as one wherever it appears. It is off by default. */
   _buildHypo() {
     this.hypoGroup = new THREE.Group();
@@ -58864,7 +58874,7 @@ __m["main"] = (function () {
   const { ALT_CHOICES, trueScaleRatio } = __m["projection"];
   const { analyseClaim, analyseDocumented, ASSUMPTIONS, COMMAND_CHECK, classify, legAnalysis } = __m["analysis"];
   const { CONFLICTS, STATUS_META, conflictsFor, openCount } = __m["conflicts"];
-  const { BANDS, FUEL_RING, FERRY_RING, HALF_FERRY_RING, AIM9, shanksvilleTest, reachMi, scaleComparison, TOLERANCES, DEPARTURE_BOUNDS, bandRadii, evidenceCeilingMi, CONFIG_TRADE } = __m["reachability"];
+  const { BANDS, FERRY_RING, HALF_FERRY_RING, AIM9, shanksvilleTest, reachMi, scaleComparison, TOLERANCES, DEPARTURE_BOUNDS, bandRadii, evidenceCeilingMi, CONFIG_TRADE } = __m["reachability"];
   const { HYPO, CONCESSIONS, VERDICT, buildHypoTrack, FOREKNOWLEDGE, HIJACK_T, foreknowledgeVerdict, fuelProof, bozemanCost, criticSnapshots, wezWindow, LOS_HORIZON, losVsWez, mutualHorizonSmi } = __m["steelman"];
   const { CALLS, CALL_TOTALS, FARADAY, WHY_THEY_MATTER } = __m["calls"];
   const { GLOSSARY, glossaryList } = __m["glossary"];
@@ -59398,6 +59408,14 @@ function renderClaimTab() {
       <p>Everything else here tests the allegation. This grants it every favourable assumption at once and asks what still fails — which is the only way to find out which objections were load-bearing.</p>
       <p class="hypo-warn"><strong>${esc(HYPO.callsign)} — ${esc(HYPO.status)}.</strong> ${esc(HYPO.disclaimer)}
       This is a <em>steelman</em> ${info('steelman')}: the claim's best possible case, built so it can be tested properly.</p>
+      <p style="font-size:12px;color:var(--ink-dim);line-height:1.55;margin-top:8px">
+        <strong style="color:var(--ink)">Standing premise: the aircraft is carrying external fuel
+        tanks</strong> ${info('dropTanks')}. That is not a favour to the claim — the documented
+        Montana-to-Albany leg cannot be flown without them. Everything below assumes a tanked
+        jet, so fuel is never the objection. The combat-radius ring this app once drew has been
+        removed for the same reason: it measures an aircraft carrying nothing, which this one
+        demonstrably was not. What the tanks <em>do</em> cost the claim is Mach 2.0, which is
+        only available clean ${info('placard')}.</p>
       <div id="steel-out"></div>
       <div id="concessions"></div>
       <div class="chip-row">
@@ -59415,7 +59433,10 @@ function renderClaimTab() {
 
     <div class="card">
       <h3>${esc(CONFIG_TRADE.title)}</h3>
-      <p>Nobody observed the aircraft, so no speed can be excluded by eyewitness. But speed and range come off the same wing stations.</p>
+      <p>Speed and range come off the same wing stations, so an F-16 can have one or the other.
+      This used to be left open here, because nobody observed the aircraft. It is not open: the
+      Montana-to-Albany leg cannot be flown without external tanks ${info('dropTanks')}, so the
+      tanks are established and the configuration is decided.</p>
       <div class="cmd-row">
         <div class="t" style="color:#fff">${CONFIG_TRADE.clean.topMph} mph</div>
         <div class="x"><strong style="color:var(--ink)">${esc(CONFIG_TRADE.clean.label)}</strong> — ${esc(CONFIG_TRADE.clean.note)}</div>
@@ -59481,7 +59502,7 @@ function renderClaimTab() {
         <dt>Cruise</dt><dd>~${F16.cruiseMph} mph</dd>
         <dt>Max, low</dt><dd>~${F16.maxSeaLevelMph} mph (Mach ${machAt(F16.maxSeaLevelMph, 0).toFixed(1)} at sea level)</dd>
         <dt>Max, high</dt><dd>~${F16.maxAltitudeMph} mph (Mach ${machAt(F16.maxAltitudeMph, 40000).toFixed(1)} at 40,000 ft)</dd>
-        <dt>Combat radius</dt><dd>~${F16.combatRadiusMi} mi, unrefuelled</dd>
+        <dt>Range, tanks fitted</dt><dd>~${F16.ferryRangeMi.toLocaleString()} mi one way</dd>
         <dt>Ferry range</dt><dd>~${F16.ferryRangeMi} mi with external tanks</dd>
       </dl>
       ${F16.notes.map((n) => `<p style="margin-top:9px;font-size:12px">${esc(n.text)} ${srcTag(n.src)}</p>`).join('')}
@@ -59722,7 +59743,7 @@ function renderReachPanel() {
         <span class="leg-name">Where the band reaches, at ${BANDS[1].mph} mph</span>
         <span class="leg-dist">${hms(elapsed).slice(0, 5)} elapsed</span>
       </div>
-      <div class="leg-speed v-${rNow > FUEL_RING.miles ? 'hard' : 'routine'}">
+      <div class="leg-speed v-${rNow > HALF_FERRY_RING.miles ? 'hard' : 'routine'}">
         ${Math.round(band.inner).toLocaleString()}–${Math.round(band.outer).toLocaleString()}<small>mi</small>
       </div>
       <div class="leg-mach">
@@ -59736,12 +59757,6 @@ function renderReachPanel() {
     </div>
     ${rows}
     <div class="cmd-row" style="border-top:1px solid var(--line-2)">
-      <div class="t" style="color:${hex(FUEL_RING.color)}">${FUEL_RING.miles} mi</div>
-      <div class="x"><strong style="color:var(--ink)">${esc(FUEL_RING.label)}</strong> — Somerset County is
-      <strong class="v-impossible">${t.fuel.radii.toFixed(1)}×</strong> this, or ${t.fuel.radiiWithTanks.toFixed(1)}× with tanks fitted.
-      This is an out-and-back figure.</div>
-    </div>
-    <div class="cmd-row">
       <div class="t" style="color:${hex(HALF_FERRY_RING.color)}">${HALF_FERRY_RING.miles.toLocaleString()} mi</div>
       <div class="x"><strong style="color:var(--ink)">Ferry half-radius</strong> — the furthest point he could reach and still
       return on the same tanks. Somerset County is <strong class="v-routine">${Math.round(t.miles / HALF_FERRY_RING.miles * 100)}%</strong> of it,
@@ -59818,7 +59833,7 @@ function updateSpeedPanel() {
       </div>
       ${speedBar(finite ? d.mph : 9999)}
       <p style="margin:10px 0 0;font-size:12px;color:var(--ink-dim)">
-        That is <strong class="v-${d.verdict.key}">${d.radiiSpent.toFixed(1)}×</strong> the jet's unrefuelled combat radius, one way.
+        That is <strong class="v-routine">${Math.round(d.ferrySpent * 100)}%</strong> of a tanked jet's one-way range.
       </p>
     </div>`;
 

@@ -55,7 +55,7 @@ export const GLOSSARY = {
   combatRadius: {
     term: 'Combat radius',
     plain: 'How far out the aircraft can go, fight, and still get home — so it is much less than half the ferry range.',
-    more: 'Fighting burns fuel fast, so a large slice is set aside for it. For a one-way trip with no fight and no return, combat radius is the wrong yardstick, and an earlier version of this app used it wrongly. That error is logged in the discrepancy register.',
+    more: 'Fighting burns fuel fast, so a large slice is set aside for it. For a one-way trip with no fight and no return it is the wrong yardstick, and an earlier version of this app used it wrongly. The ring has since been removed from the map entirely, because a combat radius also presumes no external fuel tanks — and the documented Montana leg proves this aircraft had them. Both errors are logged in the discrepancy register.',
     src: 'press',
   },
 
@@ -111,7 +111,7 @@ export const GLOSSARY = {
   dtg: {
     term: 'Date-time group',
     plain: 'The military timestamp on a message — day, hour, minute, and a letter for the time zone.',
-    more: '111349ZSEP01 means the 11th day, 13:49, zone Z (which is GMT), September 2001. Zulu time is five hours ahead of New York that month, so 13:49Z is 09:49 in the morning in New York.',
+    more: '111349ZSEP01 means the 11th day, 13:49, zone Z (which is GMT), September 2001. In September New York is on daylight saving time, four hours behind Zulu, so 13:49Z is 09:49 in the morning in New York.',
     src: 'derived',
   },
 

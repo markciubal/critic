@@ -18,7 +18,7 @@ import {
 } from './data.js';
 import { samplePath, gcPoints, haversineMi } from './geo.js';
 import {
-  BANDS, FUEL_RING, FERRY_RING, HALF_FERRY_RING, ringPoints, reachMi,
+  BANDS, FERRY_RING, HALF_FERRY_RING, ringPoints, reachMi,
   MAX_DRAW_MI, AIM9, bandRadii, evidenceCeilingMi, DEPARTURE_BOUNDS,
 } from './reachability.js';
 import { HYPO, LOS_HORIZON, horizonSmi } from './steelman.js';
@@ -474,16 +474,22 @@ export class Map3D {
 
     // Outer edge solid, inner edge dashed: the pair reads as one band whose
     // thickness is the departure-time tolerance.
+    /* A band flagged `unavailable` is a configuration the record rules out —
+       Mach 2.0 needs a clean jet, and the documented Montana leg proves this
+       one was carrying tanks. It is still drawn, because deleting a ceiling
+       hides a bound the reader may want to check, but it is drawn faint so it
+       reads as a reference line rather than an option still on the table. */
     this.reachRings = BANDS.map((b) => ({
       band: b,
-      outer: mkRing(b.color, 0.85, false),
-      inner: mkRing(b.color, 0.45, true),
+      outer: mkRing(b.color, b.unavailable ? 0.28 : 0.85, false),
+      inner: mkRing(b.color, b.unavailable ? 0.15 : 0.45, true),
     }));
     // The hard limit set by first knowledge, drawn once, brightly.
     this.ceilingRing = mkRing(0xffffff, 0.32, true);
-    this.fuelRing = mkRing(FUEL_RING.color, 0.95, true);
-    // The one-way limit with drop tanks, which is the yardstick the claim
-    // actually needs. Drawn alongside the combat radius, not instead of it.
+    /* The one-way limit with drop tanks, which is the yardstick the claim
+       actually needs. It used to be drawn alongside a 340-mile combat-radius
+       ring; that ring is gone, because a combat radius presumes no external
+       tanks and the documented Montana leg proves the tanks were fitted. */
     this.ferryRing = mkRing(FERRY_RING.color, 0.55, true);
     this.halfFerryRing = mkRing(HALF_FERRY_RING.color, 0.6, true);
     this.reachLabelAnchors = [];
@@ -556,13 +562,6 @@ export class Map3D {
       const pts = ringPoints(anchor, ceil, 120);
       this._writeRing(this.ceilingRing, pts);
       anchorAt(pts, `Evidence ceiling · earliest possible departure ${Math.round(ceil)} mi`, 0xffffff);
-    }
-
-    this.fuelRing.visible = showEnvelope;
-    if (showEnvelope) {
-      const pts = ringPoints(anchor, FUEL_RING.miles, 120);
-      this._writeRing(this.fuelRing, pts);
-      anchorAt(pts, `${FUEL_RING.label} · ${FUEL_RING.miles} mi`, FUEL_RING.color);
     }
 
     const halfOn = showEnvelope && HALF_FERRY_RING.miles < MAX_DRAW_MI;
@@ -708,7 +707,7 @@ export class Map3D {
     if (v && this._callPos) this.setCalls(this._callPos, this._t ?? 0);
   }
 
-  /* HYPO 01 — the steelman. Drawn dashed and white because it is a construct,
+  /* STEELMAN — the steelman. Drawn dashed and white because it is a construct,
      and labelled as one wherever it appears. It is off by default. */
   _buildHypo() {
     this.hypoGroup = new THREE.Group();

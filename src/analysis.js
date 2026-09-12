@@ -41,7 +41,7 @@ export function legAnalysis(fromKey, toKey, seconds) {
     mach: machAt(mph, 35000),
     verdict: classify(mph),
     // How many unrefuelled combat radii this leg spends.
-    radiiSpent: miles / F16.combatRadiusMi,
+    ferrySpent: miles / F16.ferryRangeMi,
     overFerry: miles > F16.ferryRangeMi,
   };
 }
@@ -67,7 +67,7 @@ export function analyseClaim(departEDT, interceptEDT) {
     dash,
     untimed: [back, deliver],
     totalMi,
-    radiiSpent: totalMi / F16.combatRadiusMi,
+    ferrySpent: totalMi / F16.ferryRangeMi,
     findings: claimFindings(dash, back, deliver, totalMi),
   };
 }

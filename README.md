@@ -252,12 +252,12 @@ shootdown on both sides.
 So the question is: where would the best case for the claim have been each time
 one went out?
 
-| Message | Time | HYPO 01 vs United 93 |
+| Message | Time | STEELMAN vs United 93 |
 |---|---|---|
 | NORAD originates the CRITIC | 09:49 | **72 mi apart** — 6.4x outside its own missile's reach, 9 min to close |
 | DIRNSA CRITIC 1-2001 | 09:52 | **48 mi apart** — 4.3x outside, 6 min to close |
-| FOLLOW-UP-1 | 10:14 | United 93 down 11 min; HYPO 01 en route to Albany |
-| FOLLOW-UP-2 AND FINAL | 10:48 | United 93 down 45 min; HYPO 01 already landed |
+| FOLLOW-UP-1 | 10:14 | United 93 down 11 min; STEELMAN en route to Albany |
+| FOLLOW-UP-2 AND FINAL | 10:48 | United 93 down 45 min; STEELMAN already landed |
 
 The first two are not damning on their own — the aircraft is closing fast, and
 the claim only needs one instant. The second pair is the harder question. If an
@@ -276,6 +276,10 @@ Computed live in `criticSnapshots()` (`src/steelman.js`); shown as the last two
 steps of the tour and as a card in the CRITIC tab.
 
 ## The fuel is not a concession
+
+**Standing premise of the steelman: the aircraft is carrying external fuel
+tanks.** Everything in the claim analysis assumes a tanked jet, so fuel is never
+the objection.
 
 The app used to grant the external tanks as a favour to the claim. That was too
 generous, and the correction runs the other way from what you would expect.
@@ -309,6 +313,26 @@ Both figures are computed live in `src/steelman.js` (`fuelProof`,
 `bozemanCost`) rather than written down, so the panel and the tour cannot drift
 from each other. Whether that Bozeman–Albany leg was truly flown nonstop is
 logged as an open item in the discrepancy register.
+
+### What establishing the tanks removed
+
+**The 340-mile combat-radius ring is gone from the map.** It was already the
+wrong yardstick — a combat radius is out, fight and back, while the claim needs
+a one-way transit with no fight — and that error is logged in the register. But
+it is also a limit for an aircraft carrying *nothing*, and the Montana leg
+proves this one was carrying tanks. Drawing a constraint for a configuration
+the record rules out is not caution; it is being wrong in a direction that
+flatters the argument.
+
+**Mach 2.0 went with it.** That figure is a clean number, and clean means no
+external tanks. Establishing the tanks removes the clean option, so the ceiling
+for every version of this claim is the placarded Mach 1.6. The band is still
+drawn, faint and marked `NOT AVAILABLE HERE`, because deleting a ceiling hides
+a bound worth checking — but it is not on the table.
+
+Note which way that cuts. A lower maximum speed means an earlier departure for
+the same arrival, which means *more* foreknowledge required. Granting the fuel
+is not a favour to the claim, and it costs the claim its fastest option.
 
 ## The claim being tested
 

@@ -16,7 +16,7 @@ import {
 } from './analysis.js';
 import { CONFLICTS, STATUS_META, conflictsFor, openCount } from './conflicts.js';
 import {
-  BANDS, FUEL_RING, FERRY_RING, HALF_FERRY_RING, AIM9, shanksvilleTest, reachMi,
+  BANDS, FERRY_RING, HALF_FERRY_RING, AIM9, shanksvilleTest, reachMi,
   scaleComparison, TOLERANCES, DEPARTURE_BOUNDS, bandRadii, evidenceCeilingMi,
   CONFIG_TRADE,
 } from './reachability.js';
@@ -543,6 +543,14 @@ function renderClaimTab() {
       <p>Everything else here tests the allegation. This grants it every favourable assumption at once and asks what still fails — which is the only way to find out which objections were load-bearing.</p>
       <p class="hypo-warn"><strong>${esc(HYPO.callsign)} — ${esc(HYPO.status)}.</strong> ${esc(HYPO.disclaimer)}
       This is a <em>steelman</em> ${info('steelman')}: the claim's best possible case, built so it can be tested properly.</p>
+      <p style="font-size:12px;color:var(--ink-dim);line-height:1.55;margin-top:8px">
+        <strong style="color:var(--ink)">Standing premise: the aircraft is carrying external fuel
+        tanks</strong> ${info('dropTanks')}. That is not a favour to the claim — the documented
+        Montana-to-Albany leg cannot be flown without them. Everything below assumes a tanked
+        jet, so fuel is never the objection. The combat-radius ring this app once drew has been
+        removed for the same reason: it measures an aircraft carrying nothing, which this one
+        demonstrably was not. What the tanks <em>do</em> cost the claim is Mach 2.0, which is
+        only available clean ${info('placard')}.</p>
       <div id="steel-out"></div>
       <div id="concessions"></div>
       <div class="chip-row">
@@ -560,7 +568,10 @@ function renderClaimTab() {
 
     <div class="card">
       <h3>${esc(CONFIG_TRADE.title)}</h3>
-      <p>Nobody observed the aircraft, so no speed can be excluded by eyewitness. But speed and range come off the same wing stations.</p>
+      <p>Speed and range come off the same wing stations, so an F-16 can have one or the other.
+      This used to be left open here, because nobody observed the aircraft. It is not open: the
+      Montana-to-Albany leg cannot be flown without external tanks ${info('dropTanks')}, so the
+      tanks are established and the configuration is decided.</p>
       <div class="cmd-row">
         <div class="t" style="color:#fff">${CONFIG_TRADE.clean.topMph} mph</div>
         <div class="x"><strong style="color:var(--ink)">${esc(CONFIG_TRADE.clean.label)}</strong> — ${esc(CONFIG_TRADE.clean.note)}</div>
@@ -626,7 +637,7 @@ function renderClaimTab() {
         <dt>Cruise</dt><dd>~${F16.cruiseMph} mph</dd>
         <dt>Max, low</dt><dd>~${F16.maxSeaLevelMph} mph (Mach ${machAt(F16.maxSeaLevelMph, 0).toFixed(1)} at sea level)</dd>
         <dt>Max, high</dt><dd>~${F16.maxAltitudeMph} mph (Mach ${machAt(F16.maxAltitudeMph, 40000).toFixed(1)} at 40,000 ft)</dd>
-        <dt>Combat radius</dt><dd>~${F16.combatRadiusMi} mi, unrefuelled</dd>
+        <dt>Range, tanks fitted</dt><dd>~${F16.ferryRangeMi.toLocaleString()} mi one way</dd>
         <dt>Ferry range</dt><dd>~${F16.ferryRangeMi} mi with external tanks</dd>
       </dl>
       ${F16.notes.map((n) => `<p style="margin-top:9px;font-size:12px">${esc(n.text)} ${srcTag(n.src)}</p>`).join('')}
@@ -867,7 +878,7 @@ function renderReachPanel() {
         <span class="leg-name">Where the band reaches, at ${BANDS[1].mph} mph</span>
         <span class="leg-dist">${hms(elapsed).slice(0, 5)} elapsed</span>
       </div>
-      <div class="leg-speed v-${rNow > FUEL_RING.miles ? 'hard' : 'routine'}">
+      <div class="leg-speed v-${rNow > HALF_FERRY_RING.miles ? 'hard' : 'routine'}">
         ${Math.round(band.inner).toLocaleString()}–${Math.round(band.outer).toLocaleString()}<small>mi</small>
       </div>
       <div class="leg-mach">
@@ -881,12 +892,6 @@ function renderReachPanel() {
     </div>
     ${rows}
     <div class="cmd-row" style="border-top:1px solid var(--line-2)">
-      <div class="t" style="color:${hex(FUEL_RING.color)}">${FUEL_RING.miles} mi</div>
-      <div class="x"><strong style="color:var(--ink)">${esc(FUEL_RING.label)}</strong> — Somerset County is
-      <strong class="v-impossible">${t.fuel.radii.toFixed(1)}×</strong> this, or ${t.fuel.radiiWithTanks.toFixed(1)}× with tanks fitted.
-      This is an out-and-back figure.</div>
-    </div>
-    <div class="cmd-row">
       <div class="t" style="color:${hex(HALF_FERRY_RING.color)}">${HALF_FERRY_RING.miles.toLocaleString()} mi</div>
       <div class="x"><strong style="color:var(--ink)">Ferry half-radius</strong> — the furthest point he could reach and still
       return on the same tanks. Somerset County is <strong class="v-routine">${Math.round(t.miles / HALF_FERRY_RING.miles * 100)}%</strong> of it,
@@ -963,7 +968,7 @@ function updateSpeedPanel() {
       </div>
       ${speedBar(finite ? d.mph : 9999)}
       <p style="margin:10px 0 0;font-size:12px;color:var(--ink-dim)">
-        That is <strong class="v-${d.verdict.key}">${d.radiiSpent.toFixed(1)}×</strong> the jet's unrefuelled combat radius, one way.
+        That is <strong class="v-routine">${Math.round(d.ferrySpent * 100)}%</strong> of a tanked jet's one-way range.
       </p>
     </div>`;
 

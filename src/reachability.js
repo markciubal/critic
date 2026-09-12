@@ -38,49 +38,49 @@ export const BANDS = [
     note: 'About Mach 1.2 down low. Sustainable for minutes, not hours.' },
   { key: 'dash', label: 'Max with tanks', mph: F16.maxWithTanksMph, color: 0xff8a5c,
     note: 'About Mach 1.6 — the placarded limit with two wing tanks, a centreline tank and wingtip Sidewinders.' },
-  { key: 'clean', label: 'Max clean', mph: F16.maxAltitudeMph, color: 0xffffff,
-    note: 'Mach 2.0 at altitude, and nobody saw anything, so it cannot be excluded on observation. But it is a CLEAN number: clean means no external tanks, which means the 340-mile ring is the one that applies. The speed and the range are bought with the same stations. You can have either.' },
+  { key: 'clean', label: 'Max clean — NOT AVAILABLE HERE', mph: F16.maxAltitudeMph, color: 0xffffff,
+    unavailable: true,
+    note: 'Mach 2.0 at altitude, and drawn only so the ceiling is visible. It is not available to this claim: Mach 2.0 is a CLEAN figure, clean means no external tanks, and the tanks are established by the Montana-to-Albany leg rather than assumed. An aircraft that flew that leg was carrying them, so its ceiling is the placarded Mach 1.6 above.' },
 ];
 
 /* The trade the two fastest bands describe, stated once so it is not buried
    in a tooltip. It is the most useful single fact about the airframe here. */
 export const CONFIG_TRADE = {
-  title: 'Speed and range are the same stations',
+  title: 'The configuration is settled, and it costs the claim its top speed',
   clean: {
-    label: 'Clean',
+    label: 'Clean — ruled out',
     topMph: F16.maxAltitudeMph,
     radiusMi: F16.combatRadiusMi,
-    note: 'Mach 2.0 available. No external fuel, so the 340-mile combat radius applies and Somerset County is 3.0x it.',
+    note: 'Mach 2.0 available, but no external fuel — and the documented Montana-to-Albany leg cannot be flown without external fuel. This configuration is not open to the claim.',
   },
   tanked: {
-    label: 'With tanks',
+    label: 'With tanks — what he had',
     topMph: F16.maxWithTanksMph,
     radiusMi: F16.combatRadiusTanksMi,
-    note: 'Ferry range near 2,450 miles, so the distance is easy. Placarded to Mach 1.6, so the top band is not available.',
+    note: 'Ferry range near 2,450 miles, so the distance is easy. Placarded to Mach 1.6, which is therefore the ceiling for every version of this claim.',
   },
-  reading: 'No single configuration gives both. The claim needs the range of a tanked jet and, if it is to outrun anything, the speed of a clean one. Nobody observed the aircraft, so neither can be excluded by eyewitness — but they cannot both be true of the same airframe on the same sortie.',
+  reading: 'This used to be presented as an open trade — range or speed, pick one, and nobody observed the aircraft so neither could be excluded. It is not open any more. The Montana leg settles the configuration: he was carrying tanks, so he had the range and did not have Mach 2.0. Granting the fuel is not a favour to the claim, and it costs the claim its fastest option.',
   src: 'derived',
 };
 
-/* Two fuel limits, because one of them was the wrong yardstick.
+/* The fuel limits that actually apply.
 
-   An earlier version of this app drew only the combat radius and said Somerset
-   County "never enters it, however long you wait". True of a combat radius —
-   out, fight, and back — and misleading about a one-way transit by a fighter
-   carrying drop tanks, which is what the claim actually needs. Both are drawn
-   now so the reader picks the right one rather than being handed the
-   restrictive one by default.
+   The 340-mile combat-radius ring used to be drawn here and is gone. Two
+   reasons, in order of weight.
 
-   Neither grows with the clock. That remains the point of them: time buys
+   It was the wrong yardstick. A combat radius is out, fight, and back; the
+   claim needs a one-way transit with no fight. An earlier version of this app
+   drew only that ring and said Somerset County "never enters it, however long
+   you wait", which was true of the ring and misleading about the claim. That
+   error is logged in the discrepancy register.
+
+   And it describes an aircraft this one demonstrably was not. Combat radius
+   with no tanks presumes no tanks; the Montana-to-Albany leg proves the tanks
+   were fitted. Drawing a limit for a configuration the record rules out is not
+   being cautious, it is being wrong in a way that flatters the argument.
+
+   What remains grows with nothing. That is the point of these: time buys
    distance, fuel does not. */
-export const FUEL_RING = {
-  key: 'fuel',
-  label: 'Combat radius, no tanks',
-  miles: F16.combatRadiusMi,
-  color: 0xff5964,
-  note: 'Out and back with no external fuel. About 578 miles with tanks fitted.',
-};
-
 export const FERRY_RING = {
   key: 'ferry',
   label: 'Ferry range with tanks, one way',
@@ -209,9 +209,8 @@ export function shanksvilleTest(departEDT) {
       minutes: (miles / b.mph) * 60,
     })),
     fuel: {
-      reachable: miles <= FUEL_RING.miles,
-      radii: miles / FUEL_RING.miles,
-      radiiWithTanks: miles / F16.combatRadiusTanksMi,
+      reachable: miles <= HALF_FERRY_RING.miles,
+      halfFerryFraction: miles / HALF_FERRY_RING.miles,
       ferryFraction: miles / FERRY_RING.miles,
       insideFerry: miles <= FERRY_RING.miles,
     },

@@ -10,7 +10,7 @@
    which were decoration. Granting every favourable assumption at once and
    seeing what still fails is a better test than any of them separately.
 
-   THE AIRCRAFT IS NOT REAL. Callsign HYPO 01 is a construct. It corresponds to
+   THE AIRCRAFT IS NOT REAL. Callsign STEELMAN is a construct. It corresponds to
    no aircraft, no sortie and no record; it is drawn dashed, in white, and
    labelled as constructed at every appearance. No F-16 flew this track. The point of drawing it is to show what would have had to be
    true, not to suggest that it was.
@@ -51,7 +51,11 @@ import { AIM9 } from './reachability.js';
 const at = (h, m, s = 0) => h * 3600 + m * 60 + s;
 
 export const HYPO = {
-  callsign: 'HYPO 01',
+  /* Named STEELMAN rather than a plausible-looking military callsign. "STEELMAN"
+     read like a real tail on a real sortie, which is precisely the confusion a
+     constructed aircraft on a map of real ones must not create. The name should
+     say what the thing is every time it is spoken. */
+  callsign: 'STEELMAN',
   status: 'CONSTRUCTED — NOT A RECORD',
   type: 'F-16 (hypothetical)',
   disclaimer: 'A construct, not a sortie. No aircraft flew this track. It is drawn to show what the claim requires, not to suggest it happened.',
@@ -428,7 +432,7 @@ export function foreknowledgeVerdict(distMi, interceptT, bands) {
 /* =============================================================================
    Line of sight and the engagement window
 
-   HYPO 01 is built to arrive where United 93 is at 09:58, so the range between
+   STEELMAN is built to arrive where United 93 is at 09:58, so the range between
    them collapses to nothing at that moment by construction. What is worth
    measuring is the shape of that approach: how long the two are inside AIM-9
    range of each other, and how briefly.
@@ -447,7 +451,7 @@ export function losRange(track, targetAt, t) {
   return { from: a, to: b, miles: haversineMi(a, b) };
 }
 
-/* Sample HYPO 01's own path — it is stored in the same [t,lat,lon,alt] shape
+/* Sample STEELMAN's own path — it is stored in the same [t,lat,lon,alt] shape
    as every other track here. */
 export function trackSampleLL(track, t) {
   const p = track.path;

@@ -37,7 +37,7 @@
      reset                  the whole country
      place:<KEY>            a named place from PLACES
      ua93                   United 93 at the current clock
-     hypo                   HYPO 01 at the current clock
+     hypo                   STEELMAN at the current clock
      fit:<KEY>,<KEY>        frame several places at once
    ========================================================================== */
 
@@ -129,6 +129,15 @@ export const TOUR_STEPS = [
       <p>He would also have had the missiles. They are short-range heat-seekers
       ${i('sidewinder')} that hang on the wingtips, and the tanks hang underneath, so carrying
       both at once is completely normal.</p>
+      <p>So from here on, <strong>every version of the story assumes a tanked jet</strong> and
+      fuel is never the objection. The app used to draw a 340-mile "combat radius" ring for a
+      fighter carrying nothing; that ring is gone, because this aircraft demonstrably was not
+      carrying nothing.</p>
+      <p>There is a price, though, and it is charged to the story rather than to us. Tanks are
+      draggy. A tanked F-16 is limited to about
+      ${F16.maxWithTanksMph.toLocaleString()} mph ${i('placard')} — the famous "Mach 2" belongs
+      to a clean jet with nothing hanging off it. Proving he had the fuel proves he did not have
+      his top speed.</p>
       <p><em>Remember the fuel. It comes back later, and not in the way you would expect.</em></p>`,
     t: at(8, 46, 40),
     tab: 'claim',
