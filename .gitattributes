@@ -1,0 +1,9 @@
+# Normalise line endings in the repository. Checked-in files are LF; Git may
+# check them out as CRLF on Windows, which is fine and invisible on GitHub.
+* text=auto eol=lf
+
+# Vendored and generated files: keep them out of diffs and language stats so
+# the repo reads as what it is — about 2,000 lines of hand-written source.
+vendor/three.module.js  linguist-vendored
+data/states-10m.json    linguist-generated
+index.html              linguist-generated

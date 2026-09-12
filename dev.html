@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>September 11, 2001 — Tracker</title>
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<div id="boot"><div class="boot-inner"><div class="spinner"></div><p>Loading state geometry…</p></div></div>
+
+<header id="topbar">
+  <div class="brand">
+    <h1>September 11, 2001</h1>
+    <span class="sub">Flight tracker &amp; claim tester</span>
+  </div>
+
+  <div class="clock-wrap">
+    <div id="clock">07:55:00</div>
+    <div class="clock-label">Eastern Daylight Time</div>
+  </div>
+
+  <div class="transport">
+    <button id="btn-play" class="icon-btn" title="Play / pause (space)"><span id="play-glyph">▶</span></button>
+    <div class="rate-group" id="rate-group">
+      <button data-rate="1">1×</button>
+      <button data-rate="15" class="on">15×</button>
+      <button data-rate="60">60×</button>
+      <button data-rate="240">240×</button>
+    </div>
+    <button id="btn-follow" class="ghost-btn on" aria-pressed="true"
+            title="Keep the camera on whatever is airborne (F)">Follow</button>
+    <button id="btn-reset-view" class="ghost-btn" title="Stop following and show the whole country">Reset view</button>
+  </div>
+</header>
+
+<main id="stage">
+  <canvas id="map"></canvas>
+  <div id="labels"></div>
+
+  <div id="hud">
+    <div id="hud-state">—</div>
+    <div id="hud-hint">drag to orbit · shift-drag or right-drag to pan · scroll to zoom · click to inspect</div>
+  </div>
+
+  <div id="legend">
+    <div class="legend-title">Vertical scale</div>
+    <div class="alt-group" id="alt-group">
+      <button data-alt="1" class="on">1× true</button>
+      <button data-alt="2">2×</button>
+      <button data-alt="5">5×</button>
+    </div>
+    <div class="legend-row" id="alt-note"></div>
+  </div>
+
+  <button id="aside-toggle" title="Show / hide panel">›</button>
+</main>
+
+<aside id="panel">
+  <nav id="tabs">
+    <button data-tab="timeline" class="on">Timeline</button>
+    <button data-tab="critic">CRITIC</button>
+    <button data-tab="claim">Claim</button>
+    <button data-tab="debris">Flight&nbsp;93</button>
+    <button data-tab="military">Military</button>
+    <button data-tab="conflicts">Conflicts<span id="conflict-count"></span></button>
+    <button data-tab="layers">Layers</button>
+  </nav>
+
+  <section class="tab-body" data-body="timeline">
+    <div id="now-card" class="card"></div>
+    <div id="event-list"></div>
+  </section>
+
+  <section class="tab-body hidden" data-body="critic"><div id="critic-body"></div></section>
+  <section class="tab-body hidden" data-body="claim"><div id="claim-body"></div></section>
+  <section class="tab-body hidden" data-body="debris"><div id="debris-body"></div></section>
+  <section class="tab-body hidden" data-body="military"><div id="military-body"></div></section>
+  <section class="tab-body hidden" data-body="conflicts"><div id="conflicts-body"></div></section>
+  <section class="tab-body hidden" data-body="layers"><div id="layers-body"></div></section>
+</aside>
+
+<footer id="timeline">
+  <div id="track-wrap">
+    <div id="ticks"></div>
+    <div id="track">
+      <div id="track-fill"></div>
+      <div id="event-marks"></div>
+      <div id="playhead"><div class="playhead-grip"></div></div>
+    </div>
+    <input id="scrub" type="range" min="0" max="1" step="1" value="0" aria-label="Scrub timeline" />
+  </div>
+  <div id="flight-strip"></div>
+</footer>
+
+<div id="tooltip" class="hidden"></div>
+
+<script type="module" src="src/main.js"></script>
+</body>
+</html>
