@@ -779,6 +779,19 @@ function renderSteelPanel() {
           : 'beyond the tanked placard — needs a clean jet, which has no external fuel'} ·
         ${Math.round(h.ferryFraction * 100)}% of ferry range
       </div>
+    </div>
+    <div class="cmd-row">
+      <div class="t">${Math.round(h.egressMi)} mi</div>
+      <div class="x">At the closest point to United 93 he turns straight for
+        <strong style="color:var(--ink)">Albany</strong>, bearing ${Math.round(h.egressBearing)}°,
+        arriving about ${hms(h.arrivesAlbany).slice(0, 5)}.</div>
+    </div>
+    <div class="cmd-row">
+      <div class="t">${Math.round(h.totalMi).toLocaleString()} mi</div>
+      <div class="x">Whole day — <strong class="v-routine">${Math.round(h.totalFerryFraction * 100)}% of ferry range</strong>,
+        inside one tankful. <strong>And it never goes to Bozeman.</strong> That is the shortest
+        flyable version of the claim, and it is one in which Ed Jacoby is never collected —
+        which is contradicted by Jacoby, who was.</div>
     </div>`;
 
   $('#concessions').innerHTML = `
@@ -1472,8 +1485,8 @@ function drawLabels() {
     const sm = map._hypoSample;
     wanted.set('hypo', {
       pos: map.hypoMarker.position,
-      text: `${HYPO.callsign} · CONSTRUCTED · ${Math.round((sm?.altFt ?? 0) / 100) * 100} ft`,
-      cls: 'flight', color: '#ffffff', rank: 1.2,
+      text: `${HYPO.callsign} — STEELMAN, CONSTRUCTED · ${Math.round((sm?.altFt ?? 0) / 100) * 100} ft`,
+      cls: 'flight hypo', color: '#ffffff', rank: 1.2,
     });
   }
 

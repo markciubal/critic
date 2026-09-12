@@ -11,9 +11,8 @@
    seeing what still fails is a better test than any of them separately.
 
    THE AIRCRAFT IS NOT REAL. Callsign HYPO 01 is a construct. It corresponds to
-   no aircraft, no sortie and no record; it is drawn dashed, in white, labelled
-   as constructed at every appearance, and it is off by default. No F-16 flew
-   this track. The point of drawing it is to show what would have had to be
+   no aircraft, no sortie and no record; it is drawn dashed, in white, and
+   labelled as constructed at every appearance. No F-16 flew this track. The point of drawing it is to show what would have had to be
    true, not to suggest that it was.
 
    WHAT IT GRANTS
@@ -107,6 +106,12 @@ export const CONCESSIONS = [
     blocking: true,
   },
   {
+    grant: 'He never collects Jacoby',
+    detail: 'The shortest flyable version runs Fargo to the intercept and straight on to Albany — about 1,320 miles, roughly half of one tankful. It does not go to Bozeman.',
+    cost: 'Bozeman is where Ed Jacoby was standing. He was collected, he reached Albany, and he has said on the record that Gibney flew him. The concession that makes the flying easy is the one that contradicts the only first-hand witness to the mission.',
+    blocking: true,
+  },
+  {
     grant: 'He has an order',
     detail: 'Authority to fire on a civilian airliner.',
     cost: 'The shootdown authorisation was conveyed around 10:10 and reached NEADS at 10:31, which did not pass it to its pilots. At 09:58 no such order existed anywhere in the chain.',
@@ -114,11 +119,20 @@ export const CONCESSIONS = [
   },
 ];
 
-/* Build the best-case track. The target position is sampled from United 93's
-   own path rather than hard-coded, so this stays correct if that path is
-   ever revised. */
+/* Build the best-case track: Fargo to the intercept, then straight out to
+   Albany, because the day has to end somewhere and Albany is where Gibney
+   demonstrably put his passenger down.
+
+   Note what the egress leg costs. Flying the target to Albany directly is the
+   SHORTEST version of the claim — about 1,320 miles in total, roughly half of
+   one tankful — but it skips Bozeman, and Bozeman is where Ed Jacoby was standing.
+   The most generous flyable version of this allegation is therefore one in
+   which Jacoby is never collected. He was collected, and he reached Albany,
+   and he has said so. So the concession that makes the flying easy is the one
+   that contradicts the only first-hand witness to the actual mission. */
 export function buildHypoTrack(targetLatLon, departEDT, interceptEDT) {
   const from = PLACES.KFAR;
+  const to = PLACES.KALB;
   const miles = haversineMi(from, targetLatLon);
   const seconds = Math.max(1, interceptEDT - departEDT);
   const mph = miles / (seconds / 3600);
@@ -135,6 +149,21 @@ export function buildHypoTrack(targetLatLon, departEDT, interceptEDT) {
     path.push([departEDT + seconds * f, p.lat, p.lon, alt]);
   }
 
+  /* The turn. At the closest point to United 93 he breaks straight for Albany,
+     at ordinary cruise — no reason to hurry once the shot is taken. */
+  const egressMi = haversineMi(targetLatLon, to);
+  const egressS = (egressMi / F16.cruiseMph) * 3600;
+  const EG = 16;
+  for (let i = 1; i <= EG; i++) {
+    const f = i / EG;
+    const p = gcInterp(targetLatLon, to, f);
+    const alt = f < 0.25 ? 7000 + (f / 0.25) * 21000
+      : f > 0.82 ? 28000 - ((f - 0.82) / 0.18) * 28000
+        : 28000;
+    path.push([interceptEDT + egressS * f, p.lat, p.lon, alt]);
+  }
+
+  const totalMi = miles + egressMi;
   return {
     path,
     miles,
@@ -144,6 +173,12 @@ export function buildHypoTrack(targetLatLon, departEDT, interceptEDT) {
     bearing: bearingDeg(from, targetLatLon),
     withinTankedLimit: mph <= F16.maxWithTanksMph,
     ferryFraction: miles / F16.ferryRangeMi,
+    egressMi,
+    egressBearing: bearingDeg(targetLatLon, to),
+    arrivesAlbany: interceptEDT + egressS,
+    totalMi,
+    totalFerryFraction: totalMi / F16.ferryRangeMi,
+    skipsBozeman: true,
   };
 }
 
