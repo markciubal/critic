@@ -704,7 +704,7 @@ ul.plain li { font-size: 12.5px; color: var(--ink-dim); line-height: 1.55; margi
 
   <div id="hud">
     <div id="hud-state">—</div>
-    <div id="hud-hint">drag to orbit · shift-drag or right-drag to pan · scroll to zoom · click to inspect</div>
+    <div id="hud-hint">drag to pan · right-drag, shift-drag or ctrl-drag to rotate · scroll to zoom · click to inspect</div>
   </div>
 
   <div id="legend">
@@ -56911,16 +56911,22 @@ class Map3D {
       lastX = e.clientX; lastY = e.clientY;
       moved += Math.abs(dx) + Math.abs(dy);
 
-      if (button === 2 || e.shiftKey) {
+      /* Plain drag pans, the way every other map behaves. Rotating is the
+         secondary gesture — right-drag, shift-drag or ctrl-drag.
+
+         Panning is a statement about where you want to look, so it hands
+         camera control back from follow mode. Rotating is not: you can orbit
+         around a moving subject and still be following it. */
+      if (button === 2 || e.shiftKey || e.ctrlKey) {
+        this.yaw -= dx * 0.005;
+        this.pitch = clamp(this.pitch - dy * 0.005, this.minPitch, this.maxPitch);
+      } else {
         // Pan across the map plane, in the camera's own screen basis.
         const k = this.dist * 0.0013;
         const right = new THREE.Vector3(Math.cos(this.yaw), 0, -Math.sin(this.yaw));
         const fwd = new THREE.Vector3(Math.sin(this.yaw), 0, Math.cos(this.yaw));
         this.target.addScaledVector(right, -dx * k).addScaledVector(fwd, -dy * k);
         this.onManualCamera();
-      } else {
-        this.yaw -= dx * 0.005;
-        this.pitch = clamp(this.pitch - dy * 0.005, this.minPitch, this.maxPitch);
       }
       this._applyCamera();
     });

@@ -60,8 +60,8 @@ There is no package manager and no runtime dependency. Three.js is vendored in
 
 | | |
 |---|---|
-| Drag | Orbit |
-| Shift-drag / right-drag | Pan |
+| Drag | Pan |
+| Right-drag / shift-drag / ctrl-drag | Rotate |
 | Scroll | Zoom |
 | Click | Inspect a state, aircraft, airfield or debris point |
 | Space | Play / pause |
