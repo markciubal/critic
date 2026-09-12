@@ -93,28 +93,77 @@ body.panel-hidden #panel { opacity: 0; pointer-events: none; }
 #boot.error .spinner { animation: none; border-top-color: var(--aa11); }
 
 /* --- topbar -------------------------------------------------------------- */
+/* The flag, at the weight of an official document rather than a celebration —
+   the register the whole page is written in. A canton wash with a faint star
+   field on the left, a tricolour rule underneath, and the active controls moved
+   off the generic UI blue onto the flag blue. The colour is doing the same job
+   it does on the map: telling one kind of thing from another. */
 #topbar {
-  grid-area: top; display: flex; align-items: center; gap: 24px;
-  padding: 0 18px; background: var(--bg-2);
+  grid-area: top; position: relative; z-index: 2;
+  display: flex; align-items: center; gap: 24px;
+  padding: 0 18px;
+  background:
+    linear-gradient(90deg,
+      rgba(13, 60, 118, .82) 0%,
+      rgba(12, 55, 108, .64) 18%,
+      rgba(10, 49, 97, .34) 38%,
+      rgba(10, 49, 97, .08) 58%,
+      transparent 76%),
+    var(--bg-2);
   border-bottom: 1px solid var(--line);
 }
-.brand h1 { margin: 0; font-size: 15px; font-weight: 650; letter-spacing: .2px; }
-.brand .sub { font-size: 11px; color: var(--ink-faint); }
+
+/* The canton: a field of stars, faint enough to read as texture. */
+#topbar::before {
+  content: ''; position: absolute; left: 0; top: 0; bottom: 4px; width: 460px;
+  pointer-events: none;
+  background-image:
+    radial-gradient(circle at 50% 50%, rgba(255,255,255,.30) 1.1px, transparent 1.7px),
+    radial-gradient(circle at 50% 50%, rgba(255,255,255,.20) 1.1px, transparent 1.7px);
+  background-size: 27px 21px, 27px 21px;
+  background-position: 0 0, 13.5px 10.5px;
+  -webkit-mask-image: linear-gradient(90deg, #000 0 46%, transparent 100%);
+  mask-image: linear-gradient(90deg, #000 0 46%, transparent 100%);
+}
+.brand { position: relative; padding-left: 15px; }
+.brand::before {
+  content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%);
+  width: 4px; height: 32px; border-radius: 1px;
+  background: linear-gradient(180deg,
+    var(--flag-red) 0 33.34%, #f7f9fc 33.34% 66.67%, var(--flag-blue) 66.67% 100%);
+  box-shadow: 0 0 0 1px rgba(0,0,0,.35);
+}
+.brand h1 {
+  margin: 0; font-size: 15px; font-weight: 650; letter-spacing: .2px;
+  color: #fff;
+}
+/* Lifted off --ink-faint: that colour was chosen against the near-black page
+   background and is close to unreadable on the canton blue now behind it. */
+.brand .sub { font-size: 11px; color: #b4c8e2; }
 
 .clock-wrap { margin-left: auto; text-align: right; }
 #clock {
   font-family: var(--mono); font-size: 24px; font-weight: 600;
   letter-spacing: 1px; line-height: 1; font-variant-numeric: tabular-nums;
+  color: #fff; text-shadow: 0 1px 10px rgba(255,255,255,.14);
 }
-.clock-label { font-size: 10px; color: var(--ink-faint); letter-spacing: .6px; text-transform: uppercase; }
+.clock-label {
+  font-size: 10px; letter-spacing: .9px; text-transform: uppercase;
+  color: #8fa8c9;
+}
+.clock-label::before {
+  content: ''; display: inline-block; vertical-align: 2px;
+  width: 12px; height: 2px; margin-right: 6px; border-radius: 1px;
+  background: linear-gradient(90deg, var(--flag-red) 0 50%, #f7f9fc 50% 100%);
+}
 
 .transport { display: flex; align-items: center; gap: 10px; }
 .icon-btn {
   width: 38px; height: 32px; border-radius: 7px; cursor: pointer;
-  background: var(--bg-3); border: 1px solid var(--line-2); color: var(--ink);
+  background: var(--bg-3); border: 1px solid var(--line-2); color: #fff;
   font-size: 13px;
 }
-.icon-btn:hover { border-color: var(--ui); }
+.icon-btn:hover { border-color: #6f8fbe; background: rgba(20,38,65,.7); }
 .rate-group { display: flex; border: 1px solid var(--line-2); border-radius: 7px; overflow: hidden; }
 .rate-group button {
   background: var(--bg-3); border: 0; color: var(--ink-dim); cursor: pointer;
@@ -122,12 +171,19 @@ body.panel-hidden #panel { opacity: 0; pointer-events: none; }
   border-right: 1px solid var(--line-2);
 }
 .rate-group button:last-child { border-right: 0; }
-.rate-group button.on { background: var(--ui); color: #04101f; font-weight: 700; }
+.rate-group button.on {
+  background: var(--flag-blue); color: #fff; font-weight: 700;
+  box-shadow: inset 0 -2px 0 var(--flag-red);
+}
 .ghost-btn {
-  background: transparent; border: 1px solid var(--line-2); color: var(--ink-dim);
+  background: rgba(255,255,255,.03); border: 1px solid var(--line-2); color: var(--ink-dim);
   border-radius: 7px; padding: 7px 11px; cursor: pointer; font-size: 11px;
 }
-.ghost-btn:hover { color: var(--ink); border-color: var(--ui); }
+.ghost-btn:hover { color: var(--ink); border-color: #6f8fbe; }
+.ghost-btn.on {
+  background: var(--flag-blue); border-color: #2d5f9e; color: #fff;
+  box-shadow: inset 0 -2px 0 var(--flag-red);
+}
 
 /* --- stage --------------------------------------------------------------- */
 #stage { grid-area: stage; position: relative; overflow: hidden; }
@@ -536,12 +592,20 @@ ul.plain li { font-size: 12.5px; color: var(--ink-dim); line-height: 1.55; margi
    A three-band rule under the header. It is the only decorative element in
    the app and it is three pixels tall, which is about the right weight for
    the subject. */
-#topbar { position: relative; }
+/* The rule under the bar, built as a flag rather than a gradient: a blue
+   canton on the left, then stripes.
+
+   The stripes are sized in pixels, not percentages. Thirteen across a 1600px
+   bar is a 123px band each, which reads as a dashed line; at 18px they read as
+   what they are. The white is pulled off pure so it sits in the page rather
+   than glaring out of it. */
 #topbar::after {
-  content: ''; position: absolute; left: 0; right: 0; bottom: -1px; height: 3px;
-  background: linear-gradient(90deg,
-    var(--flag-blue) 0 34%, #f7f9fc 34% 67%, var(--flag-red) 67% 100%);
-  opacity: .85;
+  content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 4px;
+  background:
+    linear-gradient(90deg, var(--flag-blue) 0 220px, transparent 220px),
+    repeating-linear-gradient(90deg,
+      var(--flag-red) 0 18px, #e8eef6 18px 36px);
+  opacity: .92;
 }
 
 /* --- CRITIC: red and unmistakable ------------------------------------------
