@@ -592,3 +592,55 @@ ul.plain li { font-size: 12.5px; color: var(--ink-dim); line-height: 1.55; margi
 .cn-detail { font-size: 11.5px; color: var(--ink-dim); line-height: 1.45; margin-top: 3px; }
 .cn-cost { font-size: 11.5px; color: var(--ink-faint); line-height: 1.45; margin-top: 3px; font-style: italic; }
 .concession.blocking .cn-cost { color: #ffb3bd; font-style: normal; }
+
+
+/* --- foreknowledge horizon -------------------------------------------------
+   The hardest claim on the page gets the hardest styling. */
+.card.fk-card { border-color: rgba(255,31,61,.5); background: rgba(255,31,61,.06); }
+.card.fk-card h3 { color: var(--critic); letter-spacing: 1px; }
+.leg.fk-leg { border-color: rgba(255,31,61,.55); background: rgba(255,31,61,.09); }
+.fk-verdict {
+  margin-top: 11px; padding-top: 10px; border-top: 1px solid rgba(255,31,61,.35);
+  font-size: 12.5px; line-height: 1.55; color: var(--ink-dim);
+}
+.fk-verdict strong { color: var(--ink); }
+.fk-caution {
+  font-size: 11px; color: var(--ink-faint); font-style: italic;
+  border-left: 2px solid var(--line-2); padding-left: 9px; margin-top: 10px;
+}
+.map-label.ring.fk {
+  background: var(--critic); font-weight: 700;
+  border-color: #ff6b80; letter-spacing: .5px; padding: 3px 8px;
+  text-shadow: 0 1px 2px rgba(0,0,0,.5);
+}
+
+
+/* --- phone calls ------------------------------------------------------------
+   The split is the whole argument, so it is a headline number rather than a
+   sentence. */
+.call-split { display: flex; gap: 8px; margin-top: 11px; }
+.cs-cell {
+  flex: 1; text-align: center; padding: 9px 4px; border-radius: 7px;
+  background: var(--bg); border: 1px solid var(--line);
+}
+.cs-cell b { display: block; font-family: var(--mono); font-size: 20px; color: var(--ink); }
+.cs-cell span { font-size: 10px; color: var(--ink-faint); text-transform: uppercase; letter-spacing: .6px; }
+.cs-cell.airfone { border-color: #2b5f80; } .cs-cell.airfone b { color: var(--aa77); }
+.cs-cell.cellular { border-color: #6b5713; } .cs-cell.cellular b { color: var(--claim); }
+
+.call-row {
+  display: grid; grid-template-columns: 52px 1fr; gap: 9px;
+  padding: 8px 0 8px 9px; border-top: 1px solid var(--line);
+  border-left: 2px solid var(--aa77);
+}
+.call-row.cellular { border-left-color: var(--claim); background: rgba(255,212,71,.05); }
+.cr-t { font-family: var(--mono); font-size: 11.5px; color: var(--ink-faint); }
+.cr-who { font-size: 12.5px; color: var(--ink); font-weight: 600; }
+.cr-to { color: var(--ink-dim); font-weight: 400; }
+.cr-type {
+  font-family: var(--mono); font-size: 9px; letter-spacing: .5px;
+  padding: 1px 5px; border-radius: 3px; margin-left: 4px;
+  border: 1px solid var(--line-2); color: var(--ink-faint);
+}
+.call-row.cellular .cr-type { color: var(--claim); border-color: #6b5713; }
+.cr-note { font-size: 11.5px; color: var(--ink-dim); line-height: 1.5; margin-top: 3px; }

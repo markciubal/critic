@@ -21,7 +21,8 @@ import {
   BANDS, FUEL_RING, FERRY_RING, HALF_FERRY_RING, ringPoints, reachMi,
   MAX_DRAW_MI, AIM9, bandRadii, evidenceCeilingMi, DEPARTURE_BOUNDS,
 } from './reachability.js';
-import { HYPO } from './steelman.js';
+import { HYPO, FOREKNOWLEDGE } from './steelman.js';
+import { CALLS } from './calls.js';
 import { destinationPoint } from './geo.js';
 
 const COL = {
@@ -76,6 +77,9 @@ export class Map3D {
     this._buildDebris();
     this._buildCritic();
     this._buildReach();
+    this._buildForeknowledge();
+    this._buildCalls();
+    this._buildTrail();
     this._buildHypo();
     this._buildPlaces();
 
@@ -424,6 +428,7 @@ export class Map3D {
     this.ferryRing = mkRing(FERRY_RING.color, 0.55, true);
     this.halfFerryRing = mkRing(HALF_FERRY_RING.color, 0.6, true);
     this.reachLabelAnchors = [];
+    this._scratch = new THREE.Vector3();
     // The engagement zone: an annulus, because a Sidewinder has a minimum
     // range as well as a maximum.
     this.wezOuter = mkRing(0xff4d4d, 1.0, false);
@@ -450,25 +455,23 @@ export class Map3D {
     if (!this.reachGroup.visible || !opts) return;
     const { anchor, now, depart, toleranceMin, target, showWez, showEnvelope } = opts;
 
-    /* A ring label has to sit ON its ring, and most of these rings run well
-       off the edge of the view. So each one offers a fan of candidate points
-       around the ring and the label layer takes the first that is actually on
-       screen. The fan starts at 202 degrees — out over empty map rather than
-       through the crowded northeast — and spreads either side from there, so
-       placement stays stable while the camera is still and only moves when it
-       has to. */
-    const LABEL_BEARING = 202;
-    const FAN = [0];
-    for (let d = 12; d <= 180; d += 12) FAN.push(d, -d);
+    /* A ring label has to sit ON its ring, and these rings mostly run off the
+       edge of the view — the ferry ring is 2,450 miles across. A fixed fan of
+       bearings can miss the visible arc entirely on a large ring, so the
+       candidates ARE the ring's own vertices. If any part of the ring is on
+       screen, at least one vertex is, and the label has somewhere to go.
 
+       They are handed over as lat/lon with a search order rather than as
+       projected points, so nothing is projected until the label layer actually
+       needs it, and it stops at the first one that fits. The order starts at
+       202 degrees — out over empty map rather than through the crowded
+       northeast — and spirals outward, so placement stays put while the camera
+       is still and only moves when it has to. */
     this.reachLabelAnchors = [];
-    const anchorAt = (r, text, color) => {
-      const candidates = FAN.map((d) => {
-        const p = destinationPoint(anchor, (LABEL_BEARING + d + 360) % 360, r);
-        const [x, z] = projectLL(p);
-        return new THREE.Vector3(x, STATE_DEPTH + 0.6, z);
+    const anchorAt = (ringLL, text, color) => {
+      this.reachLabelAnchors.push({
+        ringLL, order: searchOrder(ringLL.length), text, color,
       });
-      this.reachLabelAnchors.push({ pos: candidates[0], candidates, text, color });
     };
 
     for (const { band, outer, inner } of this.reachRings) {
@@ -477,10 +480,11 @@ export class Map3D {
       outer.visible = on;
       inner.visible = on && r.inner > 1;
       if (on) {
-        this._writeRing(outer, ringPoints(anchor, r.outer, 120));
+        const pts = ringPoints(anchor, r.outer, 120);
+        this._writeRing(outer, pts);
         if (r.inner > 1) this._writeRing(inner, ringPoints(anchor, r.inner, 120));
         const span = toleranceMin > 0 ? ` (${Math.round(r.inner)}–${Math.round(r.outer)})` : '';
-        anchorAt(r.outer, `${band.label} · ${band.mph} mph · ${Math.round(r.outer)} mi${span}`, band.color);
+        anchorAt(pts, `${band.label} · ${band.mph} mph · ${Math.round(r.outer)} mi${span}`, band.color);
       }
     }
 
@@ -488,21 +492,24 @@ export class Map3D {
     const ceilOn = showEnvelope && ceil > 1 && ceil < MAX_DRAW_MI;
     this.ceilingRing.visible = ceilOn;
     if (ceilOn) {
-      this._writeRing(this.ceilingRing, ringPoints(anchor, ceil, 120));
-      anchorAt(ceil, `Evidence ceiling · earliest possible departure ${Math.round(ceil)} mi`, 0xffffff);
+      const pts = ringPoints(anchor, ceil, 120);
+      this._writeRing(this.ceilingRing, pts);
+      anchorAt(pts, `Evidence ceiling · earliest possible departure ${Math.round(ceil)} mi`, 0xffffff);
     }
 
     this.fuelRing.visible = showEnvelope;
     if (showEnvelope) {
-      this._writeRing(this.fuelRing, ringPoints(anchor, FUEL_RING.miles, 120));
-      anchorAt(FUEL_RING.miles, `${FUEL_RING.label} · ${FUEL_RING.miles} mi`, FUEL_RING.color);
+      const pts = ringPoints(anchor, FUEL_RING.miles, 120);
+      this._writeRing(this.fuelRing, pts);
+      anchorAt(pts, `${FUEL_RING.label} · ${FUEL_RING.miles} mi`, FUEL_RING.color);
     }
 
     const halfOn = showEnvelope && HALF_FERRY_RING.miles < MAX_DRAW_MI;
     this.halfFerryRing.visible = halfOn;
     if (halfOn) {
-      this._writeRing(this.halfFerryRing, ringPoints(anchor, HALF_FERRY_RING.miles, 120));
-      anchorAt(HALF_FERRY_RING.miles,
+      const pts = ringPoints(anchor, HALF_FERRY_RING.miles, 120);
+      this._writeRing(this.halfFerryRing, pts);
+      anchorAt(pts,
         `Ferry half-radius · ${HALF_FERRY_RING.miles.toLocaleString()} mi · furthest he could still return from`,
         HALF_FERRY_RING.color);
     }
@@ -510,8 +517,9 @@ export class Map3D {
     const ferryOn = showEnvelope && FERRY_RING.miles < MAX_DRAW_MI;
     this.ferryRing.visible = ferryOn;
     if (ferryOn) {
-      this._writeRing(this.ferryRing, ringPoints(anchor, FERRY_RING.miles, 120));
-      anchorAt(FERRY_RING.miles, `${FERRY_RING.label} · ${FERRY_RING.miles.toLocaleString()} mi`, FERRY_RING.color);
+      const pts = ringPoints(anchor, FERRY_RING.miles, 120);
+      this._writeRing(this.ferryRing, pts);
+      anchorAt(pts, `${FERRY_RING.label} · ${FERRY_RING.miles.toLocaleString()} mi`, FERRY_RING.color);
     }
 
     const wezOn = showWez && !!target;
@@ -531,6 +539,169 @@ export class Map3D {
   setReachVisible(v) {
     this.reachGroup.visible = v;
     if (v) this.setReach(this._reachOpts);
+  }
+
+  /* The recorded-data trail. Every point where the record actually says
+     something is dropped on the track as the clock passes it, so the gaps
+     between them — which are interpolation, not measurement — are visible
+     as gaps rather than hidden inside a smooth line. */
+  _buildTrail() {
+    this.trailGroup = new THREE.Group();
+    this.trailGroup.visible = false;
+    this.scene.add(this.trailGroup);
+    this.trailDots = [];
+
+    const f = FLIGHTS.find((x) => x.id === 'UA93');
+    if (!f || !f.dataPoints) return;
+
+    for (const d of f.dataPoints) {
+      const sm = samplePath(f.path, Math.min(d.t, f.path[f.path.length - 1][0]));
+      if (!sm) continue;
+      const [x, z] = projectLL(sm);
+      const lettered = d.mark !== '\u2022';
+      const m = new THREE.Mesh(
+        new THREE.SphereGeometry(lettered ? 0.34 : 0.22, 12, 10),
+        new THREE.MeshBasicMaterial({ color: lettered ? 0x8cf27a : 0xdfe8f2 }),
+      );
+      m.position.set(x, altToY(sm.altFt) + STATE_DEPTH + 0.05, z);
+      m.visible = false;
+      m.userData = {
+        kind: 'datum', mark: d.mark, label: d.label, t: d.t, src: d.src,
+        altFt: sm.altFt,
+      };
+      this.trailGroup.add(m);
+
+      // A stem down to the ground so the altitude of each datum reads.
+      const stem = new THREE.Line(
+        new THREE.BufferGeometry().setFromPoints([
+          new THREE.Vector3(x, altToY(sm.altFt) + STATE_DEPTH + 0.05, z),
+          new THREE.Vector3(x, STATE_DEPTH + 0.02, z),
+        ]),
+        new THREE.LineBasicMaterial({ color: 0x8cf27a, transparent: true, opacity: 0.3 }),
+      );
+      stem.visible = false;
+      this.trailGroup.add(stem);
+
+      this.trailDots.push({ d, mesh: m, stem });
+    }
+  }
+
+  setTrail(t) {
+    if (!this.trailGroup || !this.trailGroup.visible) return;
+    for (const { d, mesh, stem } of this.trailDots) {
+      const on = t >= d.t;
+      mesh.visible = on;
+      stem.visible = on;
+      mesh.scale.setScalar(this._markerScale);
+    }
+  }
+
+  setTrailVisible(v) {
+    this.trailGroup.visible = v;
+    this.setTrail(this._t ?? 0);
+  }
+
+  /* Each call plotted where the aircraft was when it was placed, so the
+     altitude argument becomes visible rather than asserted: the two cellular
+     calls sit at the bottom of the descent, and the Airfone calls are spread
+     across the whole profile. Revealed as the clock passes each one. */
+  _buildCalls() {
+    this.callGroup = new THREE.Group();
+    this.callGroup.visible = false;
+    this.scene.add(this.callGroup);
+    this.callDots = [];
+
+    for (const c of CALLS) {
+      const cell = c.type === 'cellular';
+      const m = new THREE.Mesh(
+        new THREE.SphereGeometry(cell ? 0.42 : 0.3, 12, 10),
+        new THREE.MeshBasicMaterial({ color: cell ? 0xffd447 : 0x74c7ff }),
+      );
+      m.visible = false;
+      m.userData = {
+        kind: 'call', who: c.who, to: c.to, callType: c.type, note: c.note, t: c.t,
+      };
+      this.callGroup.add(m);
+      this.callDots.push({ c, mesh: m });
+    }
+  }
+
+  /* `positionAt` is supplied by the caller so this module does not have to
+     know which flight the calls came from. */
+  setCalls(positionAt, t) {
+    this._callPos = positionAt;
+    if (!this.callGroup || !this.callGroup.visible) return;
+    for (const { c, mesh } of this.callDots) {
+      const p = positionAt(c.t);
+      if (!p) { mesh.visible = false; continue; }
+      const [x, z] = projectLL(p);
+      mesh.position.set(x, altToY(p.altFt ?? 0) + STATE_DEPTH + 0.12, z);
+      mesh.scale.setScalar(this._markerScale);
+      mesh.visible = t >= c.t;
+    }
+  }
+
+  setCallsVisible(v) {
+    this.callGroup.visible = v;
+    if (v && this._callPos) this.setCalls(this._callPos, this._t ?? 0);
+  }
+
+  /* The foreknowledge horizon: a solid band rather than a line, because a
+     WebGL line ignores linewidth on most platforms and this one needs to read
+     as hard. It is a triangle strip between two geodesic rings, so it stays a
+     true constant-distance band under the projection instead of becoming an
+     ellipse. */
+  _buildForeknowledge() {
+    this.fkGroup = new THREE.Group();
+    this.fkGroup.visible = false;
+    this.scene.add(this.fkGroup);
+
+    const N = 181;                       // ringPoints(.., 180) yields 181
+    const geom = new THREE.BufferGeometry();
+    geom.setAttribute('position', new THREE.BufferAttribute(new Float32Array(N * 2 * 3), 3));
+    const idx = [];
+    for (let i = 0; i < N - 1; i++) {
+      const a = i * 2, b = a + 1, c = (i + 1) * 2, d = c + 1;
+      idx.push(a, b, c, b, d, c);
+    }
+    geom.setIndex(idx);
+
+    this.fkBand = new THREE.Mesh(geom, new THREE.MeshBasicMaterial({
+      color: FOREKNOWLEDGE.color, side: THREE.DoubleSide,
+      transparent: true, opacity: 0.8, depthWrite: false,
+    }));
+    this.fkBand.frustumCulled = false;
+    this.fkGroup.add(this.fkBand);
+    this.fkLabel = null;
+  }
+
+  setForeknowledge(center, radiusMi, text) {
+    this._fk = { center, radiusMi, text };
+    if (!this.fkGroup || !this.fkGroup.visible || !center || !(radiusMi > 0)) {
+      this.fkLabel = null;
+      return;
+    }
+    const w = FOREKNOWLEDGE.halfWidthMi;
+    const inner = ringPoints(center, Math.max(1, radiusMi - w), 180);
+    const outer = ringPoints(center, radiusMi + w, 180);
+    const attr = this.fkBand.geometry.attributes.position;
+    for (let i = 0; i < inner.length; i++) {
+      const [ix, iz] = projectLL(inner[i]);
+      const [ox, oz] = projectLL(outer[i]);
+      attr.setXYZ(i * 2, ix, STATE_DEPTH + 0.55, iz);
+      attr.setXYZ(i * 2 + 1, ox, STATE_DEPTH + 0.55, oz);
+    }
+    attr.needsUpdate = true;
+    this.fkBand.geometry.computeBoundingSphere();
+    this.fkLabel = {
+      ringLL: outer, order: searchOrder(outer.length), text, color: FOREKNOWLEDGE.color,
+    };
+  }
+
+  setForeknowledgeVisible(v) {
+    this.fkGroup.visible = v;
+    const f = this._fk;
+    if (f) this.setForeknowledge(f.center, f.radiusMi, f.text);
   }
 
   /* HYPO 01 — the steelman. Drawn dashed and white because it is a construct,
@@ -672,6 +843,8 @@ export class Map3D {
       ...this.placeGroup.children,
       ...(this.debrisGroup.visible ? this.debrisGroup.children : []),
       ...(this.criticGroup.visible ? this.criticGroup.children : []),
+      ...(this.callGroup.visible ? this.callGroup.children : []),
+      ...(this.trailGroup.visible ? this.trailGroup.children : []),
       ...[...this.flightObjs.values()].filter((o) => o.marker.visible).map((o) => o.marker),
       ...this.stateMeshes,
     ];
@@ -930,6 +1103,14 @@ export class Map3D {
     this.renderer.render(this.scene, this.camera);
   }
 
+  /* Project one lat/lon straight to screen, reusing a scratch vector so a
+     candidate scan does not allocate. */
+  llToScreen(ll) {
+    const [x, z] = projectLL(ll);
+    this._scratch.set(x, STATE_DEPTH + 0.6, z);
+    return this.toScreen(this._scratch);
+  }
+
   /* Project a world point to CSS pixel coordinates, for HTML labels. */
   toScreen(v3) {
     const p = v3.clone().project(this.camera);
@@ -945,6 +1126,23 @@ export class Map3D {
 /* --- helpers -------------------------------------------------------------- */
 
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+
+/* Indices into a ring's vertex array, ordered from the preferred bearing
+   outward in both directions. Cached, because it only depends on the count. */
+const PREFERRED_BEARING = 202;
+const _orderCache = new Map();
+function searchOrder(n) {
+  if (_orderCache.has(n)) return _orderCache.get(n);
+  const span = n - 1;                       // last vertex repeats the first
+  const start = Math.round((PREFERRED_BEARING / 360) * span) % span;
+  const out = [start];
+  for (let d = 1; d <= Math.ceil(span / 2); d++) {
+    out.push((start + d) % span);
+    out.push((start - d + span) % span);
+  }
+  _orderCache.set(n, out);
+  return out;
+}
 const Y_AXIS = new THREE.Vector3(0, 1, 0);
 
 function ringSpan(ring) {

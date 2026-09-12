@@ -44,6 +44,8 @@
 import { PLACES, F16 } from './data.js';
 import { haversineMi, bearingDeg, gcInterp, machAt } from './geo.js';
 
+const at = (h, m, s = 0) => h * 3600 + m * 60 + s;
+
 export const HYPO = {
   callsign: 'HYPO 01',
   status: 'CONSTRUCTED — NOT A RECORD',
@@ -150,3 +152,73 @@ export const VERDICT = {
   body: 'Granting fuel, missiles, the earliest permitted launch and a perfect heading, the run to Somerset County needs roughly Mach 1.26 sustained — inside the placarded limit for a tanked F-16, and about 41% of its ferry range. Speed and fuel do not stop this, and an argument that leans on them is leaning on the wrong thing. What stops it is that the launch requires knowing at 08:46 what would not happen until 09:28, that the sector had no track on the aircraft until four minutes after it crashed, that no order to fire existed at 09:58, and that the pilot, his unit and his passenger all place him over Montana.',
   src: 'derived',
 };
+
+/* =============================================================================
+   THE FOREKNOWLEDGE HORIZON
+
+   The sharpest form of the first blocking concession, and the one thing here
+   that can be drawn as a hard line.
+
+   United 93 was seized at 09:28. Before that moment it was an ordinary flight
+   climbing out of Newark, and nothing about it distinguished it from any other
+   aircraft in the sky. So a launch aimed at it before 09:28 is not a response
+   to a hijacking; it is a response to a hijacking that has not happened yet.
+
+   That gives a boundary with a radius rather than an argument. Take the
+   fastest speed an F-16 can manage, multiply by the thirty minutes between the
+   seizure and the alleged shot, and you get the set of points from which the
+   target could be reached WITHOUT departing early. Inside it, no foreknowledge
+   is needed. Outside it, the launch necessarily precedes the hijacking.
+
+   Fargo is 1,012 miles out. The horizon is 660. It is not close.
+
+   A caution on what this draws. The line does not show that anyone had
+   foreknowledge. It shows what the claim REQUIRES — that is a statement about
+   the claim, not about the world, and the label says so.
+   ========================================================================== */
+
+export const HIJACK_T = at(9, 28, 0);
+
+export const FOREKNOWLEDGE = {
+  title: 'Foreknowledge horizon',
+  hijackLabel: 'United 93 seized, 09:28',
+  color: 0xff1f3d,
+  halfWidthMi: 26,
+  caution: 'This is a statement about the claim, not about the world. The line marks what the allegation requires, not evidence that anyone knew anything.',
+  src: 'derived',
+};
+
+export const horizonMi = (maxMph, interceptT) =>
+  maxMph * ((interceptT - HIJACK_T) / 3600);
+
+/* For each speed the airframe can manage: when must he leave, and how far
+   ahead of the hijacking does that put him? */
+export function foreknowledgeRows(distMi, interceptT, bands) {
+  return bands.map((b) => {
+    const departBy = interceptT - (distMi / b.mph) * 3600;
+    const leadS = HIJACK_T - departBy;
+    return {
+      label: b.label,
+      mph: b.mph,
+      color: b.color,
+      departBy,
+      leadMin: leadS / 60,
+      requires: leadS > 0,
+    };
+  });
+}
+
+export function foreknowledgeVerdict(distMi, interceptT, bands) {
+  const rows = foreknowledgeRows(distMi, interceptT, bands);
+  const best = rows.reduce((a, b) => (a.leadMin <= b.leadMin ? a : b));
+  const maxMph = Math.max(...bands.map((b) => b.mph));
+  const r = horizonMi(maxMph, interceptT);
+  return {
+    rows,
+    best,
+    horizonMi: r,
+    distMi,
+    outsideBy: distMi - r,
+    allRequire: rows.every((x) => x.requires),
+  };
+}

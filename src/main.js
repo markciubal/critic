@@ -20,7 +20,11 @@ import {
   scaleComparison, TOLERANCES, DEPARTURE_BOUNDS, bandRadii, evidenceCeilingMi,
   CONFIG_TRADE,
 } from './reachability.js';
-import { HYPO, CONCESSIONS, VERDICT, buildHypoTrack } from './steelman.js';
+import {
+  HYPO, CONCESSIONS, VERDICT, buildHypoTrack,
+  FOREKNOWLEDGE, HIJACK_T, foreknowledgeVerdict,
+} from './steelman.js';
+import { CALLS, CALL_TOTALS, FARADAY, WHY_THEY_MATTER } from './calls.js';
 
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => [...document.querySelectorAll(s)];
@@ -45,7 +49,8 @@ const state = {
     PANTA: true, QUIT: true, GOFER: true, BULLY: true,
     debris: false, routeDoc: false, routeClaim: false, places: true,
     critic: true,
-    envelope: true, wez: true, hypo: false,
+    envelope: true, wez: true, hypo: true, foreknowledge: true, calls: true,
+    trail: true,
   },
 };
 
@@ -91,6 +96,10 @@ async function loadTopology() {
     setTolerance(state.toleranceMin);
     map.setCriticVisible(state.layers.critic);
     map.setReachVisible(state.layers.envelope || state.layers.wez);
+    map.setForeknowledgeVisible(state.layers.foreknowledge);
+    map.setHypoVisible(state.layers.hypo);
+    map.setCallsVisible(state.layers.calls);
+    map.setTrailVisible(state.layers.trail);
     setFollow(state.follow);
     setTime(T0);
 
@@ -146,6 +155,9 @@ function setTime(t) {
   updateFlightStrip();
   map.followPoints(focusPoints());
   updateReach();
+  updateForeknowledge();
+  map.setCalls(ua93StateAt, state.t);
+  map.setTrail(state.t);
   if (state.layers.hypo) updateHypo();
   throttledReachPanels();
 }
@@ -169,6 +181,7 @@ function throttledReachPanels(force = false) {
   renderReachPanel();
   renderWezPanel();
   renderSteelPanel();
+  renderForeknowledgePanel();
 }
 
 /* United 93's live position is the target the alleged shot needs. Once it is
@@ -200,6 +213,24 @@ function updateHypo() {
     : null;
   map.setHypo(track, state.t);
   return track;
+}
+
+/* United 93's full state at a time, for plotting the calls at the altitude
+   the aircraft was actually flying. */
+function ua93StateAt(t) {
+  const f = FLIGHTS.find((x) => x.id === 'UA93');
+  return samplePath(f.path, t);
+}
+
+function updateForeknowledge() {
+  const target = hypoTarget();
+  if (!target) return null;
+  const v = foreknowledgeVerdict(
+    haversineMi(PLACES.KFAR, target), state.interceptT, BANDS,
+  );
+  map.setForeknowledge(target, v.horizonMi,
+    `FOREKNOWLEDGE HORIZON · ${Math.round(v.horizonMi)} mi · outside this, the launch precedes the hijacking`);
+  return v;
 }
 
 function updateReach() {
@@ -522,6 +553,16 @@ function renderClaimTab() {
       </div>
     </div>
 
+    <div class="card fk-card">
+      <h3>${esc(FOREKNOWLEDGE.title)}</h3>
+      <p>United 93 was seized at <strong>09:28</strong>. Before that it was an ordinary flight climbing out of Newark. So a launch aimed at it earlier than 09:28 is not a response to a hijacking — it is a response to one that has not happened yet.</p>
+      <div id="fk-out"></div>
+      <p class="fk-caution">${esc(FOREKNOWLEDGE.caution)} ${srcTag(FOREKNOWLEDGE.src)}</p>
+      <div class="chip-row">
+        <button class="chip" data-act="show-fk">Draw the horizon</button>
+      </div>
+    </div>
+
     <div class="card">
       <h3>${esc(CONFIG_TRADE.title)}</h3>
       <p>Nobody observed the aircraft, so no speed can be excluded by eyewitness. But speed and range come off the same wing stations.</p>
@@ -608,6 +649,15 @@ function renderClaimTab() {
   });
 
   $$('#claim-body .chip').forEach((b) => b.addEventListener('click', () => {
+    if (b.dataset.act === 'show-fk') {
+      state.layers.foreknowledge = true;
+      map.setForeknowledgeVisible(true);
+      updateForeknowledge();
+      syncLayerChecks();
+      setFollow(false);
+      map.resetView();
+      return;
+    }
     if (b.dataset.act === 'show-hypo') {
       state.layers.hypo = true;
       map.setHypoVisible(true);
@@ -641,6 +691,7 @@ function renderClaimTab() {
   renderReachPanel();
   renderWezPanel();
   renderSteelPanel();
+  renderForeknowledgePanel();
   renderRouteCompare();
 }
 
@@ -666,6 +717,46 @@ function setTolerance(min) {
   $('#tol-note').textContent = t.note;
   updateReach();
   throttledReachPanels(true);
+}
+
+function renderForeknowledgePanel() {
+  const out = $('#fk-out');
+  if (!out) return;
+  const target = hypoTarget();
+  if (!target) return;
+  const v = foreknowledgeVerdict(haversineMi(PLACES.KFAR, target), state.interceptT, BANDS);
+
+  out.innerHTML = `
+    <div class="leg fk-leg">
+      <div class="leg-head">
+        <span class="leg-name">Best case, at the fastest the airframe goes</span>
+        <span class="leg-dist">${v.best.mph} mph</span>
+      </div>
+      <div class="leg-speed v-impossible">
+        ${Math.round(v.best.leadMin)}<small>minutes of foreknowledge required</small>
+      </div>
+      <div class="leg-mach">
+        He must be off the ground at ${hms(v.best.departBy).slice(0, 5)} —
+        ${Math.round(v.best.leadMin)} minutes before United 93 was seized.
+      </div>
+    </div>
+    <p style="font-size:11.5px;color:var(--ink-faint);margin:10px 0 4px">
+      Every speed the airframe can manage, and how far ahead of the hijacking each one puts the launch:
+    </p>
+    ${v.rows.map((r) => `
+      <div class="cmd-row">
+        <div class="t" style="color:${hex(r.color)}">${hms(r.departBy).slice(0, 5)}</div>
+        <div class="x"><strong style="color:var(--ink)">${esc(r.label)}</strong> — ${r.mph} mph.
+        ${r.requires
+          ? `<strong class="v-impossible">${Math.round(r.leadMin)} min before the hijacking.</strong>`
+          : 'No foreknowledge needed.'}</div>
+      </div>`).join('')}
+    <div class="fk-verdict">
+      <strong>${v.allRequire ? 'Every achievable speed requires foreknowledge.' : 'Some speeds avoid it.'}</strong>
+      The horizon — the fastest speed multiplied by the thirty minutes between the seizure and the alleged shot —
+      is <strong>${Math.round(v.horizonMi)} miles</strong>. Fargo is <strong>${Math.round(v.distMi)}</strong>,
+      outside it by <strong class="v-impossible">${Math.round(v.outsideBy)} miles</strong>.
+    </div>`;
 }
 
 function renderSteelPanel() {
@@ -870,6 +961,48 @@ function renderDebrisTab() {
     </div>
 
     <div class="card">
+      <h3>${esc(WHY_THEY_MATTER.title)}</h3>
+      ${WHY_THEY_MATTER.paras.map((t) => `<p>${esc(t)}</p>`).join('')}
+      <div class="call-split">
+        <div class="cs-cell"><b>${CALL_TOTALS.total}</b><span>calls</span></div>
+        <div class="cs-cell airfone"><b>${CALL_TOTALS.airfone}</b><span>Airfone</span></div>
+        <div class="cs-cell cellular"><b>${CALL_TOTALS.cellular}</b><span>cellular</span></div>
+      </div>
+      <p style="font-size:11.5px;color:var(--ink-faint);margin-top:8px">
+        ${esc(CALL_TOTALS.window)}. ${srcTag(CALL_TOTALS.src)}
+      </p>
+      <div class="chip-row"><button class="chip" data-act="show-calls">Plot the calls</button></div>
+    </div>
+
+    <div class="card">
+      <h3>${esc(FARADAY.title)}</h3>
+      <div class="quote">“${esc(FARADAY.claim)}” ${srcTag(FARADAY.claimSrc)}</div>
+      ${FARADAY.answers.map((a) => `
+        <div class="finding hard">
+          <h4>${esc(a.head)}</h4>
+          <p>${esc(a.text)}</p>
+          <div style="margin-top:5px">${srcTag(a.src)}</div>
+        </div>`).join('')}
+      <p style="margin-top:11px"><strong>${esc(FARADAY.reading)}</strong> ${srcTag(FARADAY.src)}</p>
+    </div>
+
+    <div class="card">
+      <h3>The calls</h3>
+      ${CALLS.map((c) => `
+        <div class="call-row ${c.type}">
+          <div class="cr-t">${hms(c.t).slice(0, 5)}</div>
+          <div>
+            <div class="cr-who">${esc(c.who)} <span class="cr-to">→ ${esc(c.to)}</span>
+              <span class="cr-type">${c.type === 'cellular' ? 'CELLULAR' : 'Airfone'}</span></div>
+            <div class="cr-note">${esc(c.note)}</div>
+          </div>
+        </div>`).join('')}
+      <p style="font-size:11.5px;color:var(--ink-faint);margin-top:9px">
+        A representative set, not all ${CALL_TOTALS.total} — many of the total are repeat calls by the same people. Times are approximate to the minute; sources vary by a minute or two on several. ${srcTag('press')}
+      </p>
+    </div>
+
+    <div class="card">
       <h3>${esc(DEBRIS_NOTE.title)}</h3>
       ${DEBRIS_NOTE.body.split('\n\n').map((p) => `<p>${esc(p)}</p>`).join('')}
       <div>${srcTag(DEBRIS_NOTE.src)}</div>
@@ -883,6 +1016,15 @@ function renderDebrisTab() {
 
   $$('#debris-body .chip').forEach((b) => b.addEventListener('click', () => {
     const act = b.dataset.act;
+    if (act === 'show-calls') {
+      state.layers.calls = true;
+      map.setCallsVisible(true);
+      map.setCalls(ua93StateAt, state.t);
+      syncLayerChecks();
+      setPlaying(false);
+      setTime(10 * 3600 + 3 * 60);
+      setFollow(true);
+    }
     if (act === 'fly-crash') { setFollow(false); map.flyTo(PLACES.SHKV, 22); }
     if (act === 'show-debris') {
       setFollow(false);
@@ -1213,6 +1355,21 @@ function renderLayersTab() {
         <span>Sidewinder engagement zone</span><span class="meta">${AIM9.rMaxMi} mi</span>
       </label>
       <label class="toggle">
+        <input type="checkbox" data-layer="trail" ${state.layers.trail ? 'checked' : ''}>
+        <span class="swatch" style="background:var(--ua93)"></span>
+        <span>United 93 — recorded data trail</span><span class="meta">FDR points</span>
+      </label>
+      <label class="toggle">
+        <input type="checkbox" data-layer="calls" ${state.layers.calls ? 'checked' : ''}>
+        <span class="swatch" style="background:#74c7ff"></span>
+        <span>Phone calls from United 93</span><span class="meta">37 calls</span>
+      </label>
+      <label class="toggle">
+        <input type="checkbox" data-layer="foreknowledge" ${state.layers.foreknowledge ? 'checked' : ''}>
+        <span class="swatch" style="background:var(--critic)"></span>
+        <span>Foreknowledge horizon</span><span class="meta">660 mi</span>
+      </label>
+      <label class="toggle">
         <input type="checkbox" data-layer="hypo" ${state.layers.hypo ? 'checked' : ''}>
         <span class="swatch" style="background:#fff"></span>
         <span>${esc(HYPO.callsign)} — best-case track</span><span class="meta">constructed</span>
@@ -1264,6 +1421,9 @@ function renderLayersTab() {
     else if (k === 'debris') map.setDebrisVisible(cb.checked);
     else if (k === 'critic') map.setCriticVisible(cb.checked);
     else if (k === 'hypo') { map.setHypoVisible(cb.checked); if (cb.checked) updateHypo(); }
+    else if (k === 'foreknowledge') { map.setForeknowledgeVisible(cb.checked); updateForeknowledge(); }
+    else if (k === 'calls') { map.setCallsVisible(cb.checked); map.setCalls(ua93StateAt, state.t); }
+    else if (k === 'trail') { map.setTrailVisible(cb.checked); map.setTrail(state.t); }
     else if (k === 'envelope' || k === 'wez') {
       map.setReachVisible(state.layers.envelope || state.layers.wez);
       updateReach();
@@ -1317,10 +1477,19 @@ function drawLabels() {
     });
   }
 
+  if (map.fkGroup && map.fkGroup.visible && map.fkLabel) {
+    const f = map.fkLabel;
+    wanted.set('fk', {
+      ringLL: f.ringLL, order: f.order, text: f.text,
+      // White, not the ring colour: this label is drawn ON a red fill.
+      cls: 'ring fk', color: '#ffffff', rank: 0.5,
+    });
+  }
+
   if (map.reachGroup.visible && map.reachLabelAnchors) {
     for (const a of map.reachLabelAnchors) {
       wanted.set(`r:${a.text}`, {
-        pos: a.pos, candidates: a.candidates, text: a.text,
+        ringLL: a.ringLL, order: a.order, text: a.text,
         cls: 'ring', color: hex(a.color), rank: 2.5,
       });
     }
@@ -1367,23 +1536,24 @@ function drawLabels() {
     el.className = `map-label ${w.cls}`;
     if (w.color) el.style.color = w.color;
 
-    /* Ring labels try each candidate point around their ring and take the
-       first that lands on screen, so a ring whose preferred anchor is off the
-       edge still gets labelled somewhere the reader can see. */
-    let s = map.toScreen(w.pos);
-    if (w.candidates) {
-      const M = 8, fits = (q) => !q.behind
-        && q.x > M && q.y > M && q.x < W - M && q.y < H - M;
-      if (!fits(s)) {
-        for (const c of w.candidates) {
-          const q = map.toScreen(c);
-          if (fits(q)) { s = q; break; }
-        }
+    /* A ring label walks its own ring, from the preferred bearing outward,
+       and stops at the first vertex on screen. So if any part of a ring is
+       visible, its label is too — which is the rule the reader expects. */
+    let s;
+    if (w.ringLL) {
+      const M = 10;
+      const fits = (q) => !q.behind && q.x > M && q.y > M && q.x < W - M && q.y < H - M;
+      for (const i of w.order) {
+        const q = map.llToScreen(w.ringLL[i]);
+        if (fits(q)) { s = q; break; }
       }
-    }
-    if (s.behind || s.x < -60 || s.y < -30 || s.x > W + 60 || s.y > H + 30) {
-      el.style.display = 'none';
-      continue;
+      if (!s) { el.style.display = 'none'; continue; }
+    } else {
+      s = map.toScreen(w.pos);
+      if (s.behind || s.x < -60 || s.y < -30 || s.x > W + 60 || s.y > H + 30) {
+        el.style.display = 'none';
+        continue;
+      }
     }
 
     // Pin labels are translated (-50%, -140%) so their box sits above the
@@ -1417,6 +1587,14 @@ function handlePick(ud) {
     showTipAt(ud.name, `FIPS ${ud.id}`, 'geo');
   } else if (ud.kind === 'debris') {
     showTipAt(ud.name, ud.note, ud.src);
+  } else if (ud.kind === 'datum') {
+    showTipAt(`${ud.mark === '\u2022' ? '' : ud.mark + ' — '}${ud.label}`,
+      `${hms(ud.t)} · ${Math.round(ud.altFt).toLocaleString()} ft\nA point where the record says something. Between these, the track is interpolated.`,
+      ud.src);
+  } else if (ud.kind === 'call') {
+    showTipAt(`${ud.who} → ${ud.to}`,
+      `${ud.callType === 'cellular' ? 'CELLULAR' : 'Airfone'} · ${hms(ud.t).slice(0, 5)}\n${ud.note}`,
+      'commission');
   } else if (ud.kind === 'criticNode') {
     showTipAt(ud.name, ud.note, ud.src);
   } else if (ud.kind === 'place') {

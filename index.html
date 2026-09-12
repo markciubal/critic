@@ -607,6 +607,58 @@ ul.plain li { font-size: 12.5px; color: var(--ink-dim); line-height: 1.55; margi
 .cn-cost { font-size: 11.5px; color: var(--ink-faint); line-height: 1.45; margin-top: 3px; font-style: italic; }
 .concession.blocking .cn-cost { color: #ffb3bd; font-style: normal; }
 
+
+/* --- foreknowledge horizon -------------------------------------------------
+   The hardest claim on the page gets the hardest styling. */
+.card.fk-card { border-color: rgba(255,31,61,.5); background: rgba(255,31,61,.06); }
+.card.fk-card h3 { color: var(--critic); letter-spacing: 1px; }
+.leg.fk-leg { border-color: rgba(255,31,61,.55); background: rgba(255,31,61,.09); }
+.fk-verdict {
+  margin-top: 11px; padding-top: 10px; border-top: 1px solid rgba(255,31,61,.35);
+  font-size: 12.5px; line-height: 1.55; color: var(--ink-dim);
+}
+.fk-verdict strong { color: var(--ink); }
+.fk-caution {
+  font-size: 11px; color: var(--ink-faint); font-style: italic;
+  border-left: 2px solid var(--line-2); padding-left: 9px; margin-top: 10px;
+}
+.map-label.ring.fk {
+  background: var(--critic); font-weight: 700;
+  border-color: #ff6b80; letter-spacing: .5px; padding: 3px 8px;
+  text-shadow: 0 1px 2px rgba(0,0,0,.5);
+}
+
+
+/* --- phone calls ------------------------------------------------------------
+   The split is the whole argument, so it is a headline number rather than a
+   sentence. */
+.call-split { display: flex; gap: 8px; margin-top: 11px; }
+.cs-cell {
+  flex: 1; text-align: center; padding: 9px 4px; border-radius: 7px;
+  background: var(--bg); border: 1px solid var(--line);
+}
+.cs-cell b { display: block; font-family: var(--mono); font-size: 20px; color: var(--ink); }
+.cs-cell span { font-size: 10px; color: var(--ink-faint); text-transform: uppercase; letter-spacing: .6px; }
+.cs-cell.airfone { border-color: #2b5f80; } .cs-cell.airfone b { color: var(--aa77); }
+.cs-cell.cellular { border-color: #6b5713; } .cs-cell.cellular b { color: var(--claim); }
+
+.call-row {
+  display: grid; grid-template-columns: 52px 1fr; gap: 9px;
+  padding: 8px 0 8px 9px; border-top: 1px solid var(--line);
+  border-left: 2px solid var(--aa77);
+}
+.call-row.cellular { border-left-color: var(--claim); background: rgba(255,212,71,.05); }
+.cr-t { font-family: var(--mono); font-size: 11.5px; color: var(--ink-faint); }
+.cr-who { font-size: 12.5px; color: var(--ink); font-weight: 600; }
+.cr-to { color: var(--ink-dim); font-weight: 400; }
+.cr-type {
+  font-family: var(--mono); font-size: 9px; letter-spacing: .5px;
+  padding: 1px 5px; border-radius: 3px; margin-left: 4px;
+  border: 1px solid var(--line-2); color: var(--ink-faint);
+}
+.call-row.cellular .cr-type { color: var(--claim); border-color: #6b5713; }
+.cr-note { font-size: 11.5px; color: var(--ink-dim); line-height: 1.5; margin-top: 3px; }
+
 </style>
 </head>
 <body>
@@ -54429,9 +54481,155 @@ function criticEvents() {
   };
 })();
 
+__m["calls"] = (function () {
+
+/* =============================================================================
+   calls.js — the phone calls from United 93.
+
+   These matter twice over.
+
+   As evidence, they are why Flight 93 is the one aircraft of the four that did
+   not reach its target. The hijackers' script depended on the passengers
+   believing a landing and negotiation were coming. The calls broke that, and
+   the revolt followed within minutes.
+
+   As a disputed claim, they are the subject of the "Faraday cage" argument:
+   that an aluminium fuselage blocks radio, so the calls could not have
+   happened and were fabricated. That argument is worth taking seriously
+   enough to answer with the actual numbers, because the numbers settle it in
+   a way that hand-waving about physics does not.
+
+   THE NUMBERS
+
+   Thirty-seven calls were placed from United 93 between the hijacking at 09:28
+   and the crash at 10:03:11. Thirty-five of them were made on AIRFONE — the
+   seatback air-to-ground radio-telephone fitted to the last nine rows — and
+   exactly TWO were cellular. Both cell calls came after the aircraft had
+   descended to about 5,000 feet.
+
+   So the Faraday argument is aimed at 2 calls out of 37, and those two happen
+   at precisely the altitude where a cell call is least surprising. The other
+   35 used a system designed and certificated for making telephone calls from
+   an airliner in cruise, which the argument does not touch at all.
+
+   Call times below are approximate to the minute; sources vary by a minute or
+   two on several of them, and the app says so rather than implying a precision
+   the record does not carry. The Airfone/cellular split and the count are
+   firm: they come from carrier records entered as evidence in the Moussaoui
+   sentencing trial.
+   ========================================================================== */
+
+const at = (h, m, s = 0) => h * 3600 + m * 60 + s;
+
+const CALL_TOTALS = {
+  total: 37,
+  airfone: 35,
+  cellular: 2,
+  window: 'between the hijacking at 09:28 and impact at 10:03:11',
+  src: 'commission',
+};
+
+/* A representative set, not the full 37 — the complete log is the carrier
+   records, and many of the 37 are repeat calls by the same people. Times are
+   approximate. */
+const CALLS = [
+  { t: at(9, 30), who: 'Tom Burnett', to: 'his wife Deena', type: 'airfone',
+    note: 'First of four. He told her the hijackers claimed a bomb, and that he believed it was a ruse.' },
+  { t: at(9, 32), who: 'Mark Bingham', to: 'his mother Alice Hoagland', type: 'airfone',
+    note: '"I want you to know that I love you. I am on a flight from Newark to San Francisco and there are three guys who have taken over the plane."' },
+  { t: at(9, 35), who: 'Jeremy Glick', to: 'his wife Lyz', type: 'airfone',
+    note: 'A long call. Lyz told him about the World Trade Center. This is one of the moments the script breaks.' },
+  { t: at(9, 37), who: 'Tom Burnett', to: 'Deena', type: 'airfone',
+    note: 'Learns of the World Trade Center. "They are talking about crashing this plane into the ground."' },
+  { t: at(9, 39), who: 'Sandy Bradshaw', to: 'her husband Phil', type: 'airfone',
+    note: 'A flight attendant. She told him the crew were boiling water to throw at the hijackers.' },
+  { t: at(9, 42), who: 'Lauren Grandcolas', to: 'her husband Jack', type: 'airfone',
+    note: 'Reached his voicemail. "We have a little problem with the plane. I am totally fine. I just love you more than anything."' },
+  { t: at(9, 44), who: 'Todd Beamer', to: 'GTE operator Lisa Jefferson', type: 'airfone',
+    note: 'About thirteen minutes. He described the hijacking, recited the Lord’s Prayer with her, and asked her to call his family.' },
+  { t: at(9, 45), who: 'Tom Burnett', to: 'Deena', type: 'airfone',
+    note: '"A group of us are going to do something."' },
+  { t: at(9, 47), who: 'Linda Gronlund', to: 'her sister Elsa', type: 'airfone',
+    note: 'Left a message giving the location of her safe deposit box.' },
+  { t: at(9, 49), who: 'Marion Britton', to: 'her friend Fred Fiumano', type: 'airfone',
+    note: 'Told him the plane had been hijacked and two people had been killed.' },
+  { t: at(9, 53), who: 'Elizabeth Wainio', to: 'her stepmother Esther', type: 'airfone',
+    note: '"They are getting ready to break into the cockpit. I have to go. I love you."' },
+  { t: at(9, 54), who: 'Tom Burnett', to: 'Deena', type: 'airfone',
+    note: 'The last of his four. "We are going to do something."' },
+  { t: at(9, 57), who: 'Todd Beamer', to: 'Lisa Jefferson (same call)', type: 'airfone',
+    note: '"Are you guys ready? Okay. Let’s roll." The revolt begins.' },
+  { t: at(9, 58), who: 'Edward Felt', to: '911, Westmoreland County', type: 'cellular',
+    note: 'From a lavatory. Dispatcher Glenn Cramer took the call. One of only two cellular calls from the aircraft — placed at about 5,000 ft.' },
+  { t: at(9, 58), who: 'CeeCee Lyles', to: 'her husband Lorne', type: 'cellular',
+    note: 'A flight attendant. The second and last cellular call, also at low altitude. She had reached him earlier on an Airfone.' },
+];
+
+const FARADAY = {
+  title: 'The Faraday cage argument',
+  claim: 'An aluminium fuselage is a Faraday cage, so mobile calls from an airliner are impossible; therefore the calls were fabricated.',
+  claimSrc: 'claim',
+  answers: [
+    {
+      head: 'It is aimed at two calls out of thirty-seven',
+      text: 'Thirty-five of the thirty-seven calls were Airfone — the seatback air-to-ground radio-telephone fitted to the last nine rows of the aircraft. It is a system built and certificated for making telephone calls from an airliner in cruise. No argument about mobile phone coverage touches it.',
+      src: 'commission',
+    },
+    {
+      head: 'Both cellular calls were made low',
+      text: 'The two cellular calls — Edward Felt and CeeCee Lyles — were placed at about 09:58, after the flight data recorder shows the aircraft down at roughly 5,000 ft. That is the altitude at which a cell call is least surprising, not most.',
+      src: 'ntsb',
+    },
+    {
+      head: 'A fuselage is not a sealed cage',
+      text: 'A Faraday cage needs a continuous conductive enclosure whose apertures are small against the wavelength. Cellular traffic in 2001 ran at 800 and 1900 MHz — wavelengths of about 37 and 16 cm. Airliner cabin windows are of the same order. They are apertures, not barriers. A fuselage attenuates signal; it does not null it.',
+      src: 'derived',
+    },
+    {
+      head: 'The record is call-by-call, not a general assertion',
+      text: 'The Airfone and cellular split comes from carrier billing records — time, originating seat row, number dialled, duration — entered as evidence at the Moussaoui sentencing trial. This is the kind of claim that could have been falsified by the records and was not.',
+      src: 'commission',
+    },
+  ],
+  reading: 'The argument treats "cell phones do not work on planes" as though it were a law rather than a matter of degree, and then applies it to a set of calls that were overwhelmingly not cellular. Both halves fail independently.',
+  src: 'derived',
+};
+
+/* Why the calls are load-bearing for the rest of the record. */
+const WHY_THEY_MATTER = {
+  title: 'Why the calls decided the outcome',
+  paras: [
+    'The hijackers’ method on all four aircraft was to invoke the pre-2001 hijacking script: a bomb, a promised landing, demands to be met. Under that script the rational thing for a passenger to do is sit still. It bought roughly half an hour of compliance, which was all that was needed.',
+    'United 93 pushed back twenty-five minutes late. That delay is the reason its passengers were still airborne when the World Trade Center was struck, and the reason they had time to make and receive these calls. The moment they learned the truth, the bomb stopped being a reason to wait.',
+    'The revolt began at 09:57, within minutes of the last of these calls. It is the only one of the four aircraft that never reached its target.',
+  ],
+  src: 'commission',
+};
+
+function callEvents() {
+  return CALLS.map((c) => ({
+    t: c.t,
+    text: `${c.who} calls ${c.to} — ${c.type === 'cellular' ? 'CELLULAR' : 'Airfone'}. ${c.note}`,
+    src: 'commission',
+    kind: 'call',
+    label: 'Phone call',
+    color: c.type === 'cellular' ? 0xffd447 : 0x74c7ff,
+  }));
+}
+
+  return {
+    CALL_TOTALS,
+    CALLS,
+    FARADAY,
+    WHY_THEY_MATTER,
+    callEvents
+  };
+})();
+
 __m["data"] = (function () {
   const { MIL_FLIGHTS, CALLSIGNS, KERNEL } = __m["military"];
   const { CRITIC_NODES, CRITIC_CHAIN, CRITIC_SUMMARY, CRITIC_GLIMPSE, DISTRIBUTION, CRITIC_BACKGROUND, FOIA, criticEvents } = __m["critic"];
+  const { CALLS, CALL_TOTALS, FARADAY, WHY_THEY_MATTER, callEvents } = __m["calls"];
 /* =============================================================================
    data.js — 9/11 timeline, flight tracks, debris field, and the Gibney claim.
 
@@ -54456,6 +54654,7 @@ __m["data"] = (function () {
 
    Times are seconds after local midnight, US Eastern Daylight Time.
    ========================================================================== */
+
 
 
 
@@ -54597,6 +54796,23 @@ const FLIGHTS = [
     color: 0x8cf27a,
     src: 'ntsb',
     pathNote: 'Altitudes are FDR values from the NTSB Flight Path Study (Figure 2). The lateral track is traced from the study\'s radar ground track (Figure 1), which is a printed map, so the ground path remains an approximation while the vertical profile does not.',
+    /* Points where the record actually says something, as against the
+       interpolation between them. Dropped on the map as a trail so it is
+       visible which parts of this track are measured and which are drawn. */
+    dataPoints: [
+      { t: at(8, 42, 0), mark: 'A', label: 'Departs Newark', src: 'ntsb' },
+      { t: at(9, 2, 0), mark: 'B', label: 'Levels at 35,000 ft', src: 'ntsb' },
+      { t: at(9, 28, 8), mark: 'C', label: '600 ft deviation — the takeover', src: 'ntsb' },
+      { t: at(9, 31, 58), mark: '•', label: 'Cockpit voice recorder begins', src: 'ntsb' },
+      { t: at(9, 34, 0), mark: 'D', label: 'Climb begins, turns southeast', src: 'ntsb' },
+      { t: at(9, 39, 0), mark: 'E', label: 'Tops out at 41,000 ft', src: 'ntsb' },
+      { t: at(9, 41, 0), mark: '•', label: 'Transponder returns cease', src: 'ntsb' },
+      { t: at(9, 46, 0), mark: 'F', label: 'Descent interrupted, 19,000 to 20,500 ft', src: 'ntsb' },
+      { t: at(9, 57, 0), mark: '•', label: 'Revolt begins', src: 'commission' },
+      { t: at(9, 59, 0), mark: 'G', label: '5,000 ft — full-deflection rolls', src: 'ntsb' },
+      { t: at(10, 2, 0), mark: 'H', label: '10,000 ft — noses down', src: 'ntsb' },
+      { t: at(10, 3, 11), mark: 'I', label: 'Impact, 490 kt, inverted', src: 'ntsb' },
+    ],
     path: [
       [at(8, 42, 0), 40.6925, -74.1687, 0],          // A — departs Newark
       [at(8, 50, 0), 40.78, -75.30, 17000],
@@ -54806,6 +55022,7 @@ function buildEvents() {
     out.push({ t: m.t, text: m.text, src: m.src, kind: 'military', label: 'Air defence command', color: 0xc9a6ff, place: m.place });
   }
   for (const e of criticEvents()) out.push(e);
+  for (const e of callEvents()) out.push(e);
   out.push({
     t: at(9, 58, 0),
     text: 'Alleged missile engagement of United 93. Asserted by Donn de Grand-Pre in 2004; contradicted by the aircrew, the passenger, the unit, and the physical evidence.',
@@ -54854,7 +55071,11 @@ const SRC_META = {
     CRITIC_GLIMPSE,
     DISTRIBUTION,
     CRITIC_BACKGROUND,
-    FOIA
+    FOIA,
+    CALLS,
+    CALL_TOTALS,
+    FARADAY,
+    WHY_THEY_MATTER
   };
 })();
 
@@ -55656,6 +55877,8 @@ __m["steelman"] = (function () {
 
 
 
+const at = (h, m, s = 0) => h * 3600 + m * 60 + s;
+
 const HYPO = {
   callsign: 'HYPO 01',
   status: 'CONSTRUCTED — NOT A RECORD',
@@ -55763,11 +55986,86 @@ const VERDICT = {
   src: 'derived',
 };
 
+/* =============================================================================
+   THE FOREKNOWLEDGE HORIZON
+
+   The sharpest form of the first blocking concession, and the one thing here
+   that can be drawn as a hard line.
+
+   United 93 was seized at 09:28. Before that moment it was an ordinary flight
+   climbing out of Newark, and nothing about it distinguished it from any other
+   aircraft in the sky. So a launch aimed at it before 09:28 is not a response
+   to a hijacking; it is a response to a hijacking that has not happened yet.
+
+   That gives a boundary with a radius rather than an argument. Take the
+   fastest speed an F-16 can manage, multiply by the thirty minutes between the
+   seizure and the alleged shot, and you get the set of points from which the
+   target could be reached WITHOUT departing early. Inside it, no foreknowledge
+   is needed. Outside it, the launch necessarily precedes the hijacking.
+
+   Fargo is 1,012 miles out. The horizon is 660. It is not close.
+
+   A caution on what this draws. The line does not show that anyone had
+   foreknowledge. It shows what the claim REQUIRES — that is a statement about
+   the claim, not about the world, and the label says so.
+   ========================================================================== */
+
+const HIJACK_T = at(9, 28, 0);
+
+const FOREKNOWLEDGE = {
+  title: 'Foreknowledge horizon',
+  hijackLabel: 'United 93 seized, 09:28',
+  color: 0xff1f3d,
+  halfWidthMi: 26,
+  caution: 'This is a statement about the claim, not about the world. The line marks what the allegation requires, not evidence that anyone knew anything.',
+  src: 'derived',
+};
+
+const horizonMi = (maxMph, interceptT) =>
+  maxMph * ((interceptT - HIJACK_T) / 3600);
+
+/* For each speed the airframe can manage: when must he leave, and how far
+   ahead of the hijacking does that put him? */
+function foreknowledgeRows(distMi, interceptT, bands) {
+  return bands.map((b) => {
+    const departBy = interceptT - (distMi / b.mph) * 3600;
+    const leadS = HIJACK_T - departBy;
+    return {
+      label: b.label,
+      mph: b.mph,
+      color: b.color,
+      departBy,
+      leadMin: leadS / 60,
+      requires: leadS > 0,
+    };
+  });
+}
+
+function foreknowledgeVerdict(distMi, interceptT, bands) {
+  const rows = foreknowledgeRows(distMi, interceptT, bands);
+  const best = rows.reduce((a, b) => (a.leadMin <= b.leadMin ? a : b));
+  const maxMph = Math.max(...bands.map((b) => b.mph));
+  const r = horizonMi(maxMph, interceptT);
+  return {
+    rows,
+    best,
+    horizonMi: r,
+    distMi,
+    outsideBy: distMi - r,
+    allRequire: rows.every((x) => x.requires),
+  };
+}
+
   return {
     HYPO,
     CONCESSIONS,
     buildHypoTrack,
-    VERDICT
+    VERDICT,
+    HIJACK_T,
+    FOREKNOWLEDGE,
+    horizonMi,
+    foreknowledgeRows,
+    foreknowledgeVerdict
   };
 })();
 
@@ -55777,7 +56075,8 @@ __m["map3d"] = (function () {
   const { FLIGHTS, MIL_FLIGHTS, PLACES, DEBRIS, GIBNEY, CLAIM_ROUTE, CRITIC_NODES, CRITIC_CHAIN, DISTRIBUTION } = __m["data"];
   const { samplePath, gcPoints, destinationPoint } = __m["geo"];
   const { BANDS, FUEL_RING, FERRY_RING, HALF_FERRY_RING, ringPoints, reachMi, MAX_DRAW_MI, AIM9, bandRadii, evidenceCeilingMi, DEPARTURE_BOUNDS } = __m["reachability"];
-  const { HYPO } = __m["steelman"];
+  const { HYPO, FOREKNOWLEDGE } = __m["steelman"];
+  const { CALLS } = __m["calls"];
 /* =============================================================================
    map3d.js — the 3D map.
 
@@ -55840,6 +56139,9 @@ class Map3D {
     this._buildDebris();
     this._buildCritic();
     this._buildReach();
+    this._buildForeknowledge();
+    this._buildCalls();
+    this._buildTrail();
     this._buildHypo();
     this._buildPlaces();
 
@@ -56188,6 +56490,7 @@ class Map3D {
     this.ferryRing = mkRing(FERRY_RING.color, 0.55, true);
     this.halfFerryRing = mkRing(HALF_FERRY_RING.color, 0.6, true);
     this.reachLabelAnchors = [];
+    this._scratch = new THREE.Vector3();
     // The engagement zone: an annulus, because a Sidewinder has a minimum
     // range as well as a maximum.
     this.wezOuter = mkRing(0xff4d4d, 1.0, false);
@@ -56214,25 +56517,23 @@ class Map3D {
     if (!this.reachGroup.visible || !opts) return;
     const { anchor, now, depart, toleranceMin, target, showWez, showEnvelope } = opts;
 
-    /* A ring label has to sit ON its ring, and most of these rings run well
-       off the edge of the view. So each one offers a fan of candidate points
-       around the ring and the label layer takes the first that is actually on
-       screen. The fan starts at 202 degrees — out over empty map rather than
-       through the crowded northeast — and spreads either side from there, so
-       placement stays stable while the camera is still and only moves when it
-       has to. */
-    const LABEL_BEARING = 202;
-    const FAN = [0];
-    for (let d = 12; d <= 180; d += 12) FAN.push(d, -d);
+    /* A ring label has to sit ON its ring, and these rings mostly run off the
+       edge of the view — the ferry ring is 2,450 miles across. A fixed fan of
+       bearings can miss the visible arc entirely on a large ring, so the
+       candidates ARE the ring's own vertices. If any part of the ring is on
+       screen, at least one vertex is, and the label has somewhere to go.
 
+       They are handed over as lat/lon with a search order rather than as
+       projected points, so nothing is projected until the label layer actually
+       needs it, and it stops at the first one that fits. The order starts at
+       202 degrees — out over empty map rather than through the crowded
+       northeast — and spirals outward, so placement stays put while the camera
+       is still and only moves when it has to. */
     this.reachLabelAnchors = [];
-    const anchorAt = (r, text, color) => {
-      const candidates = FAN.map((d) => {
-        const p = destinationPoint(anchor, (LABEL_BEARING + d + 360) % 360, r);
-        const [x, z] = projectLL(p);
-        return new THREE.Vector3(x, STATE_DEPTH + 0.6, z);
+    const anchorAt = (ringLL, text, color) => {
+      this.reachLabelAnchors.push({
+        ringLL, order: searchOrder(ringLL.length), text, color,
       });
-      this.reachLabelAnchors.push({ pos: candidates[0], candidates, text, color });
     };
 
     for (const { band, outer, inner } of this.reachRings) {
@@ -56241,10 +56542,11 @@ class Map3D {
       outer.visible = on;
       inner.visible = on && r.inner > 1;
       if (on) {
-        this._writeRing(outer, ringPoints(anchor, r.outer, 120));
+        const pts = ringPoints(anchor, r.outer, 120);
+        this._writeRing(outer, pts);
         if (r.inner > 1) this._writeRing(inner, ringPoints(anchor, r.inner, 120));
         const span = toleranceMin > 0 ? ` (${Math.round(r.inner)}–${Math.round(r.outer)})` : '';
-        anchorAt(r.outer, `${band.label} · ${band.mph} mph · ${Math.round(r.outer)} mi${span}`, band.color);
+        anchorAt(pts, `${band.label} · ${band.mph} mph · ${Math.round(r.outer)} mi${span}`, band.color);
       }
     }
 
@@ -56252,21 +56554,24 @@ class Map3D {
     const ceilOn = showEnvelope && ceil > 1 && ceil < MAX_DRAW_MI;
     this.ceilingRing.visible = ceilOn;
     if (ceilOn) {
-      this._writeRing(this.ceilingRing, ringPoints(anchor, ceil, 120));
-      anchorAt(ceil, `Evidence ceiling · earliest possible departure ${Math.round(ceil)} mi`, 0xffffff);
+      const pts = ringPoints(anchor, ceil, 120);
+      this._writeRing(this.ceilingRing, pts);
+      anchorAt(pts, `Evidence ceiling · earliest possible departure ${Math.round(ceil)} mi`, 0xffffff);
     }
 
     this.fuelRing.visible = showEnvelope;
     if (showEnvelope) {
-      this._writeRing(this.fuelRing, ringPoints(anchor, FUEL_RING.miles, 120));
-      anchorAt(FUEL_RING.miles, `${FUEL_RING.label} · ${FUEL_RING.miles} mi`, FUEL_RING.color);
+      const pts = ringPoints(anchor, FUEL_RING.miles, 120);
+      this._writeRing(this.fuelRing, pts);
+      anchorAt(pts, `${FUEL_RING.label} · ${FUEL_RING.miles} mi`, FUEL_RING.color);
     }
 
     const halfOn = showEnvelope && HALF_FERRY_RING.miles < MAX_DRAW_MI;
     this.halfFerryRing.visible = halfOn;
     if (halfOn) {
-      this._writeRing(this.halfFerryRing, ringPoints(anchor, HALF_FERRY_RING.miles, 120));
-      anchorAt(HALF_FERRY_RING.miles,
+      const pts = ringPoints(anchor, HALF_FERRY_RING.miles, 120);
+      this._writeRing(this.halfFerryRing, pts);
+      anchorAt(pts,
         `Ferry half-radius · ${HALF_FERRY_RING.miles.toLocaleString()} mi · furthest he could still return from`,
         HALF_FERRY_RING.color);
     }
@@ -56274,8 +56579,9 @@ class Map3D {
     const ferryOn = showEnvelope && FERRY_RING.miles < MAX_DRAW_MI;
     this.ferryRing.visible = ferryOn;
     if (ferryOn) {
-      this._writeRing(this.ferryRing, ringPoints(anchor, FERRY_RING.miles, 120));
-      anchorAt(FERRY_RING.miles, `${FERRY_RING.label} · ${FERRY_RING.miles.toLocaleString()} mi`, FERRY_RING.color);
+      const pts = ringPoints(anchor, FERRY_RING.miles, 120);
+      this._writeRing(this.ferryRing, pts);
+      anchorAt(pts, `${FERRY_RING.label} · ${FERRY_RING.miles.toLocaleString()} mi`, FERRY_RING.color);
     }
 
     const wezOn = showWez && !!target;
@@ -56295,6 +56601,169 @@ class Map3D {
   setReachVisible(v) {
     this.reachGroup.visible = v;
     if (v) this.setReach(this._reachOpts);
+  }
+
+  /* The recorded-data trail. Every point where the record actually says
+     something is dropped on the track as the clock passes it, so the gaps
+     between them — which are interpolation, not measurement — are visible
+     as gaps rather than hidden inside a smooth line. */
+  _buildTrail() {
+    this.trailGroup = new THREE.Group();
+    this.trailGroup.visible = false;
+    this.scene.add(this.trailGroup);
+    this.trailDots = [];
+
+    const f = FLIGHTS.find((x) => x.id === 'UA93');
+    if (!f || !f.dataPoints) return;
+
+    for (const d of f.dataPoints) {
+      const sm = samplePath(f.path, Math.min(d.t, f.path[f.path.length - 1][0]));
+      if (!sm) continue;
+      const [x, z] = projectLL(sm);
+      const lettered = d.mark !== '\u2022';
+      const m = new THREE.Mesh(
+        new THREE.SphereGeometry(lettered ? 0.34 : 0.22, 12, 10),
+        new THREE.MeshBasicMaterial({ color: lettered ? 0x8cf27a : 0xdfe8f2 }),
+      );
+      m.position.set(x, altToY(sm.altFt) + STATE_DEPTH + 0.05, z);
+      m.visible = false;
+      m.userData = {
+        kind: 'datum', mark: d.mark, label: d.label, t: d.t, src: d.src,
+        altFt: sm.altFt,
+      };
+      this.trailGroup.add(m);
+
+      // A stem down to the ground so the altitude of each datum reads.
+      const stem = new THREE.Line(
+        new THREE.BufferGeometry().setFromPoints([
+          new THREE.Vector3(x, altToY(sm.altFt) + STATE_DEPTH + 0.05, z),
+          new THREE.Vector3(x, STATE_DEPTH + 0.02, z),
+        ]),
+        new THREE.LineBasicMaterial({ color: 0x8cf27a, transparent: true, opacity: 0.3 }),
+      );
+      stem.visible = false;
+      this.trailGroup.add(stem);
+
+      this.trailDots.push({ d, mesh: m, stem });
+    }
+  }
+
+  setTrail(t) {
+    if (!this.trailGroup || !this.trailGroup.visible) return;
+    for (const { d, mesh, stem } of this.trailDots) {
+      const on = t >= d.t;
+      mesh.visible = on;
+      stem.visible = on;
+      mesh.scale.setScalar(this._markerScale);
+    }
+  }
+
+  setTrailVisible(v) {
+    this.trailGroup.visible = v;
+    this.setTrail(this._t ?? 0);
+  }
+
+  /* Each call plotted where the aircraft was when it was placed, so the
+     altitude argument becomes visible rather than asserted: the two cellular
+     calls sit at the bottom of the descent, and the Airfone calls are spread
+     across the whole profile. Revealed as the clock passes each one. */
+  _buildCalls() {
+    this.callGroup = new THREE.Group();
+    this.callGroup.visible = false;
+    this.scene.add(this.callGroup);
+    this.callDots = [];
+
+    for (const c of CALLS) {
+      const cell = c.type === 'cellular';
+      const m = new THREE.Mesh(
+        new THREE.SphereGeometry(cell ? 0.42 : 0.3, 12, 10),
+        new THREE.MeshBasicMaterial({ color: cell ? 0xffd447 : 0x74c7ff }),
+      );
+      m.visible = false;
+      m.userData = {
+        kind: 'call', who: c.who, to: c.to, callType: c.type, note: c.note, t: c.t,
+      };
+      this.callGroup.add(m);
+      this.callDots.push({ c, mesh: m });
+    }
+  }
+
+  /* `positionAt` is supplied by the caller so this module does not have to
+     know which flight the calls came from. */
+  setCalls(positionAt, t) {
+    this._callPos = positionAt;
+    if (!this.callGroup || !this.callGroup.visible) return;
+    for (const { c, mesh } of this.callDots) {
+      const p = positionAt(c.t);
+      if (!p) { mesh.visible = false; continue; }
+      const [x, z] = projectLL(p);
+      mesh.position.set(x, altToY(p.altFt ?? 0) + STATE_DEPTH + 0.12, z);
+      mesh.scale.setScalar(this._markerScale);
+      mesh.visible = t >= c.t;
+    }
+  }
+
+  setCallsVisible(v) {
+    this.callGroup.visible = v;
+    if (v && this._callPos) this.setCalls(this._callPos, this._t ?? 0);
+  }
+
+  /* The foreknowledge horizon: a solid band rather than a line, because a
+     WebGL line ignores linewidth on most platforms and this one needs to read
+     as hard. It is a triangle strip between two geodesic rings, so it stays a
+     true constant-distance band under the projection instead of becoming an
+     ellipse. */
+  _buildForeknowledge() {
+    this.fkGroup = new THREE.Group();
+    this.fkGroup.visible = false;
+    this.scene.add(this.fkGroup);
+
+    const N = 181;                       // ringPoints(.., 180) yields 181
+    const geom = new THREE.BufferGeometry();
+    geom.setAttribute('position', new THREE.BufferAttribute(new Float32Array(N * 2 * 3), 3));
+    const idx = [];
+    for (let i = 0; i < N - 1; i++) {
+      const a = i * 2, b = a + 1, c = (i + 1) * 2, d = c + 1;
+      idx.push(a, b, c, b, d, c);
+    }
+    geom.setIndex(idx);
+
+    this.fkBand = new THREE.Mesh(geom, new THREE.MeshBasicMaterial({
+      color: FOREKNOWLEDGE.color, side: THREE.DoubleSide,
+      transparent: true, opacity: 0.8, depthWrite: false,
+    }));
+    this.fkBand.frustumCulled = false;
+    this.fkGroup.add(this.fkBand);
+    this.fkLabel = null;
+  }
+
+  setForeknowledge(center, radiusMi, text) {
+    this._fk = { center, radiusMi, text };
+    if (!this.fkGroup || !this.fkGroup.visible || !center || !(radiusMi > 0)) {
+      this.fkLabel = null;
+      return;
+    }
+    const w = FOREKNOWLEDGE.halfWidthMi;
+    const inner = ringPoints(center, Math.max(1, radiusMi - w), 180);
+    const outer = ringPoints(center, radiusMi + w, 180);
+    const attr = this.fkBand.geometry.attributes.position;
+    for (let i = 0; i < inner.length; i++) {
+      const [ix, iz] = projectLL(inner[i]);
+      const [ox, oz] = projectLL(outer[i]);
+      attr.setXYZ(i * 2, ix, STATE_DEPTH + 0.55, iz);
+      attr.setXYZ(i * 2 + 1, ox, STATE_DEPTH + 0.55, oz);
+    }
+    attr.needsUpdate = true;
+    this.fkBand.geometry.computeBoundingSphere();
+    this.fkLabel = {
+      ringLL: outer, order: searchOrder(outer.length), text, color: FOREKNOWLEDGE.color,
+    };
+  }
+
+  setForeknowledgeVisible(v) {
+    this.fkGroup.visible = v;
+    const f = this._fk;
+    if (f) this.setForeknowledge(f.center, f.radiusMi, f.text);
   }
 
   /* HYPO 01 — the steelman. Drawn dashed and white because it is a construct,
@@ -56436,6 +56905,8 @@ class Map3D {
       ...this.placeGroup.children,
       ...(this.debrisGroup.visible ? this.debrisGroup.children : []),
       ...(this.criticGroup.visible ? this.criticGroup.children : []),
+      ...(this.callGroup.visible ? this.callGroup.children : []),
+      ...(this.trailGroup.visible ? this.trailGroup.children : []),
       ...[...this.flightObjs.values()].filter((o) => o.marker.visible).map((o) => o.marker),
       ...this.stateMeshes,
     ];
@@ -56694,6 +57165,14 @@ class Map3D {
     this.renderer.render(this.scene, this.camera);
   }
 
+  /* Project one lat/lon straight to screen, reusing a scratch vector so a
+     candidate scan does not allocate. */
+  llToScreen(ll) {
+    const [x, z] = projectLL(ll);
+    this._scratch.set(x, STATE_DEPTH + 0.6, z);
+    return this.toScreen(this._scratch);
+  }
+
   /* Project a world point to CSS pixel coordinates, for HTML labels. */
   toScreen(v3) {
     const p = v3.clone().project(this.camera);
@@ -56709,6 +57188,23 @@ class Map3D {
 /* --- helpers -------------------------------------------------------------- */
 
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+
+/* Indices into a ring's vertex array, ordered from the preferred bearing
+   outward in both directions. Cached, because it only depends on the count. */
+const PREFERRED_BEARING = 202;
+const _orderCache = new Map();
+function searchOrder(n) {
+  if (_orderCache.has(n)) return _orderCache.get(n);
+  const span = n - 1;                       // last vertex repeats the first
+  const start = Math.round((PREFERRED_BEARING / 360) * span) % span;
+  const out = [start];
+  for (let d = 1; d <= Math.ceil(span / 2); d++) {
+    out.push((start + d) % span);
+    out.push((start - d + span) % span);
+  }
+  _orderCache.set(n, out);
+  return out;
+}
 const Y_AXIS = new THREE.Vector3(0, 1, 0);
 
 function ringSpan(ring) {
@@ -56789,10 +57285,12 @@ __m["main"] = (function () {
   const { analyseClaim, analyseDocumented, ASSUMPTIONS, COMMAND_CHECK, classify, legAnalysis } = __m["analysis"];
   const { CONFLICTS, STATUS_META, conflictsFor, openCount } = __m["conflicts"];
   const { BANDS, FUEL_RING, FERRY_RING, HALF_FERRY_RING, AIM9, shanksvilleTest, reachMi, scaleComparison, TOLERANCES, DEPARTURE_BOUNDS, bandRadii, evidenceCeilingMi, CONFIG_TRADE } = __m["reachability"];
-  const { HYPO, CONCESSIONS, VERDICT, buildHypoTrack } = __m["steelman"];
+  const { HYPO, CONCESSIONS, VERDICT, buildHypoTrack, FOREKNOWLEDGE, HIJACK_T, foreknowledgeVerdict } = __m["steelman"];
+  const { CALLS, CALL_TOTALS, FARADAY, WHY_THEY_MATTER } = __m["calls"];
 /* =============================================================================
    main.js — app wiring: playback clock, scrubber, panels, labels.
    ========================================================================== */
+
 
 
 
@@ -56825,7 +57323,8 @@ const state = {
     PANTA: true, QUIT: true, GOFER: true, BULLY: true,
     debris: false, routeDoc: false, routeClaim: false, places: true,
     critic: true,
-    envelope: true, wez: true, hypo: false,
+    envelope: true, wez: true, hypo: true, foreknowledge: true, calls: true,
+    trail: true,
   },
 };
 
@@ -56871,6 +57370,10 @@ async function loadTopology() {
     setTolerance(state.toleranceMin);
     map.setCriticVisible(state.layers.critic);
     map.setReachVisible(state.layers.envelope || state.layers.wez);
+    map.setForeknowledgeVisible(state.layers.foreknowledge);
+    map.setHypoVisible(state.layers.hypo);
+    map.setCallsVisible(state.layers.calls);
+    map.setTrailVisible(state.layers.trail);
     setFollow(state.follow);
     setTime(T0);
 
@@ -56926,6 +57429,9 @@ function setTime(t) {
   updateFlightStrip();
   map.followPoints(focusPoints());
   updateReach();
+  updateForeknowledge();
+  map.setCalls(ua93StateAt, state.t);
+  map.setTrail(state.t);
   if (state.layers.hypo) updateHypo();
   throttledReachPanels();
 }
@@ -56949,6 +57455,7 @@ function throttledReachPanels(force = false) {
   renderReachPanel();
   renderWezPanel();
   renderSteelPanel();
+  renderForeknowledgePanel();
 }
 
 /* United 93's live position is the target the alleged shot needs. Once it is
@@ -56980,6 +57487,24 @@ function updateHypo() {
     : null;
   map.setHypo(track, state.t);
   return track;
+}
+
+/* United 93's full state at a time, for plotting the calls at the altitude
+   the aircraft was actually flying. */
+function ua93StateAt(t) {
+  const f = FLIGHTS.find((x) => x.id === 'UA93');
+  return samplePath(f.path, t);
+}
+
+function updateForeknowledge() {
+  const target = hypoTarget();
+  if (!target) return null;
+  const v = foreknowledgeVerdict(
+    haversineMi(PLACES.KFAR, target), state.interceptT, BANDS,
+  );
+  map.setForeknowledge(target, v.horizonMi,
+    `FOREKNOWLEDGE HORIZON · ${Math.round(v.horizonMi)} mi · outside this, the launch precedes the hijacking`);
+  return v;
 }
 
 function updateReach() {
@@ -57302,6 +57827,16 @@ function renderClaimTab() {
       </div>
     </div>
 
+    <div class="card fk-card">
+      <h3>${esc(FOREKNOWLEDGE.title)}</h3>
+      <p>United 93 was seized at <strong>09:28</strong>. Before that it was an ordinary flight climbing out of Newark. So a launch aimed at it earlier than 09:28 is not a response to a hijacking — it is a response to one that has not happened yet.</p>
+      <div id="fk-out"></div>
+      <p class="fk-caution">${esc(FOREKNOWLEDGE.caution)} ${srcTag(FOREKNOWLEDGE.src)}</p>
+      <div class="chip-row">
+        <button class="chip" data-act="show-fk">Draw the horizon</button>
+      </div>
+    </div>
+
     <div class="card">
       <h3>${esc(CONFIG_TRADE.title)}</h3>
       <p>Nobody observed the aircraft, so no speed can be excluded by eyewitness. But speed and range come off the same wing stations.</p>
@@ -57388,6 +57923,15 @@ function renderClaimTab() {
   });
 
   $$('#claim-body .chip').forEach((b) => b.addEventListener('click', () => {
+    if (b.dataset.act === 'show-fk') {
+      state.layers.foreknowledge = true;
+      map.setForeknowledgeVisible(true);
+      updateForeknowledge();
+      syncLayerChecks();
+      setFollow(false);
+      map.resetView();
+      return;
+    }
     if (b.dataset.act === 'show-hypo') {
       state.layers.hypo = true;
       map.setHypoVisible(true);
@@ -57421,6 +57965,7 @@ function renderClaimTab() {
   renderReachPanel();
   renderWezPanel();
   renderSteelPanel();
+  renderForeknowledgePanel();
   renderRouteCompare();
 }
 
@@ -57446,6 +57991,46 @@ function setTolerance(min) {
   $('#tol-note').textContent = t.note;
   updateReach();
   throttledReachPanels(true);
+}
+
+function renderForeknowledgePanel() {
+  const out = $('#fk-out');
+  if (!out) return;
+  const target = hypoTarget();
+  if (!target) return;
+  const v = foreknowledgeVerdict(haversineMi(PLACES.KFAR, target), state.interceptT, BANDS);
+
+  out.innerHTML = `
+    <div class="leg fk-leg">
+      <div class="leg-head">
+        <span class="leg-name">Best case, at the fastest the airframe goes</span>
+        <span class="leg-dist">${v.best.mph} mph</span>
+      </div>
+      <div class="leg-speed v-impossible">
+        ${Math.round(v.best.leadMin)}<small>minutes of foreknowledge required</small>
+      </div>
+      <div class="leg-mach">
+        He must be off the ground at ${hms(v.best.departBy).slice(0, 5)} —
+        ${Math.round(v.best.leadMin)} minutes before United 93 was seized.
+      </div>
+    </div>
+    <p style="font-size:11.5px;color:var(--ink-faint);margin:10px 0 4px">
+      Every speed the airframe can manage, and how far ahead of the hijacking each one puts the launch:
+    </p>
+    ${v.rows.map((r) => `
+      <div class="cmd-row">
+        <div class="t" style="color:${hex(r.color)}">${hms(r.departBy).slice(0, 5)}</div>
+        <div class="x"><strong style="color:var(--ink)">${esc(r.label)}</strong> — ${r.mph} mph.
+        ${r.requires
+          ? `<strong class="v-impossible">${Math.round(r.leadMin)} min before the hijacking.</strong>`
+          : 'No foreknowledge needed.'}</div>
+      </div>`).join('')}
+    <div class="fk-verdict">
+      <strong>${v.allRequire ? 'Every achievable speed requires foreknowledge.' : 'Some speeds avoid it.'}</strong>
+      The horizon — the fastest speed multiplied by the thirty minutes between the seizure and the alleged shot —
+      is <strong>${Math.round(v.horizonMi)} miles</strong>. Fargo is <strong>${Math.round(v.distMi)}</strong>,
+      outside it by <strong class="v-impossible">${Math.round(v.outsideBy)} miles</strong>.
+    </div>`;
 }
 
 function renderSteelPanel() {
@@ -57650,6 +58235,48 @@ function renderDebrisTab() {
     </div>
 
     <div class="card">
+      <h3>${esc(WHY_THEY_MATTER.title)}</h3>
+      ${WHY_THEY_MATTER.paras.map((t) => `<p>${esc(t)}</p>`).join('')}
+      <div class="call-split">
+        <div class="cs-cell"><b>${CALL_TOTALS.total}</b><span>calls</span></div>
+        <div class="cs-cell airfone"><b>${CALL_TOTALS.airfone}</b><span>Airfone</span></div>
+        <div class="cs-cell cellular"><b>${CALL_TOTALS.cellular}</b><span>cellular</span></div>
+      </div>
+      <p style="font-size:11.5px;color:var(--ink-faint);margin-top:8px">
+        ${esc(CALL_TOTALS.window)}. ${srcTag(CALL_TOTALS.src)}
+      </p>
+      <div class="chip-row"><button class="chip" data-act="show-calls">Plot the calls</button></div>
+    </div>
+
+    <div class="card">
+      <h3>${esc(FARADAY.title)}</h3>
+      <div class="quote">“${esc(FARADAY.claim)}” ${srcTag(FARADAY.claimSrc)}</div>
+      ${FARADAY.answers.map((a) => `
+        <div class="finding hard">
+          <h4>${esc(a.head)}</h4>
+          <p>${esc(a.text)}</p>
+          <div style="margin-top:5px">${srcTag(a.src)}</div>
+        </div>`).join('')}
+      <p style="margin-top:11px"><strong>${esc(FARADAY.reading)}</strong> ${srcTag(FARADAY.src)}</p>
+    </div>
+
+    <div class="card">
+      <h3>The calls</h3>
+      ${CALLS.map((c) => `
+        <div class="call-row ${c.type}">
+          <div class="cr-t">${hms(c.t).slice(0, 5)}</div>
+          <div>
+            <div class="cr-who">${esc(c.who)} <span class="cr-to">→ ${esc(c.to)}</span>
+              <span class="cr-type">${c.type === 'cellular' ? 'CELLULAR' : 'Airfone'}</span></div>
+            <div class="cr-note">${esc(c.note)}</div>
+          </div>
+        </div>`).join('')}
+      <p style="font-size:11.5px;color:var(--ink-faint);margin-top:9px">
+        A representative set, not all ${CALL_TOTALS.total} — many of the total are repeat calls by the same people. Times are approximate to the minute; sources vary by a minute or two on several. ${srcTag('press')}
+      </p>
+    </div>
+
+    <div class="card">
       <h3>${esc(DEBRIS_NOTE.title)}</h3>
       ${DEBRIS_NOTE.body.split('\n\n').map((p) => `<p>${esc(p)}</p>`).join('')}
       <div>${srcTag(DEBRIS_NOTE.src)}</div>
@@ -57663,6 +58290,15 @@ function renderDebrisTab() {
 
   $$('#debris-body .chip').forEach((b) => b.addEventListener('click', () => {
     const act = b.dataset.act;
+    if (act === 'show-calls') {
+      state.layers.calls = true;
+      map.setCallsVisible(true);
+      map.setCalls(ua93StateAt, state.t);
+      syncLayerChecks();
+      setPlaying(false);
+      setTime(10 * 3600 + 3 * 60);
+      setFollow(true);
+    }
     if (act === 'fly-crash') { setFollow(false); map.flyTo(PLACES.SHKV, 22); }
     if (act === 'show-debris') {
       setFollow(false);
@@ -57993,6 +58629,21 @@ function renderLayersTab() {
         <span>Sidewinder engagement zone</span><span class="meta">${AIM9.rMaxMi} mi</span>
       </label>
       <label class="toggle">
+        <input type="checkbox" data-layer="trail" ${state.layers.trail ? 'checked' : ''}>
+        <span class="swatch" style="background:var(--ua93)"></span>
+        <span>United 93 — recorded data trail</span><span class="meta">FDR points</span>
+      </label>
+      <label class="toggle">
+        <input type="checkbox" data-layer="calls" ${state.layers.calls ? 'checked' : ''}>
+        <span class="swatch" style="background:#74c7ff"></span>
+        <span>Phone calls from United 93</span><span class="meta">37 calls</span>
+      </label>
+      <label class="toggle">
+        <input type="checkbox" data-layer="foreknowledge" ${state.layers.foreknowledge ? 'checked' : ''}>
+        <span class="swatch" style="background:var(--critic)"></span>
+        <span>Foreknowledge horizon</span><span class="meta">660 mi</span>
+      </label>
+      <label class="toggle">
         <input type="checkbox" data-layer="hypo" ${state.layers.hypo ? 'checked' : ''}>
         <span class="swatch" style="background:#fff"></span>
         <span>${esc(HYPO.callsign)} — best-case track</span><span class="meta">constructed</span>
@@ -58044,6 +58695,9 @@ function renderLayersTab() {
     else if (k === 'debris') map.setDebrisVisible(cb.checked);
     else if (k === 'critic') map.setCriticVisible(cb.checked);
     else if (k === 'hypo') { map.setHypoVisible(cb.checked); if (cb.checked) updateHypo(); }
+    else if (k === 'foreknowledge') { map.setForeknowledgeVisible(cb.checked); updateForeknowledge(); }
+    else if (k === 'calls') { map.setCallsVisible(cb.checked); map.setCalls(ua93StateAt, state.t); }
+    else if (k === 'trail') { map.setTrailVisible(cb.checked); map.setTrail(state.t); }
     else if (k === 'envelope' || k === 'wez') {
       map.setReachVisible(state.layers.envelope || state.layers.wez);
       updateReach();
@@ -58097,10 +58751,19 @@ function drawLabels() {
     });
   }
 
+  if (map.fkGroup && map.fkGroup.visible && map.fkLabel) {
+    const f = map.fkLabel;
+    wanted.set('fk', {
+      ringLL: f.ringLL, order: f.order, text: f.text,
+      // White, not the ring colour: this label is drawn ON a red fill.
+      cls: 'ring fk', color: '#ffffff', rank: 0.5,
+    });
+  }
+
   if (map.reachGroup.visible && map.reachLabelAnchors) {
     for (const a of map.reachLabelAnchors) {
       wanted.set(`r:${a.text}`, {
-        pos: a.pos, candidates: a.candidates, text: a.text,
+        ringLL: a.ringLL, order: a.order, text: a.text,
         cls: 'ring', color: hex(a.color), rank: 2.5,
       });
     }
@@ -58147,23 +58810,24 @@ function drawLabels() {
     el.className = `map-label ${w.cls}`;
     if (w.color) el.style.color = w.color;
 
-    /* Ring labels try each candidate point around their ring and take the
-       first that lands on screen, so a ring whose preferred anchor is off the
-       edge still gets labelled somewhere the reader can see. */
-    let s = map.toScreen(w.pos);
-    if (w.candidates) {
-      const M = 8, fits = (q) => !q.behind
-        && q.x > M && q.y > M && q.x < W - M && q.y < H - M;
-      if (!fits(s)) {
-        for (const c of w.candidates) {
-          const q = map.toScreen(c);
-          if (fits(q)) { s = q; break; }
-        }
+    /* A ring label walks its own ring, from the preferred bearing outward,
+       and stops at the first vertex on screen. So if any part of a ring is
+       visible, its label is too — which is the rule the reader expects. */
+    let s;
+    if (w.ringLL) {
+      const M = 10;
+      const fits = (q) => !q.behind && q.x > M && q.y > M && q.x < W - M && q.y < H - M;
+      for (const i of w.order) {
+        const q = map.llToScreen(w.ringLL[i]);
+        if (fits(q)) { s = q; break; }
       }
-    }
-    if (s.behind || s.x < -60 || s.y < -30 || s.x > W + 60 || s.y > H + 30) {
-      el.style.display = 'none';
-      continue;
+      if (!s) { el.style.display = 'none'; continue; }
+    } else {
+      s = map.toScreen(w.pos);
+      if (s.behind || s.x < -60 || s.y < -30 || s.x > W + 60 || s.y > H + 30) {
+        el.style.display = 'none';
+        continue;
+      }
     }
 
     // Pin labels are translated (-50%, -140%) so their box sits above the
@@ -58197,6 +58861,14 @@ function handlePick(ud) {
     showTipAt(ud.name, `FIPS ${ud.id}`, 'geo');
   } else if (ud.kind === 'debris') {
     showTipAt(ud.name, ud.note, ud.src);
+  } else if (ud.kind === 'datum') {
+    showTipAt(`${ud.mark === '\u2022' ? '' : ud.mark + ' — '}${ud.label}`,
+      `${hms(ud.t)} · ${Math.round(ud.altFt).toLocaleString()} ft\nA point where the record says something. Between these, the track is interpolated.`,
+      ud.src);
+  } else if (ud.kind === 'call') {
+    showTipAt(`${ud.who} → ${ud.to}`,
+      `${ud.callType === 'cellular' ? 'CELLULAR' : 'Airfone'} · ${hms(ud.t).slice(0, 5)}\n${ud.note}`,
+      'commission');
   } else if (ud.kind === 'criticNode') {
     showTipAt(ud.name, ud.note, ud.src);
   } else if (ud.kind === 'place') {

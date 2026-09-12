@@ -25,11 +25,13 @@
 
 import { MIL_FLIGHTS } from './military.js';
 import { criticEvents } from './critic.js';
+import { callEvents } from './calls.js';
 export { MIL_FLIGHTS, CALLSIGNS, KERNEL } from './military.js';
 export {
   CRITIC_NODES, CRITIC_CHAIN, CRITIC_SUMMARY, CRITIC_GLIMPSE,
   DISTRIBUTION, CRITIC_BACKGROUND, FOIA,
 } from './critic.js';
+export { CALLS, CALL_TOTALS, FARADAY, WHY_THEY_MATTER } from './calls.js';
 
 export const T0 = 7 * 3600 + 55 * 60; // 07:55 EDT — timeline start
 export const T1 = 11 * 3600; // 11:00 EDT — must clear FOLLOW-UP-2 AND FINAL at 10:48
@@ -169,6 +171,23 @@ export const FLIGHTS = [
     color: 0x8cf27a,
     src: 'ntsb',
     pathNote: 'Altitudes are FDR values from the NTSB Flight Path Study (Figure 2). The lateral track is traced from the study\'s radar ground track (Figure 1), which is a printed map, so the ground path remains an approximation while the vertical profile does not.',
+    /* Points where the record actually says something, as against the
+       interpolation between them. Dropped on the map as a trail so it is
+       visible which parts of this track are measured and which are drawn. */
+    dataPoints: [
+      { t: at(8, 42, 0), mark: 'A', label: 'Departs Newark', src: 'ntsb' },
+      { t: at(9, 2, 0), mark: 'B', label: 'Levels at 35,000 ft', src: 'ntsb' },
+      { t: at(9, 28, 8), mark: 'C', label: '600 ft deviation — the takeover', src: 'ntsb' },
+      { t: at(9, 31, 58), mark: '•', label: 'Cockpit voice recorder begins', src: 'ntsb' },
+      { t: at(9, 34, 0), mark: 'D', label: 'Climb begins, turns southeast', src: 'ntsb' },
+      { t: at(9, 39, 0), mark: 'E', label: 'Tops out at 41,000 ft', src: 'ntsb' },
+      { t: at(9, 41, 0), mark: '•', label: 'Transponder returns cease', src: 'ntsb' },
+      { t: at(9, 46, 0), mark: 'F', label: 'Descent interrupted, 19,000 to 20,500 ft', src: 'ntsb' },
+      { t: at(9, 57, 0), mark: '•', label: 'Revolt begins', src: 'commission' },
+      { t: at(9, 59, 0), mark: 'G', label: '5,000 ft — full-deflection rolls', src: 'ntsb' },
+      { t: at(10, 2, 0), mark: 'H', label: '10,000 ft — noses down', src: 'ntsb' },
+      { t: at(10, 3, 11), mark: 'I', label: 'Impact, 490 kt, inverted', src: 'ntsb' },
+    ],
     path: [
       [at(8, 42, 0), 40.6925, -74.1687, 0],          // A — departs Newark
       [at(8, 50, 0), 40.78, -75.30, 17000],
@@ -378,6 +397,7 @@ export function buildEvents() {
     out.push({ t: m.t, text: m.text, src: m.src, kind: 'military', label: 'Air defence command', color: 0xc9a6ff, place: m.place });
   }
   for (const e of criticEvents()) out.push(e);
+  for (const e of callEvents()) out.push(e);
   out.push({
     t: at(9, 58, 0),
     text: 'Alleged missile engagement of United 93. Asserted by Donn de Grand-Pre in 2004; contradicted by the aircrew, the passenger, the unit, and the physical evidence.',
