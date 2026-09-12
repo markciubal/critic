@@ -960,6 +960,13 @@ export class Map3D {
     if (fit) this.followGoal = fit;
   }
 
+  /* Frame a set of places at once. fitPoints returns projected coordinates,
+     so this cannot go through flyTo's lat/lon path. */
+  flyToFit(pts, pad = 1.7) {
+    const fit = this.fitPoints(pts, pad);
+    if (fit) this._startTween(fit.cx, fit.cz, fit.dist);
+  }
+
   flyTo(latlon, dist = 46) {
     const [x, z] = latlon.isVector3 ? [latlon.x, latlon.z] : projectLL(latlon);
     this._startTween(x, z, dist);

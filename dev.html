@@ -32,6 +32,9 @@
     <button id="btn-follow" class="ghost-btn on" aria-pressed="true"
             title="Keep the camera on whatever is airborne (F)">Follow</button>
     <button id="btn-reset-view" class="ghost-btn" title="Stop following and show the whole country">Reset view</button>
+    <button id="btn-tour" class="tour-btn" title="Play a guided walk through the steelman argument">
+      <span class="tour-btn-glyph">&#9654;</span> Steelman tour
+    </button>
   </div>
 </header>
 
@@ -55,6 +58,27 @@
   </div>
 
   <button id="aside-toggle" title="Show / hide panel">›</button>
+
+  <!-- The guided tour's callout. Lives over the map, because the map is what
+       it is talking about. -->
+  <section id="tour" class="hidden" aria-live="polite" aria-label="Steelman tour">
+    <div class="tour-bar"><i id="tour-bar-fill"></i></div>
+    <div class="tour-head">
+      <span id="tour-chapter" class="tour-chapter">&mdash;</span>
+      <span id="tour-count" class="tour-count"></span>
+      <button id="tour-close" class="tour-x" title="End the tour (Esc)">&#10005;</button>
+    </div>
+    <h4 id="tour-title"></h4>
+    <div id="tour-body"></div>
+    <div class="tour-foot">
+      <div id="tour-dots" class="tour-dots"></div>
+      <div class="tour-ctl">
+        <button id="tour-prev" title="Previous step (&larr;)">&lsaquo;</button>
+        <button id="tour-toggle" title="Pause / resume"><span id="tour-glyph">&#10074;&#10074;</span></button>
+        <button id="tour-next" title="Next step (&rarr;)">&rsaquo;</button>
+      </div>
+    </div>
+  </section>
 </main>
 
 <aside id="panel">

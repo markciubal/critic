@@ -26,6 +26,7 @@ import {
 } from './steelman.js';
 import { CALLS, CALL_TOTALS, FARADAY, WHY_THEY_MATTER } from './calls.js';
 import { wezWindow, LOS_HORIZON, losVsWez, mutualHorizonSmi } from './steelman.js';
+import { TOUR_STEPS, TONES } from './tour.js';
 
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => [...document.querySelectorAll(s)];
@@ -538,6 +539,7 @@ function renderClaimTab() {
       <div id="concessions"></div>
       <div class="chip-row">
         <button class="chip" data-act="show-hypo">Plot ${esc(HYPO.callsign)}</button>
+        <button class="chip" data-act="tour">&#9654; Walk me through it</button>
       </div>
     </div>
 
@@ -634,6 +636,7 @@ function renderClaimTab() {
   });
 
   $$('#claim-body .chip').forEach((b) => b.addEventListener('click', () => {
+    if (b.dataset.act === 'tour') { tourEnter(); return; }
     if (b.dataset.act === 'show-hypo') {
       state.layers.hypo = true;
       map.setHypoVisible(true);
@@ -1677,6 +1680,271 @@ function hideTip() { $('#tooltip').classList.add('hidden'); }
    Chrome
    ========================================================================== */
 
+/* =============================================================================
+   The steelman tour
+
+   A scripted walk through the argument in steelman.js. Each step owns four
+   things — the clock, the camera, the visible layers and the open panel — and
+   sets all four, so what is being said and what is being shown cannot drift
+   apart.
+
+   Two rules make it safe to hand a stranger:
+
+   1. It is fully reversible. Entering snapshots the clock, the layers, the
+      camera mode and the open tab; leaving by any route — the ✕, Esc, the
+      button, or falling off the end — puts all of them back. The tour borrows
+      the app, it does not redecorate it.
+
+   2. Auto-advance is a convenience, never a cage. Prev/next work at any time,
+      the first interaction with the map pauses it rather than fighting the
+      user for the camera, and the progress bar always says how long is left.
+   ========================================================================== */
+
+const tour = {
+  on: false,
+  i: 0,
+  paused: false,
+  stepStart: 0,
+  elapsed: 0,          // ms consumed on the current step, across pauses
+  raf: null,
+  saved: null,
+};
+
+function tourEnter() {
+  if (tour.on) return;
+
+  // Everything the tour is about to take over, remembered exactly as it is.
+  tour.saved = {
+    t: state.t,
+    playing: state.playing,
+    follow: state.follow,
+    layers: { ...state.layers },
+    tab: ($('#tabs button.on') || {}).dataset?.tab || 'timeline',
+  };
+
+  tour.on = true;
+  tour.i = 0;
+  tour.paused = false;
+  setPlaying(false);
+  setFollow(false);
+
+  $('#tour').classList.remove('hidden');
+  $('#btn-tour').classList.add('on');
+  document.body.classList.add('touring');
+  buildTourDots();
+  tourGo(0);
+}
+
+function tourExit() {
+  if (!tour.on) return;
+  tour.on = false;
+  cancelAnimationFrame(tour.raf);
+  $('#tour').classList.add('hidden');
+  $('#btn-tour').classList.remove('on');
+  document.body.classList.remove('touring');
+  $$('.tour-lit').forEach((el) => el.classList.remove('tour-lit'));
+
+  const sv = tour.saved;
+  if (sv) {
+    Object.assign(state.layers, sv.layers);
+    syncLayerChecks();
+    applyAllLayers();
+    tourTab(sv.tab);
+    setTime(sv.t);
+    setFollow(sv.follow);
+    setPlaying(sv.playing);
+    map.resetView();
+  }
+  tour.saved = null;
+}
+
+/* Layer state lives in `state.layers`, but the calls that push it at the map
+   are scattered through the layer-toggle handler. The tour needs to set many
+   at once, so they are gathered here — and the handler is left alone, because
+   rewriting it to use this would change behaviour the tour has no business
+   changing. */
+function applyAllLayers() {
+  for (const f of FLIGHTS) map.setFlightVisible(f.id, !!state.layers[f.id]);
+  for (const f of MIL_FLIGHTS) map.setFlightVisible(f.id, !!state.layers[f.id]);
+  map.setDebrisVisible(state.layers.debris);
+  map.placeGroup.visible = state.layers.places;
+  map.setCriticVisible(state.layers.critic);
+  map.setRouteVisible('documented', state.layers.routeDoc);
+  map.setRouteVisible('claim', state.layers.routeClaim);
+  map.setReachVisible(state.layers.envelope || state.layers.wez);
+  map.setHypoVisible(state.layers.hypo);
+  map.setCallsVisible(state.layers.calls);
+  map.setTrailVisible(state.layers.trail);
+  updateReach();
+  updateHypo();
+  map.setTrail(state.t);
+  map.setCalls(ua93StateAt, state.t);
+  map.setTime(state.t);
+}
+
+function tourTab(name) {
+  const btn = $(`#tabs button[data-tab="${name}"]`);
+  if (!btn) return;
+  $$('#tabs button').forEach((x) => x.classList.toggle('on', x === btn));
+  $$('.tab-body').forEach((sec) => sec.classList.toggle('hidden', sec.dataset.body !== name));
+}
+
+/* `view` is resolved here rather than in tour.js so the step data stays free
+   of anything that needs the map to exist. */
+function tourView(step) {
+  const v = step.view || 'reset';
+  const d = step.viewDist;
+
+  if (v === 'reset') { map.resetView(); return; }
+
+  if (v === 'ua93') {
+    const s = ua93Position();
+    if (s) map.flyTo(s, d || 46);
+    else map.resetView();
+    return;
+  }
+
+  if (v === 'hypo') {
+    const s = map._hypoSample;
+    if (s) map.flyTo(s, d || 46);
+    else map.resetView();
+    return;
+  }
+
+  if (v.startsWith('place:')) {
+    const pl = PLACES[v.slice(6)];
+    if (pl) map.flyTo(pl, d || 46);
+    return;
+  }
+
+  if (v.startsWith('fit:')) {
+    map.flyToFit(v.slice(4).split(',').map((k) => PLACES[k]).filter(Boolean));
+    return;
+  }
+
+  map.resetView();
+}
+
+/* What the step bodies are allowed to quote. Built fresh on every step from
+   the same model the Claim panel reads, so the callout and the panel behind it
+   can never print different numbers for the same claim. */
+function tourContext() {
+  const target = hypoTarget();
+  const steel = target ? buildHypoTrack(target, state.claimDepart, state.interceptT) : null;
+  const tgt = ua93StateAt(state.interceptT);
+  return {
+    steel: steel || { miles: 0, mph: 0, mach: 0, ferryFraction: 0, totalMi: 0, totalFerryFraction: 0 },
+    los: losVsWez(31000, tgt ? tgt.altFt : 5000, AIM9.rMaxMi),
+  };
+}
+
+function tourGo(i) {
+  if (!tour.on) return;
+  if (i < 0) i = 0;
+  if (i >= TOUR_STEPS.length) { tourExit(); return; }
+
+  tour.i = i;
+  tour.elapsed = 0;
+  tour.stepStart = performance.now();
+
+  const step = TOUR_STEPS[i];
+  const tone = TONES[step.tone] || TONES.setup;
+
+  // Layers first, so the camera flies to something that is actually drawn.
+  if (step.layers) {
+    Object.assign(state.layers, step.layers);
+    syncLayerChecks();
+  }
+  if (typeof step.t === 'number') setTime(step.t);
+  if (step.layers) applyAllLayers();
+  if (step.tab) tourTab(step.tab);
+  tourView(step);
+
+  const el = $('#tour');
+  el.style.setProperty('--tour-accent', tone.color);
+  el.classList.toggle('paused', tour.paused);
+  $('#tour-chapter').textContent = tone.label;
+  $('#tour-count').textContent = `${i + 1} / ${TOUR_STEPS.length}`;
+  $('#tour-title').textContent = step.title;
+  $('#tour-body').innerHTML = typeof step.body === 'function' ? step.body(tourContext()) : step.body;
+  $('#tour-body').scrollTop = 0;
+
+  $('#tour-prev').disabled = i === 0;
+  $('#tour-next').textContent = step.last ? '✓' : '›';
+  $('#tour-next').title = step.last ? 'Finish and restore the view' : 'Next step (→)';
+
+  $$('#tour-dots > i').forEach((dot, n) => {
+    dot.classList.toggle('done', n < i);
+    dot.classList.toggle('on', n === i);
+  });
+
+  /* The panel element carrying this step's evidence gets a brief ring, and is
+     scrolled into view — a tour that talks about a number the reader has to go
+     hunting for has not finished its job. */
+  $$('.tour-lit').forEach((x) => x.classList.remove('tour-lit'));
+  if (step.highlight) {
+    const target = $(step.highlight);
+    if (target) {
+      target.classList.add('tour-lit');
+      target.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    }
+  }
+
+  cancelAnimationFrame(tour.raf);
+  tour.raf = requestAnimationFrame(tourTick);
+}
+
+function tourTick(now) {
+  if (!tour.on) return;
+  const step = TOUR_STEPS[tour.i];
+  const dwell = step.dwellMs || 14000;
+
+  if (!tour.paused) tour.elapsed += now - tour.stepStart;
+  tour.stepStart = now;
+
+  const f = Math.min(1, tour.elapsed / dwell);
+  $('#tour-bar-fill').style.width = `${(f * 100).toFixed(1)}%`;
+
+  if (f >= 1 && !tour.paused) {
+    if (step.last) { tourExit(); return; }
+    tourGo(tour.i + 1);
+    return;
+  }
+  tour.raf = requestAnimationFrame(tourTick);
+}
+
+function tourSetPaused(v) {
+  tour.paused = v;
+  $('#tour').classList.toggle('paused', v);
+  $('#tour-glyph').textContent = v ? '▶' : '❚❚';
+  $('#tour-toggle').title = v ? 'Resume' : 'Pause';
+}
+
+function buildTourDots() {
+  $('#tour-dots').innerHTML = TOUR_STEPS.map(() => '<i></i>').join('');
+}
+
+function bindTour() {
+  $('#btn-tour').addEventListener('click', () => (tour.on ? tourExit() : tourEnter()));
+  $('#tour-close').addEventListener('click', tourExit);
+  $('#tour-prev').addEventListener('click', () => { tourSetPaused(true); tourGo(tour.i - 1); });
+  $('#tour-next').addEventListener('click', () => {
+    if (TOUR_STEPS[tour.i].last) { tourExit(); return; }
+    tourSetPaused(true);
+    tourGo(tour.i + 1);
+  });
+  $('#tour-toggle').addEventListener('click', () => tourSetPaused(!tour.paused));
+
+  /* Taking the camera by hand pauses rather than being overridden on the next
+     tick. Fighting a user for the view is the fastest way to make a tour feel
+     like something happening TO them. */
+  const wasManual = map.onManualCamera;
+  map.onManualCamera = () => {
+    if (tour.on && !tour.paused) tourSetPaused(true);
+    wasManual();
+  };
+}
+
 function bindChrome() {
   $('#btn-play').addEventListener('click', () => {
     if (state.t >= T1) setTime(T0);
@@ -1717,8 +1985,19 @@ function bindChrome() {
     setTimeout(() => map.resize(), 280);
   });
 
+  bindTour();
+
   addEventListener('keydown', (e) => {
     if (e.target.tagName === 'INPUT' && e.target.type !== 'range') return;
+
+    // While the tour has the floor, the transport keys drive the tour.
+    if (tour.on) {
+      if (e.code === 'Escape') { tourExit(); return; }
+      if (e.code === 'ArrowLeft') { e.preventDefault(); tourSetPaused(true); tourGo(tour.i - 1); return; }
+      if (e.code === 'ArrowRight') { e.preventDefault(); tourSetPaused(true); tourGo(tour.i + 1); return; }
+      if (e.code === 'Space') { e.preventDefault(); tourSetPaused(!tour.paused); return; }
+    }
+
     if (e.code === 'Space') { e.preventDefault(); $('#btn-play').click(); }
     if (e.code === 'KeyF') setFollow(!state.follow);
     if (e.code === 'ArrowLeft') { setPlaying(false); setTime(state.t - (e.shiftKey ? 300 : 30)); }

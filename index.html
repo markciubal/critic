@@ -675,6 +675,111 @@ ul.plain li { font-size: 12.5px; color: var(--ink-dim); line-height: 1.55; margi
 }
 .leg.los-hot { border-color: #ff4d4d; background: rgba(255,77,77,.1); }
 
+
+/* --- steelman tour ----------------------------------------------------------
+   A callout over the map rather than in the panel: the tour is narrating what
+   the map is doing, so the two have to be readable in one glance. The accent
+   colour is the step's tone, which is why it is set inline from the model
+   rather than hardcoded here. */
+.tour-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  margin-left: 10px; padding: 6px 12px;
+  background: rgba(255,31,61,.14); color: var(--ink);
+  border: 1px solid rgba(255,31,61,.55); border-radius: 6px;
+  font: 600 11.5px/1 var(--ui-font, inherit); letter-spacing: .4px;
+  cursor: pointer; white-space: nowrap; transition: background .16s, border-color .16s;
+}
+.tour-btn:hover { background: rgba(255,31,61,.26); border-color: var(--critic); }
+.tour-btn.on { background: var(--critic); border-color: var(--critic); color: #fff; }
+.tour-btn-glyph { font-size: 9px; color: var(--critic); }
+.tour-btn.on .tour-btn-glyph { color: #fff; }
+
+#tour {
+  position: absolute; left: 18px; bottom: 18px; width: 372px; max-width: calc(100vw - 36px);
+  background: rgba(6,11,22,.94); backdrop-filter: blur(9px);
+  border: 1px solid var(--tour-accent, var(--line-2));
+  border-left: 3px solid var(--tour-accent, var(--ui));
+  border-radius: 8px; padding: 0 0 10px;
+  box-shadow: 0 18px 48px rgba(0,0,0,.62);
+  z-index: 40; overflow: hidden;
+  animation: tour-in .32s ease-out;
+}
+#tour.hidden { display: none; }
+@keyframes tour-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+.tour-bar { height: 2px; background: rgba(255,255,255,.07); }
+.tour-bar > i {
+  display: block; height: 100%; width: 0;
+  background: var(--tour-accent, var(--ui)); transition: width .25s linear;
+}
+#tour.paused .tour-bar > i { opacity: .35; }
+
+.tour-head { display: flex; align-items: center; gap: 8px; padding: 9px 12px 0; }
+.tour-chapter {
+  font: 700 9.5px/1 var(--mono); letter-spacing: 1.2px; text-transform: uppercase;
+  color: var(--tour-accent, var(--ink-dim));
+}
+.tour-count { font: 500 10px/1 var(--mono); color: var(--ink-faint); margin-left: auto; }
+.tour-x {
+  background: none; border: 0; color: var(--ink-faint); cursor: pointer;
+  font-size: 12px; padding: 2px 1px 2px 6px; line-height: 1;
+}
+.tour-x:hover { color: var(--ink); }
+
+#tour h4 {
+  margin: 7px 12px 6px; font-size: 14.5px; line-height: 1.35; color: var(--ink);
+  letter-spacing: .1px;
+}
+#tour-body {
+  margin: 0 12px; font-size: 12.5px; line-height: 1.6; color: var(--ink-dim);
+  max-height: 34vh; overflow-y: auto;
+}
+#tour-body p { margin: 8px 0 0; }
+#tour-body strong { color: var(--ink); }
+#tour-body em { color: var(--ink); font-style: italic; }
+#tour-body .tour-warn {
+  font-size: 11.5px; color: var(--ink-faint); font-style: italic;
+  border-left: 2px solid var(--line-2); padding-left: 9px; margin-top: 10px;
+}
+
+.tour-foot {
+  display: flex; align-items: center; gap: 10px; margin: 11px 12px 0;
+  padding-top: 9px; border-top: 1px solid var(--line);
+}
+.tour-dots { display: flex; gap: 3px; flex: 1; }
+.tour-dots > i {
+  height: 3px; flex: 1; border-radius: 2px; background: var(--line-2);
+  transition: background .2s;
+}
+.tour-dots > i.done { background: var(--ink-faint); }
+.tour-dots > i.on { background: var(--tour-accent, var(--ui)); }
+.tour-ctl { display: flex; gap: 4px; }
+.tour-ctl button {
+  min-width: 26px; height: 22px; padding: 0 6px;
+  background: var(--bg-3); color: var(--ink-dim);
+  border: 1px solid var(--line-2); border-radius: 4px;
+  font-size: 11px; line-height: 1; cursor: pointer;
+}
+.tour-ctl button:hover:not(:disabled) { color: var(--ink); border-color: var(--ui); }
+.tour-ctl button:disabled { opacity: .35; cursor: default; }
+
+/* While the tour runs, the thing it is pointing at gets a brief ring. */
+.tour-lit { animation: tour-lit 1.6s ease-out 2; border-radius: 6px; }
+@keyframes tour-lit {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(74,143,231,0); }
+  35%      { box-shadow: 0 0 0 3px rgba(74,143,231,.4); }
+}
+
+@media (max-width: 900px) {
+  #tour { left: 10px; right: 10px; bottom: 10px; width: auto; }
+  #tour-body { max-height: 26vh; }
+}
+
+/* The callout takes the bottom-left corner, which the vertical-scale legend
+   already owned. The legend steps aside rather than being covered: a control
+   half-hidden under a card reads as a bug. */
+body.touring #legend { opacity: 0; pointer-events: none; transition: opacity .25s; }
+
 </style>
 </head>
 <body>
@@ -703,6 +808,9 @@ ul.plain li { font-size: 12.5px; color: var(--ink-dim); line-height: 1.55; margi
     <button id="btn-follow" class="ghost-btn on" aria-pressed="true"
             title="Keep the camera on whatever is airborne (F)">Follow</button>
     <button id="btn-reset-view" class="ghost-btn" title="Stop following and show the whole country">Reset view</button>
+    <button id="btn-tour" class="tour-btn" title="Play a guided walk through the steelman argument">
+      <span class="tour-btn-glyph">&#9654;</span> Steelman tour
+    </button>
   </div>
 </header>
 
@@ -726,6 +834,27 @@ ul.plain li { font-size: 12.5px; color: var(--ink-dim); line-height: 1.55; margi
   </div>
 
   <button id="aside-toggle" title="Show / hide panel">›</button>
+
+  <!-- The guided tour's callout. Lives over the map, because the map is what
+       it is talking about. -->
+  <section id="tour" class="hidden" aria-live="polite" aria-label="Steelman tour">
+    <div class="tour-bar"><i id="tour-bar-fill"></i></div>
+    <div class="tour-head">
+      <span id="tour-chapter" class="tour-chapter">&mdash;</span>
+      <span id="tour-count" class="tour-count"></span>
+      <button id="tour-close" class="tour-x" title="End the tour (Esc)">&#10005;</button>
+    </div>
+    <h4 id="tour-title"></h4>
+    <div id="tour-body"></div>
+    <div class="tour-foot">
+      <div id="tour-dots" class="tour-dots"></div>
+      <div class="tour-ctl">
+        <button id="tour-prev" title="Previous step (&larr;)">&lsaquo;</button>
+        <button id="tour-toggle" title="Pause / resume"><span id="tour-glyph">&#10074;&#10074;</span></button>
+        <button id="tour-next" title="Next step (&rarr;)">&rsaquo;</button>
+      </div>
+    </div>
+  </section>
 </main>
 
 <aside id="panel">
@@ -56502,6 +56631,321 @@ function losVsWez(hypoAltFt, targetAltFt, rMaxMi) {
   };
 })();
 
+__m["tour"] = (function () {
+  const { F16 } = __m["data"];
+  const { AIM9 } = __m["reachability"];
+  const { HYPO, CONCESSIONS, VERDICT, LOS_HORIZON, FOREKNOWLEDGE } = __m["steelman"];
+/* =============================================================================
+   tour.js — a guided walk through the steelman argument.
+
+   The steelman is the most demanding thing in this app to read cold. It grants
+   ten things, and the whole point lives in the order: six concessions are free,
+   the kinematics then survive, and only after that do four separate blockers
+   land. Someone scrubbing a timeline at random will never assemble that order,
+   and the argument collapses into "a fast jet could have got there", which is
+   the opposite of what it says.
+
+   So the tour is not decoration. It is the argument's sequence, made playable:
+   each step sets the clock, moves the camera and opens the panel that carries
+   the evidence, so the claim is being *watched* while it is being explained.
+
+   Steps are data. Every body is a function taking a live context — the built
+   steelman track, the line-of-sight comparison — so the tour cannot quote a
+   figure the panel beside it disagrees with. The first draft did exactly that:
+   it said "Mach 1.26 over 1,012 miles" from the prose in steelman.js while the
+   panel three inches away computed Mach 1.22 over 990 miles from the model.
+   Both came from the same allegation; only one was being calculated.
+
+   `view` kinds:
+     reset                  the whole country
+     place:<KEY>            a named place from PLACES
+     ua93                   United 93 at the current clock
+     hypo                   HYPO 01 at the current clock
+     fit:<KEY>,<KEY>        frame several places at once
+   ========================================================================== */
+
+
+
+
+const at = (h, m, s = 0) => h * 3600 + m * 60 + s;
+
+/* The three acts, used for the chapter strip and the accent colour. A step's
+   tone is a claim about what the step is doing to the argument, not a mood. */
+const TONES = {
+  setup:    { label: 'The claim',      color: '#a2b5cf' },
+  grant:    { label: 'What we grant',  color: '#ffd447' },
+  survives: { label: 'What survives',  color: '#35d6a4' },
+  blocks:   { label: 'What blocks it', color: '#ff1f3d' },
+  verdict:  { label: 'The verdict',    color: '#eef3fa' },
+};
+
+const blocking = CONCESSIONS.filter((c) => c.blocking);
+const free = CONCESSIONS.filter((c) => !c.blocking);
+
+const TOUR_STEPS = [
+  {
+    id: 'why',
+    tone: 'setup',
+    title: 'Why build the best version of a claim you think is wrong',
+    body: (c) => `
+      Everything else in this app tests Major Rick Gibney's account. This tests the
+      <em>strongest possible</em> version of it.
+      <p>Arguing only against the weakest reading teaches you nothing: you never find out which
+      of your objections were load-bearing and which were decoration. So the next few minutes
+      grant the claim <strong>${CONCESSIONS.length} favourable assumptions at once</strong> —
+      fuel, missiles, a perfect launch, a perfect heading — and then ask what is still standing.</p>
+      <p class="tour-warn"><strong>${HYPO.callsign} is a construct.</strong> ${HYPO.disclaimer}</p>`,
+    t: at(7, 59, 0),
+    tab: 'claim',
+    view: 'reset',
+    layers: { hypo: false, envelope: false, wez: false },
+    dwellMs: 15000,
+  },
+
+  {
+    id: 'account',
+    tone: 'setup',
+    title: 'What the account actually says',
+    body: (c) => `
+      Gibney is a North Dakota Air National Guard pilot. On 11 September he flew New York
+      emergency-management director <strong>Ed Jacoby Jr.</strong> from Montana to Albany —
+      that part is documented and Jacoby has described it on the record.
+      <p>The allegation added later is that between those two points he was scrambled from
+      <strong>Fargo</strong>, intercepted <strong>United 93</strong> over Somerset County,
+      Pennsylvania, and shot it down.</p>
+      <p>Two routes, then: the one with witnesses, and the one without. The map is showing both.</p>`,
+    t: at(8, 42, 0),
+    tab: 'claim',
+    view: 'reset',
+    layers: { routeDoc: true, routeClaim: true, hypo: false },
+    dwellMs: 15000,
+  },
+
+  {
+    id: 'grant-hardware',
+    tone: 'grant',
+    title: `Granted: the fuel and the missiles`,
+    body: (c) => `
+      The first two concessions cost nothing, and it is worth saying so plainly rather than
+      pretending the claim falls at the first fence.
+      <p><strong>Fuel.</strong> ${free[0].detail} Fargo to the intercept is
+      <strong>${Math.round(c.steel.miles).toLocaleString()} miles</strong> —
+      <strong>${Math.round(c.steel.ferryFraction * 100)}%</strong> of the
+      ${F16.ferryRangeMi.toLocaleString()}-mile ferry range. Nowhere near the limit.</p>
+      <p><strong>Missiles.</strong> ${free[1].detail} Tanks take the wing and centreline
+      stations; the wingtip rails stay free. The placard describes carrying both.</p>
+      <p>The rings on the map are that envelope. An argument against this claim that leans on
+      fuel is leaning on the wrong thing.</p>`,
+    t: at(8, 46, 40),
+    tab: 'claim',
+    view: 'place:KFAR',
+    viewDist: 120,
+    layers: { envelope: true, wez: false, hypo: false, routeDoc: false, routeClaim: true },
+    highlight: '#reach-out',
+    dwellMs: 17000,
+  },
+
+  {
+    id: 'grant-launch',
+    tone: 'grant',
+    title: 'Granted: he launches the instant anyone could have',
+    body: (c) => `
+      The clock is at <strong>08:46:40</strong> — American 11 striking the North Tower. It is
+      the first moment in the entire day that anyone, anywhere, had a reason to act.
+      <p>So the tour hands the claim a launch at that exact second. Not a minute of hesitation,
+      no briefing, no start-up, no taxi.</p>
+      <p>${free[2].cost}</p>`,
+    t: at(8, 46, 40),
+    tab: 'claim',
+    view: 'place:KFAR',
+    viewDist: 90,
+    layers: { envelope: true, hypo: false },
+    dwellMs: 14000,
+  },
+
+  {
+    id: 'grant-heading',
+    tone: 'grant',
+    title: 'Granted: the perfect heading, flown perfectly',
+    body: (c) => `
+      ${free[3].detail}
+      <p>No air-traffic vectors, no jet stream, no weather deviation, no time on the ground.
+      The two-seat problem — that carrying Jacoby needs an F-16B/D with 17% less internal fuel
+      — is waved away too.</p>
+      <p>That is <strong>${free.length} of the ${CONCESSIONS.length} concessions</strong>, all
+      free or nearly so. ${HYPO.callsign} is now on the map, drawn dashed and white because it
+      is a construct and nothing else on this map is.</p>`,
+    t: at(9, 20, 0),
+    tab: 'claim',
+    view: 'hypo',
+    viewDist: 90,
+    layers: { hypo: true, envelope: true },
+    highlight: '#steel-out',
+    dwellMs: 16000,
+  },
+
+  {
+    id: 'survives',
+    tone: 'survives',
+    title: 'And it works. The kinematics are not the problem.',
+    body: (c) => `
+      This is the honest result, and the reason the steelman was worth building.
+      <p>The run needs <strong>${Math.round(c.steel.mph).toLocaleString()} mph</strong> —
+      <strong>Mach ${c.steel.mach.toFixed(2)}</strong> sustained. The placarded limit with
+      tanks is ${F16.maxWithTanksMph.toLocaleString()} mph, so the claim fits
+      <em>inside</em> it. The jet can physically do this.</p>
+      <p>Anyone who tells you Gibney's account is impossible because an F-16 is too slow or
+      too short-legged has not checked. Speed and fuel do not stop this claim. Something else
+      has to, or nothing does.</p>`,
+    t: at(9, 48, 0),
+    tab: 'claim',
+    view: 'hypo',
+    viewDist: 70,
+    layers: { hypo: true, envelope: true, wez: false },
+    highlight: '#steel-out',
+    dwellMs: 16000,
+  },
+
+  {
+    id: 'block-knowledge',
+    tone: 'blocks',
+    title: `Blocker 1 — he has to know at 08:46 what happens at 09:28`,
+    body: (c) => `
+      Look at the clock, and look at United 93.
+      <p>It is <strong>08:46</strong>. United 93 is four minutes out of Newark, climbing,
+      entirely normal. Its hijacking is <strong>42 minutes away</strong>. Nobody aboard knows,
+      nobody on the ground knows, and there is nothing whatsoever to intercept.</p>
+      <p>${blocking[0].cost}</p>
+      <p class="tour-warn">${FOREKNOWLEDGE.caution}</p>`,
+    t: at(8, 46, 40),
+    tab: 'claim',
+    view: 'ua93',
+    viewDist: 60,
+    layers: { hypo: true, UA93: true },
+    highlight: '#fk-out',
+    dwellMs: 18000,
+  },
+
+  {
+    id: 'block-tracking',
+    tone: 'blocks',
+    title: 'Blocker 2 — nobody could have vectored him onto it',
+    body: (c) => `
+      Grant the foreknowledge anyway. He still has to be <em>steered</em> onto a target
+      crossing Pennsylvania at 400-odd miles an hour.
+      <p>${blocking[1].cost}</p>
+      <p>The clock is now at <strong>10:07</strong> — the moment NEADS first learned United 93
+      existed. It had already been on the ground for four minutes.</p>`,
+    t: at(10, 7, 0),
+    tab: 'military',
+    view: 'place:SHKV',
+    viewDist: 90,
+    layers: { hypo: true },
+    dwellMs: 17000,
+  },
+
+  {
+    id: 'block-order',
+    tone: 'blocks',
+    title: 'Blocker 3 — no order to fire existed',
+    body: (c) => `
+      Grant the tracking too. He still needs authority to destroy a civilian airliner with
+      forty people aboard.
+      <p>${blocking[3].cost}</p>
+      <p>The alleged shot is at <strong>09:58</strong>. The clock is at <strong>10:31</strong>
+      — thirty-three minutes later, and the authorisation has only just reached the sector
+      that never passed it on.</p>`,
+    t: at(10, 31, 0),
+    tab: 'critic',
+    view: 'reset',
+    layers: { hypo: true, critic: true },
+    dwellMs: 17000,
+  },
+
+  {
+    id: 'block-jacoby',
+    tone: 'blocks',
+    title: 'Blocker 4 — the easy version erases the only witness',
+    body: (c) => `
+      This is the one that does the most damage, and it is self-inflicted.
+      <p>The shortest flyable version of the claim runs Fargo → intercept → Albany:
+      <strong>${Math.round(c.steel.totalMi).toLocaleString()} miles</strong>,
+      <strong>${Math.round(c.steel.totalFerryFraction * 100)}%</strong> of ferry range —
+      inside one tankful. That is the routing ${HYPO.callsign} is flying. It never goes near
+      Bozeman.</p>
+      <p>${blocking[2].cost}</p>
+      <p>So the fuel argument and the witness argument point in opposite directions. Make the
+      flying comfortable and you delete Ed Jacoby; keep Jacoby and the fuel gets much harder.
+      The claim cannot have both.</p>`,
+    t: at(10, 20, 0),
+    tab: 'claim',
+    view: 'fit:KBZN,KFAR,KALB',
+    layers: { hypo: true, routeDoc: true, places: true },
+    highlight: '#concessions',
+    dwellMs: 20000,
+  },
+
+  {
+    id: 'scale',
+    tone: 'blocks',
+    title: 'And the shot itself is a twenty-mile coincidence',
+    body: (c) => `
+      Every ring on this map has been generous. This one is not.
+      <p>To fire, he must be within <strong>${c.los.wezMi} miles</strong> of United 93 — and no
+      nearer than ${AIM9.rMinMi}, because a Sidewinder has a minimum range too. Set that beside
+      the <strong>${Math.round(c.los.losMi)} miles</strong> at which the two aircraft could
+      merely <em>see</em> each other: a ratio of
+      <strong>${Math.round(c.los.ratio)} to 1</strong>.</p>
+      <p>${LOS_HORIZON.note} Seeing was never the constraint. Being inside a twenty-mile circle around one airliner
+      at one instant is — and nothing in the record puts him there, or anywhere else.</p>`,
+    t: at(9, 58, 0),
+    tab: 'claim',
+    view: 'ua93',
+    viewDist: 40,
+    layers: { hypo: true, wez: true, envelope: true },
+    highlight: '#wez-out',
+    dwellMs: 18000,
+  },
+
+  {
+    id: 'verdict',
+    tone: 'verdict',
+    title: VERDICT.headline,
+    body: (c) => `
+      <p>${VERDICT.body}</p>
+      <p>That is a more useful conclusion than "impossible", and a much harder one to wave
+      away. A claim refuted on arithmetic invites a better arithmetician. A claim refuted on
+      knowledge, authority and first-hand testimony has nowhere left to go.</p>
+      <p class="tour-warn">${HYPO.callsign} has been removed from the map. It was never there.</p>`,
+    t: at(9, 58, 0),
+    tab: 'claim',
+    view: 'reset',
+    layers: { hypo: false, wez: false },
+    dwellMs: 22000,
+    last: true,
+  },
+];
+
+/* The chapter strip: one dot per step, grouped by tone, so the shape of the
+   argument — grant, grant, grant, survive, block, block, block — is visible
+   before it is heard. */
+function tourChapters() {
+  const out = [];
+  for (const s of TOUR_STEPS) {
+    const prev = out[out.length - 1];
+    if (prev && prev.tone === s.tone) prev.count += 1;
+    else out.push({ tone: s.tone, count: 1, label: TONES[s.tone].label });
+  }
+  return out;
+}
+
+  return {
+    TONES,
+    TOUR_STEPS,
+    tourChapters
+  };
+})();
+
 __m["map3d"] = (function () {
   const { readStates } = __m["topo"];
   const { projectForState, projectLL, altToY, OMITTED_FIPS, UNITS_PER_MILE, setAltExaggeration } = __m["projection"];
@@ -57455,6 +57899,13 @@ class Map3D {
     if (fit) this.followGoal = fit;
   }
 
+  /* Frame a set of places at once. fitPoints returns projected coordinates,
+     so this cannot go through flyTo's lat/lon path. */
+  flyToFit(pts, pad = 1.7) {
+    const fit = this.fitPoints(pts, pad);
+    if (fit) this._startTween(fit.cx, fit.cz, fit.dist);
+  }
+
   flyTo(latlon, dist = 46) {
     const [x, z] = latlon.isVector3 ? [latlon.x, latlon.z] : projectLL(latlon);
     this._startTween(x, z, dist);
@@ -57762,9 +58213,11 @@ __m["main"] = (function () {
   const { BANDS, FUEL_RING, FERRY_RING, HALF_FERRY_RING, AIM9, shanksvilleTest, reachMi, scaleComparison, TOLERANCES, DEPARTURE_BOUNDS, bandRadii, evidenceCeilingMi, CONFIG_TRADE } = __m["reachability"];
   const { HYPO, CONCESSIONS, VERDICT, buildHypoTrack, FOREKNOWLEDGE, HIJACK_T, foreknowledgeVerdict, wezWindow, LOS_HORIZON, losVsWez, mutualHorizonSmi } = __m["steelman"];
   const { CALLS, CALL_TOTALS, FARADAY, WHY_THEY_MATTER } = __m["calls"];
+  const { TOUR_STEPS, TONES } = __m["tour"];
 /* =============================================================================
    main.js — app wiring: playback clock, scrubber, panels, labels.
    ========================================================================== */
+
 
 
 
@@ -58287,6 +58740,7 @@ function renderClaimTab() {
       <div id="concessions"></div>
       <div class="chip-row">
         <button class="chip" data-act="show-hypo">Plot ${esc(HYPO.callsign)}</button>
+        <button class="chip" data-act="tour">&#9654; Walk me through it</button>
       </div>
     </div>
 
@@ -58383,6 +58837,7 @@ function renderClaimTab() {
   });
 
   $$('#claim-body .chip').forEach((b) => b.addEventListener('click', () => {
+    if (b.dataset.act === 'tour') { tourEnter(); return; }
     if (b.dataset.act === 'show-hypo') {
       state.layers.hypo = true;
       map.setHypoVisible(true);
@@ -59426,6 +59881,271 @@ function hideTip() { $('#tooltip').classList.add('hidden'); }
    Chrome
    ========================================================================== */
 
+/* =============================================================================
+   The steelman tour
+
+   A scripted walk through the argument in steelman.js. Each step owns four
+   things — the clock, the camera, the visible layers and the open panel — and
+   sets all four, so what is being said and what is being shown cannot drift
+   apart.
+
+   Two rules make it safe to hand a stranger:
+
+   1. It is fully reversible. Entering snapshots the clock, the layers, the
+      camera mode and the open tab; leaving by any route — the ✕, Esc, the
+      button, or falling off the end — puts all of them back. The tour borrows
+      the app, it does not redecorate it.
+
+   2. Auto-advance is a convenience, never a cage. Prev/next work at any time,
+      the first interaction with the map pauses it rather than fighting the
+      user for the camera, and the progress bar always says how long is left.
+   ========================================================================== */
+
+const tour = {
+  on: false,
+  i: 0,
+  paused: false,
+  stepStart: 0,
+  elapsed: 0,          // ms consumed on the current step, across pauses
+  raf: null,
+  saved: null,
+};
+
+function tourEnter() {
+  if (tour.on) return;
+
+  // Everything the tour is about to take over, remembered exactly as it is.
+  tour.saved = {
+    t: state.t,
+    playing: state.playing,
+    follow: state.follow,
+    layers: { ...state.layers },
+    tab: ($('#tabs button.on') || {}).dataset?.tab || 'timeline',
+  };
+
+  tour.on = true;
+  tour.i = 0;
+  tour.paused = false;
+  setPlaying(false);
+  setFollow(false);
+
+  $('#tour').classList.remove('hidden');
+  $('#btn-tour').classList.add('on');
+  document.body.classList.add('touring');
+  buildTourDots();
+  tourGo(0);
+}
+
+function tourExit() {
+  if (!tour.on) return;
+  tour.on = false;
+  cancelAnimationFrame(tour.raf);
+  $('#tour').classList.add('hidden');
+  $('#btn-tour').classList.remove('on');
+  document.body.classList.remove('touring');
+  $$('.tour-lit').forEach((el) => el.classList.remove('tour-lit'));
+
+  const sv = tour.saved;
+  if (sv) {
+    Object.assign(state.layers, sv.layers);
+    syncLayerChecks();
+    applyAllLayers();
+    tourTab(sv.tab);
+    setTime(sv.t);
+    setFollow(sv.follow);
+    setPlaying(sv.playing);
+    map.resetView();
+  }
+  tour.saved = null;
+}
+
+/* Layer state lives in `state.layers`, but the calls that push it at the map
+   are scattered through the layer-toggle handler. The tour needs to set many
+   at once, so they are gathered here — and the handler is left alone, because
+   rewriting it to use this would change behaviour the tour has no business
+   changing. */
+function applyAllLayers() {
+  for (const f of FLIGHTS) map.setFlightVisible(f.id, !!state.layers[f.id]);
+  for (const f of MIL_FLIGHTS) map.setFlightVisible(f.id, !!state.layers[f.id]);
+  map.setDebrisVisible(state.layers.debris);
+  map.placeGroup.visible = state.layers.places;
+  map.setCriticVisible(state.layers.critic);
+  map.setRouteVisible('documented', state.layers.routeDoc);
+  map.setRouteVisible('claim', state.layers.routeClaim);
+  map.setReachVisible(state.layers.envelope || state.layers.wez);
+  map.setHypoVisible(state.layers.hypo);
+  map.setCallsVisible(state.layers.calls);
+  map.setTrailVisible(state.layers.trail);
+  updateReach();
+  updateHypo();
+  map.setTrail(state.t);
+  map.setCalls(ua93StateAt, state.t);
+  map.setTime(state.t);
+}
+
+function tourTab(name) {
+  const btn = $(`#tabs button[data-tab="${name}"]`);
+  if (!btn) return;
+  $$('#tabs button').forEach((x) => x.classList.toggle('on', x === btn));
+  $$('.tab-body').forEach((sec) => sec.classList.toggle('hidden', sec.dataset.body !== name));
+}
+
+/* `view` is resolved here rather than in tour.js so the step data stays free
+   of anything that needs the map to exist. */
+function tourView(step) {
+  const v = step.view || 'reset';
+  const d = step.viewDist;
+
+  if (v === 'reset') { map.resetView(); return; }
+
+  if (v === 'ua93') {
+    const s = ua93Position();
+    if (s) map.flyTo(s, d || 46);
+    else map.resetView();
+    return;
+  }
+
+  if (v === 'hypo') {
+    const s = map._hypoSample;
+    if (s) map.flyTo(s, d || 46);
+    else map.resetView();
+    return;
+  }
+
+  if (v.startsWith('place:')) {
+    const pl = PLACES[v.slice(6)];
+    if (pl) map.flyTo(pl, d || 46);
+    return;
+  }
+
+  if (v.startsWith('fit:')) {
+    map.flyToFit(v.slice(4).split(',').map((k) => PLACES[k]).filter(Boolean));
+    return;
+  }
+
+  map.resetView();
+}
+
+/* What the step bodies are allowed to quote. Built fresh on every step from
+   the same model the Claim panel reads, so the callout and the panel behind it
+   can never print different numbers for the same claim. */
+function tourContext() {
+  const target = hypoTarget();
+  const steel = target ? buildHypoTrack(target, state.claimDepart, state.interceptT) : null;
+  const tgt = ua93StateAt(state.interceptT);
+  return {
+    steel: steel || { miles: 0, mph: 0, mach: 0, ferryFraction: 0, totalMi: 0, totalFerryFraction: 0 },
+    los: losVsWez(31000, tgt ? tgt.altFt : 5000, AIM9.rMaxMi),
+  };
+}
+
+function tourGo(i) {
+  if (!tour.on) return;
+  if (i < 0) i = 0;
+  if (i >= TOUR_STEPS.length) { tourExit(); return; }
+
+  tour.i = i;
+  tour.elapsed = 0;
+  tour.stepStart = performance.now();
+
+  const step = TOUR_STEPS[i];
+  const tone = TONES[step.tone] || TONES.setup;
+
+  // Layers first, so the camera flies to something that is actually drawn.
+  if (step.layers) {
+    Object.assign(state.layers, step.layers);
+    syncLayerChecks();
+  }
+  if (typeof step.t === 'number') setTime(step.t);
+  if (step.layers) applyAllLayers();
+  if (step.tab) tourTab(step.tab);
+  tourView(step);
+
+  const el = $('#tour');
+  el.style.setProperty('--tour-accent', tone.color);
+  el.classList.toggle('paused', tour.paused);
+  $('#tour-chapter').textContent = tone.label;
+  $('#tour-count').textContent = `${i + 1} / ${TOUR_STEPS.length}`;
+  $('#tour-title').textContent = step.title;
+  $('#tour-body').innerHTML = typeof step.body === 'function' ? step.body(tourContext()) : step.body;
+  $('#tour-body').scrollTop = 0;
+
+  $('#tour-prev').disabled = i === 0;
+  $('#tour-next').textContent = step.last ? '✓' : '›';
+  $('#tour-next').title = step.last ? 'Finish and restore the view' : 'Next step (→)';
+
+  $$('#tour-dots > i').forEach((dot, n) => {
+    dot.classList.toggle('done', n < i);
+    dot.classList.toggle('on', n === i);
+  });
+
+  /* The panel element carrying this step's evidence gets a brief ring, and is
+     scrolled into view — a tour that talks about a number the reader has to go
+     hunting for has not finished its job. */
+  $$('.tour-lit').forEach((x) => x.classList.remove('tour-lit'));
+  if (step.highlight) {
+    const target = $(step.highlight);
+    if (target) {
+      target.classList.add('tour-lit');
+      target.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    }
+  }
+
+  cancelAnimationFrame(tour.raf);
+  tour.raf = requestAnimationFrame(tourTick);
+}
+
+function tourTick(now) {
+  if (!tour.on) return;
+  const step = TOUR_STEPS[tour.i];
+  const dwell = step.dwellMs || 14000;
+
+  if (!tour.paused) tour.elapsed += now - tour.stepStart;
+  tour.stepStart = now;
+
+  const f = Math.min(1, tour.elapsed / dwell);
+  $('#tour-bar-fill').style.width = `${(f * 100).toFixed(1)}%`;
+
+  if (f >= 1 && !tour.paused) {
+    if (step.last) { tourExit(); return; }
+    tourGo(tour.i + 1);
+    return;
+  }
+  tour.raf = requestAnimationFrame(tourTick);
+}
+
+function tourSetPaused(v) {
+  tour.paused = v;
+  $('#tour').classList.toggle('paused', v);
+  $('#tour-glyph').textContent = v ? '▶' : '❚❚';
+  $('#tour-toggle').title = v ? 'Resume' : 'Pause';
+}
+
+function buildTourDots() {
+  $('#tour-dots').innerHTML = TOUR_STEPS.map(() => '<i></i>').join('');
+}
+
+function bindTour() {
+  $('#btn-tour').addEventListener('click', () => (tour.on ? tourExit() : tourEnter()));
+  $('#tour-close').addEventListener('click', tourExit);
+  $('#tour-prev').addEventListener('click', () => { tourSetPaused(true); tourGo(tour.i - 1); });
+  $('#tour-next').addEventListener('click', () => {
+    if (TOUR_STEPS[tour.i].last) { tourExit(); return; }
+    tourSetPaused(true);
+    tourGo(tour.i + 1);
+  });
+  $('#tour-toggle').addEventListener('click', () => tourSetPaused(!tour.paused));
+
+  /* Taking the camera by hand pauses rather than being overridden on the next
+     tick. Fighting a user for the view is the fastest way to make a tour feel
+     like something happening TO them. */
+  const wasManual = map.onManualCamera;
+  map.onManualCamera = () => {
+    if (tour.on && !tour.paused) tourSetPaused(true);
+    wasManual();
+  };
+}
+
 function bindChrome() {
   $('#btn-play').addEventListener('click', () => {
     if (state.t >= T1) setTime(T0);
@@ -59466,8 +60186,19 @@ function bindChrome() {
     setTimeout(() => map.resize(), 280);
   });
 
+  bindTour();
+
   addEventListener('keydown', (e) => {
     if (e.target.tagName === 'INPUT' && e.target.type !== 'range') return;
+
+    // While the tour has the floor, the transport keys drive the tour.
+    if (tour.on) {
+      if (e.code === 'Escape') { tourExit(); return; }
+      if (e.code === 'ArrowLeft') { e.preventDefault(); tourSetPaused(true); tourGo(tour.i - 1); return; }
+      if (e.code === 'ArrowRight') { e.preventDefault(); tourSetPaused(true); tourGo(tour.i + 1); return; }
+      if (e.code === 'Space') { e.preventDefault(); tourSetPaused(!tour.paused); return; }
+    }
+
     if (e.code === 'Space') { e.preventDefault(); $('#btn-play').click(); }
     if (e.code === 'KeyF') setFollow(!state.follow);
     if (e.code === 'ArrowLeft') { setPlaying(false); setTime(state.t - (e.shiftKey ? 300 : 30)); }

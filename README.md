@@ -71,6 +71,34 @@ There is no package manager and no runtime dependency. Three.js is vendored in
 
 The map legend carries a **vertical scale** control: `1x true`, `2x`, `5x`.
 
+### The steelman tour
+
+**Steelman tour** in the top bar plays a scripted walk through the argument in
+`src/steelman.js` — twelve steps, about three and a half minutes unattended.
+
+It exists because the steelman is the one thing here that cannot be read out of
+order. It grants ten assumptions, and the whole point lives in the sequence: six
+concessions are free, the kinematics then *survive*, and only after that do four
+separate blockers land. Someone scrubbing the timeline at random never assembles
+that order, and the argument collapses into "a fast jet could have got there" —
+which is the opposite of what it says.
+
+Each step owns the clock, the camera, the visible layers and the open panel, and
+sets all four, so what is being said and what is being shown cannot drift apart.
+Step bodies are functions over the live model rather than fixed prose, so the
+callout cannot print a figure the panel beside it disagrees with.
+
+| | |
+|---|---|
+| Space | Pause / resume the tour |
+| ← / → | Previous / next step |
+| Esc | Leave |
+
+Taking the camera by hand pauses the tour rather than being overridden on the
+next tick. Leaving by any route — the tour button, the ✕, Esc, or running off
+the end — restores the clock, the layers, the camera and the open tab exactly as
+they were. The tour borrows the app; it does not redecorate it.
+
 ## What's in it
 
 **The CRITIC chain** — the four messages on the timeline as first-class events,
@@ -343,13 +371,15 @@ dev.html            modular shell for development
 build.mjs           the bundler
 styles.css
 src/
-  main.js           playback clock, scrubber, panels, label overlay
+  main.js           playback clock, scrubber, panels, label overlay, tour driver
   map3d.js          Three.js scene: extruded states, tracks, routes, debris
   data.js           timeline, airliners, debris, the claim; provenance tags
   military.js       military callsigns, tracks and the QUIT/GOFER records
   conflicts.js      the discrepancy register, including this app's own defects
   critic.js         DIRNSA CRITIC 1-2001: the chain, the alert network, the gaps
   reachability.js   travel envelopes, the AIM-9 engagement zone, the scale ratio
+  steelman.js       the claim's best possible case, and what survives it
+  tour.js           the guided walk through that argument — steps as data
   analysis.js       the feasibility engine
   geo.js            haversine, great-circle interpolation, Mach
   projection.js     composite Albers USA, hand-rolled

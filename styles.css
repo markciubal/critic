@@ -660,3 +660,108 @@ ul.plain li { font-size: 12.5px; color: var(--ink-dim); line-height: 1.55; margi
   border-color: #ff8f9b; text-shadow: 0 1px 2px rgba(0,0,0,.55);
 }
 .leg.los-hot { border-color: #ff4d4d; background: rgba(255,77,77,.1); }
+
+
+/* --- steelman tour ----------------------------------------------------------
+   A callout over the map rather than in the panel: the tour is narrating what
+   the map is doing, so the two have to be readable in one glance. The accent
+   colour is the step's tone, which is why it is set inline from the model
+   rather than hardcoded here. */
+.tour-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  margin-left: 10px; padding: 6px 12px;
+  background: rgba(255,31,61,.14); color: var(--ink);
+  border: 1px solid rgba(255,31,61,.55); border-radius: 6px;
+  font: 600 11.5px/1 var(--ui-font, inherit); letter-spacing: .4px;
+  cursor: pointer; white-space: nowrap; transition: background .16s, border-color .16s;
+}
+.tour-btn:hover { background: rgba(255,31,61,.26); border-color: var(--critic); }
+.tour-btn.on { background: var(--critic); border-color: var(--critic); color: #fff; }
+.tour-btn-glyph { font-size: 9px; color: var(--critic); }
+.tour-btn.on .tour-btn-glyph { color: #fff; }
+
+#tour {
+  position: absolute; left: 18px; bottom: 18px; width: 372px; max-width: calc(100vw - 36px);
+  background: rgba(6,11,22,.94); backdrop-filter: blur(9px);
+  border: 1px solid var(--tour-accent, var(--line-2));
+  border-left: 3px solid var(--tour-accent, var(--ui));
+  border-radius: 8px; padding: 0 0 10px;
+  box-shadow: 0 18px 48px rgba(0,0,0,.62);
+  z-index: 40; overflow: hidden;
+  animation: tour-in .32s ease-out;
+}
+#tour.hidden { display: none; }
+@keyframes tour-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+.tour-bar { height: 2px; background: rgba(255,255,255,.07); }
+.tour-bar > i {
+  display: block; height: 100%; width: 0;
+  background: var(--tour-accent, var(--ui)); transition: width .25s linear;
+}
+#tour.paused .tour-bar > i { opacity: .35; }
+
+.tour-head { display: flex; align-items: center; gap: 8px; padding: 9px 12px 0; }
+.tour-chapter {
+  font: 700 9.5px/1 var(--mono); letter-spacing: 1.2px; text-transform: uppercase;
+  color: var(--tour-accent, var(--ink-dim));
+}
+.tour-count { font: 500 10px/1 var(--mono); color: var(--ink-faint); margin-left: auto; }
+.tour-x {
+  background: none; border: 0; color: var(--ink-faint); cursor: pointer;
+  font-size: 12px; padding: 2px 1px 2px 6px; line-height: 1;
+}
+.tour-x:hover { color: var(--ink); }
+
+#tour h4 {
+  margin: 7px 12px 6px; font-size: 14.5px; line-height: 1.35; color: var(--ink);
+  letter-spacing: .1px;
+}
+#tour-body {
+  margin: 0 12px; font-size: 12.5px; line-height: 1.6; color: var(--ink-dim);
+  max-height: 34vh; overflow-y: auto;
+}
+#tour-body p { margin: 8px 0 0; }
+#tour-body strong { color: var(--ink); }
+#tour-body em { color: var(--ink); font-style: italic; }
+#tour-body .tour-warn {
+  font-size: 11.5px; color: var(--ink-faint); font-style: italic;
+  border-left: 2px solid var(--line-2); padding-left: 9px; margin-top: 10px;
+}
+
+.tour-foot {
+  display: flex; align-items: center; gap: 10px; margin: 11px 12px 0;
+  padding-top: 9px; border-top: 1px solid var(--line);
+}
+.tour-dots { display: flex; gap: 3px; flex: 1; }
+.tour-dots > i {
+  height: 3px; flex: 1; border-radius: 2px; background: var(--line-2);
+  transition: background .2s;
+}
+.tour-dots > i.done { background: var(--ink-faint); }
+.tour-dots > i.on { background: var(--tour-accent, var(--ui)); }
+.tour-ctl { display: flex; gap: 4px; }
+.tour-ctl button {
+  min-width: 26px; height: 22px; padding: 0 6px;
+  background: var(--bg-3); color: var(--ink-dim);
+  border: 1px solid var(--line-2); border-radius: 4px;
+  font-size: 11px; line-height: 1; cursor: pointer;
+}
+.tour-ctl button:hover:not(:disabled) { color: var(--ink); border-color: var(--ui); }
+.tour-ctl button:disabled { opacity: .35; cursor: default; }
+
+/* While the tour runs, the thing it is pointing at gets a brief ring. */
+.tour-lit { animation: tour-lit 1.6s ease-out 2; border-radius: 6px; }
+@keyframes tour-lit {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(74,143,231,0); }
+  35%      { box-shadow: 0 0 0 3px rgba(74,143,231,.4); }
+}
+
+@media (max-width: 900px) {
+  #tour { left: 10px; right: 10px; bottom: 10px; width: auto; }
+  #tour-body { max-height: 26vh; }
+}
+
+/* The callout takes the bottom-left corner, which the vertical-scale legend
+   already owned. The legend steps aside rather than being covered: a control
+   half-hidden under a card reads as a bug. */
+body.touring #legend { opacity: 0; pointer-events: none; transition: opacity .25s; }
