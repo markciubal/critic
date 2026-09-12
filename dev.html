@@ -59,6 +59,14 @@
 
   <button id="aside-toggle" title="Show / hide panel">›</button>
 
+  <!-- One popover, shared by every (i) on the page. -->
+  <div id="info-pop" class="hidden" role="dialog" aria-label="Definition">
+    <div class="ip-term" id="ip-term"></div>
+    <p class="ip-plain" id="ip-plain"></p>
+    <p class="ip-more" id="ip-more"></p>
+    <div class="ip-src" id="ip-src"></div>
+  </div>
+
   <!-- The guided tour's callout. Lives over the map, because the map is what
        it is talking about. -->
   <section id="tour" class="hidden" aria-live="polite" aria-label="Steelman tour">
@@ -74,8 +82,8 @@
       <div id="tour-dots" class="tour-dots"></div>
       <div class="tour-ctl">
         <button id="tour-prev" title="Previous step (&larr;)">&lsaquo;</button>
-        <button id="tour-toggle" title="Pause / resume"><span id="tour-glyph">&#10074;&#10074;</span></button>
-        <button id="tour-next" title="Next step (&rarr;)">&rsaquo;</button>
+        <button id="tour-replay" title="Show me where to look again">&#9673;</button>
+        <button id="tour-next" title="Next step (space or &rarr;)">&rsaquo;</button>
       </div>
     </div>
   </section>

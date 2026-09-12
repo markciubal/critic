@@ -26,6 +26,7 @@ import {
   fuelProof, bozemanCost,
 } from './steelman.js';
 import { CALLS, CALL_TOTALS, FARADAY, WHY_THEY_MATTER } from './calls.js';
+import { GLOSSARY, glossaryList } from './glossary.js';
 import { wezWindow, LOS_HORIZON, losVsWez, mutualHorizonSmi } from './steelman.js';
 import { TOUR_STEPS, TONES } from './tour.js';
 
@@ -514,13 +515,17 @@ function renderClaimTab() {
       </p>
       <div class="chip-row">
         <button class="chip" data-act="show-envelope">Draw the envelope</button>
-        <button class="chip" data-act="show-wez">Draw the engagement zone</button>
+        <button class="chip" data-act="show-wez">Draw the missile range</button>
       </div>
     </div>
 
     <div class="card">
       <h3>What he would have had to hit it with</h3>
-      <p><strong>${esc(AIM9.designation)}</strong> — ${esc(AIM9.inService)} ${srcTag(AIM9.src)}</p>
+      <p><strong>${esc(AIM9.designation)}</strong> ${info('sidewinder')} — ${esc(AIM9.inService)} ${srcTag(AIM9.src)}</p>
+      <p style="font-size:12px;color:var(--ink-dim);line-height:1.55">In plain terms: a short-range
+      missile that steers towards the heat of an engine. It has to be fired from fairly close, and
+      not too close — inside about half a mile it has not armed itself yet. So the area it can
+      actually reach is a ring, not a circle ${info('wez')}.</p>
       <dl class="kv">
         <dt>Seeker</dt><dd>${esc(AIM9.seeker)}</dd>
         <dt>Speed</dt><dd>${esc(AIM9.speed)}</dd>
@@ -535,7 +540,8 @@ function renderClaimTab() {
     <div class="card steel">
       <h3>The strongest possible version</h3>
       <p>Everything else here tests the allegation. This grants it every favourable assumption at once and asks what still fails — which is the only way to find out which objections were load-bearing.</p>
-      <p class="hypo-warn"><strong>${esc(HYPO.callsign)} — ${esc(HYPO.status)}.</strong> ${esc(HYPO.disclaimer)}</p>
+      <p class="hypo-warn"><strong>${esc(HYPO.callsign)} — ${esc(HYPO.status)}.</strong> ${esc(HYPO.disclaimer)}
+      This is a <em>steelman</em> ${info('steelman')}: the claim's best possible case, built so it can be tested properly.</p>
       <div id="steel-out"></div>
       <div id="concessions"></div>
       <div class="chip-row">
@@ -896,24 +902,43 @@ function renderReachPanel() {
 
 function renderWezPanel() {
   const sc = scaleComparison(state.claimDepart, state.t);
+
+  /* Before the claimed takeoff the envelope has zero radius, so the ratio is a
+     division by nothing and the panel used to read "ratio 1 : 0 ... 1 part in
+     0". That is not a small number, it is an undefined one, and printing it as
+     a finding is exactly the sort of thing this app exists to complain about.
+     Say plainly that the clock has not reached the comparison yet. */
+  const started = sc.envelopeDiameterMi > 1 && Number.isFinite(sc.ratio) && sc.ratio > 0;
+
   $('#wez-out').innerHTML = `
     <div class="leg" style="border-color:#6b2b2b;background:rgba(255,89,100,.05)">
       <div class="leg-head">
-        <span class="leg-name">The zone he had to be inside</span>
+        <span class="leg-name">The ring he had to be inside</span>
         <span class="leg-dist">${(AIM9.rMaxMi * 2).toFixed(0)} mi across</span>
       </div>
       <p style="margin:0 0 8px;font-size:12.5px;color:var(--ink-dim);line-height:1.5">
         To fire, he must have been within about <strong style="color:var(--ink)">${AIM9.rMaxMi} miles</strong> of United 93 — and no closer than ${AIM9.rMinMi}. The map draws that ring at Fargo, the one place the record puts him, so its size can be read against the envelope it sits inside.
       </p>
+      ${started ? `
       <div class="leg-mach">
-        Envelope now <strong style="color:var(--ink)">${Math.round(sc.envelopeDiameterMi).toLocaleString()} mi</strong> across ·
-        engagement zone <strong style="color:var(--ink)">${Math.round(sc.wezDiameterMi)} mi</strong> ·
+        How far he could have got by now: <strong style="color:var(--ink)">${Math.round(sc.envelopeDiameterMi).toLocaleString()} mi</strong> across ·
+        how far the missile reaches: <strong style="color:var(--ink)">${Math.round(sc.wezDiameterMi)} mi</strong> ·
         ratio <strong class="v-impossible">1 : ${Math.round(sc.ratio).toLocaleString()}</strong>
       </div>
       <p style="margin:9px 0 0;font-size:12px;color:var(--ink-dim);line-height:1.5">
         By area that is about <strong class="v-impossible">1 part in ${Math.round(sc.areaRatio).toLocaleString()}</strong>.
         The question was never whether he could reach Pennsylvania. It is whether he was inside a twenty-mile circle around one airliner at one instant — and nothing in the record puts him there, or anywhere else.
-      </p>
+      </p>` : `
+      <div class="leg-mach">
+        The clock is at ${hms(state.t).slice(0, 5)}, before the takeoff this app grants him at
+        ${hms(state.claimDepart).slice(0, 5)}. He has gone nowhere yet, so there is nothing to
+        compare the missile's reach against.
+      </div>
+      <p style="margin:9px 0 0;font-size:12px;color:var(--ink-dim);line-height:1.5">
+        Move the clock past ${hms(state.claimDepart).slice(0, 5)} and this becomes the whole
+        argument: the area he could be in grows every second, while the area he could shoot into
+        stays ${(AIM9.rMaxMi * 2).toFixed(0)} miles across and never moves.
+      </p>`}
     </div>`;
 }
 
@@ -1112,13 +1137,18 @@ function renderCriticTab() {
   $('#critic-body').innerHTML = `
     <div class="card">
       <h3>${esc(CRITIC_BACKGROUND.title)}</h3>
+      <p style="font-size:12.5px;color:var(--ink);line-height:1.55">
+        In plain terms: a <strong>CRITIC</strong> ${info('critic')} is the most urgent message
+        type US intelligence has. It is supposed to be in front of the President within ten
+        minutes. Four went out that morning, and what they said is still withheld — which is
+        what the public-records request ${info('foia')} behind this app is asking for.</p>
       ${CRITIC_BACKGROUND.paras.map((t) => `<p>${esc(t)}</p>`).join('')}
       <div>${srcTag(CRITIC_BACKGROUND.src)}</div>
     </div>
 
     <div class="card">
       <h3>DIRNSA CRITIC 1-2001 — the chain</h3>
-      <p style="font-size:11.5px;color:var(--ink-faint)">Date-time groups are NSA's own, from its FOIA release. Times are EDT, four hours behind the Zulu stamps. ${srcTag('foia')}</p>
+      <p style="font-size:11.5px;color:var(--ink-faint)">The codes beside each time are military timestamps ${info('dtg')} — NSA's own, from its records release. Clock times here are New York time. ${srcTag('foia')}</p>
       ${CRITIC_CHAIN.map(msg).join('')}
       <div class="leg critic-msg" style="opacity:.75">
         <div class="leg-head">
@@ -1446,6 +1476,20 @@ function renderLayersTab() {
     </div>
 
     <div class="card">
+      <h3>Plain-English glossary</h3>
+      <p style="font-size:12px;color:var(--ink-dim);line-height:1.55">Every technical term this
+      app uses, in ordinary words. The same definitions sit behind the small
+      <span class="ii" style="cursor:default;pointer-events:none"></span> marks throughout the
+      page &mdash; click one wherever you see it.</p>
+      ${glossaryList().map((g) => `
+        <div class="gl-row">
+          <div class="gl-term">${esc(g.term)}</div>
+          <div class="gl-plain">${esc(g.plain)}</div>
+          ${g.more ? `<div class="gl-more">${esc(g.more)}</div>` : ''}
+        </div>`).join('')}
+    </div>
+
+    <div class="card">
       <h3>How to read this map ${conflictChip('DATA')}</h3>
       <p>States are real geometry — US Census cartographic boundaries at 1:10,000,000, extruded. Alaska, Hawaii and Puerto Rico sit in the conventional insets and are <em>not</em> at true position or scale. ${srcTag('geo')}</p>
       <p>The vertical axis defaults to <strong>true scale</strong> — the same units up as across. That makes the tracks look nearly flat, which is the honest picture: a cruising airliner is about 1:${Math.round(trueScaleRatio()).toLocaleString()} against the width of the country. The control in the map legend raises it to 2× or 5× when you need to read altitude structure, and says so whenever it is not 1.</p>
@@ -1533,6 +1577,17 @@ function drawLabels() {
       pos: map.hypoMarker.position,
       text: `${HYPO.callsign} — STEELMAN, CONSTRUCTED · ${Math.round((sm?.altFt ?? 0) / 100) * 100} ft`,
       cls: 'flight hypo', color: '#ffffff', rank: 1.2,
+    });
+  }
+
+  /* The CRITIC arcs, named as each message fires. These outrank almost
+     everything else on the map: the withheld messages are the subject. */
+  for (const cl of map.criticLabels()) {
+    wanted.set(cl.key, {
+      pos: cl.pos,
+      text: cl.text,
+      cls: `critic-line${cl.fresh ? ' fresh' : ''}`,
+      rank: 0.2,
     });
   }
 
@@ -1701,18 +1756,22 @@ function hideTip() { $('#tooltip').classList.add('hidden'); }
       button, or falling off the end — puts all of them back. The tour borrows
       the app, it does not redecorate it.
 
-   2. Auto-advance is a convenience, never a cage. Prev/next work at any time,
-      the first interaction with the map pauses it rather than fighting the
-      user for the camera, and the progress bar always says how long is left.
+   2. It never moves on its own. An earlier version advanced on a timer, which
+      is the wrong shape for this: the whole point is to look at the map while
+      you read, and a clock running underneath turns that into a race. The
+      reader advances it, every time.
+
+      What replaces the timer is a signal rather than a deadline. Each step
+      moves the camera and opens a panel, and those take about a second to
+      settle; once they have, the thing the step is talking about flashes
+      briefly, and the Next control lights to say there is more. Nothing is
+      taken away if you ignore it.
    ========================================================================== */
 
 const tour = {
   on: false,
   i: 0,
-  paused: false,
-  stepStart: 0,
-  elapsed: 0,          // ms consumed on the current step, across pauses
-  raf: null,
+  settle: null,        // timer that flashes the step's UI once the camera lands
   saved: null,
 };
 
@@ -1730,7 +1789,6 @@ function tourEnter() {
 
   tour.on = true;
   tour.i = 0;
-  tour.paused = false;
   setPlaying(false);
   setFollow(false);
 
@@ -1744,11 +1802,12 @@ function tourEnter() {
 function tourExit() {
   if (!tour.on) return;
   tour.on = false;
-  cancelAnimationFrame(tour.raf);
+  clearTimeout(tour.settle);
   $('#tour').classList.add('hidden');
   $('#btn-tour').classList.remove('on');
   document.body.classList.remove('touring');
   $$('.tour-lit').forEach((el) => el.classList.remove('tour-lit'));
+  $('#tour-next').classList.remove('ready');
 
   const sv = tour.saved;
   if (sv) {
@@ -1852,8 +1911,7 @@ function tourGo(i) {
   if (i >= TOUR_STEPS.length) { tourExit(); return; }
 
   tour.i = i;
-  tour.elapsed = 0;
-  tour.stepStart = performance.now();
+  clearTimeout(tour.settle);
 
   const step = TOUR_STEPS[i];
   const tone = TONES[step.tone] || TONES.setup;
@@ -1870,12 +1928,16 @@ function tourGo(i) {
 
   const el = $('#tour');
   el.style.setProperty('--tour-accent', tone.color);
-  el.classList.toggle('paused', tour.paused);
   $('#tour-chapter').textContent = tone.label;
   $('#tour-count').textContent = `${i + 1} / ${TOUR_STEPS.length}`;
   $('#tour-title').textContent = step.title;
-  $('#tour-body').innerHTML = typeof step.body === 'function' ? step.body(tourContext()) : step.body;
+  $('#tour-body').innerHTML = typeof step.body === 'function'
+    ? step.body(tourContext(), info)
+    : step.body;
   $('#tour-body').scrollTop = 0;
+
+  // The position bar now says where you are, not how long you have left.
+  $('#tour-bar-fill').style.width = `${((i + 1) / TOUR_STEPS.length * 100).toFixed(1)}%`;
 
   $('#tour-prev').disabled = i === 0;
   $('#tour-next').textContent = step.last ? '✓' : '›';
@@ -1886,46 +1948,52 @@ function tourGo(i) {
     dot.classList.toggle('on', n === i);
   });
 
-  /* The panel element carrying this step's evidence gets a brief ring, and is
-     scrolled into view — a tour that talks about a number the reader has to go
-     hunting for has not finished its job. */
+  /* Nothing flashes yet. The camera tween runs ~620 ms and the panel has to
+     lay out and scroll, so flashing now would draw the eye to something still
+     moving. Wait for it to settle, then point. */
   $$('.tour-lit').forEach((x) => x.classList.remove('tour-lit'));
+  $('#tour-next').classList.remove('ready');
+  tour.settle = setTimeout(() => tourSettled(step), 900);
+}
+
+/* The camera has stopped and the panel is in place: now say where to look. */
+function tourSettled(step) {
+  if (!tour.on) return;
+
   if (step.highlight) {
     const target = $(step.highlight);
     if (target) {
-      target.classList.add('tour-lit');
       target.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      // Restart the animation even if the class is already present.
+      target.classList.remove('tour-lit');
+      void target.offsetWidth;
+      target.classList.add('tour-lit');
     }
   }
 
-  cancelAnimationFrame(tour.raf);
-  tour.raf = requestAnimationFrame(tourTick);
+  /* And the map: whatever labels this step put on screen get one pulse, so the
+     eye is pulled to the thing being described rather than hunting the map. */
+  flashMapLabels();
+
+  if (!step.last) $('#tour-next').classList.add('ready');
 }
 
-function tourTick(now) {
-  if (!tour.on) return;
-  const step = TOUR_STEPS[tour.i];
-  const dwell = step.dwellMs || 14000;
+/* One brief pulse across the live map labels. Cheap, and it works for every
+   step without the step having to name what it drew.
 
-  if (!tour.paused) tour.elapsed += now - tour.stepStart;
-  tour.stepStart = now;
+   The class goes on the CONTAINER, not the labels. drawLabels() rewrites every
+   label's className on every frame — so a class set on a label survives about
+   16 milliseconds, which is how the first version of this silently did nothing
+   at all. The container is never touched by the label loop. */
+let labelFlashTimer = null;
 
-  const f = Math.min(1, tour.elapsed / dwell);
-  $('#tour-bar-fill').style.width = `${(f * 100).toFixed(1)}%`;
-
-  if (f >= 1 && !tour.paused) {
-    if (step.last) { tourExit(); return; }
-    tourGo(tour.i + 1);
-    return;
-  }
-  tour.raf = requestAnimationFrame(tourTick);
-}
-
-function tourSetPaused(v) {
-  tour.paused = v;
-  $('#tour').classList.toggle('paused', v);
-  $('#tour-glyph').textContent = v ? '▶' : '❚❚';
-  $('#tour-toggle').title = v ? 'Resume' : 'Pause';
+function flashMapLabels() {
+  const box = $('#labels');
+  clearTimeout(labelFlashTimer);
+  box.classList.remove('flash');
+  void box.offsetWidth;                 // restart the animation
+  box.classList.add('flash');
+  labelFlashTimer = setTimeout(() => box.classList.remove('flash'), 1700);
 }
 
 function buildTourDots() {
@@ -1935,22 +2003,96 @@ function buildTourDots() {
 function bindTour() {
   $('#btn-tour').addEventListener('click', () => (tour.on ? tourExit() : tourEnter()));
   $('#tour-close').addEventListener('click', tourExit);
-  $('#tour-prev').addEventListener('click', () => { tourSetPaused(true); tourGo(tour.i - 1); });
+  $('#tour-prev').addEventListener('click', () => tourGo(tour.i - 1));
   $('#tour-next').addEventListener('click', () => {
     if (TOUR_STEPS[tour.i].last) { tourExit(); return; }
-    tourSetPaused(true);
     tourGo(tour.i + 1);
   });
-  $('#tour-toggle').addEventListener('click', () => tourSetPaused(!tour.paused));
+  $('#tour-replay').addEventListener('click', () => tourSettled(TOUR_STEPS[tour.i]));
+}
 
-  /* Taking the camera by hand pauses rather than being overridden on the next
-     tick. Fighting a user for the view is the fastest way to make a tour feel
-     like something happening TO them. */
-  const wasManual = map.onManualCamera;
-  map.onManualCamera = () => {
-    if (tour.on && !tour.paused) tourSetPaused(true);
-    wasManual();
-  };
+/* =============================================================================
+   The (i) mechanism
+
+   One popover, one handler, terms defined once in glossary.js. The prose reads
+   plainly and the precise vocabulary sits behind the icon, so nothing has been
+   removed for the reader who wants it and nothing is in the way of the reader
+   who does not.
+   ========================================================================== */
+
+/* Drop into any template string: `... the speed of sound ${info('mach')}` */
+function info(key) {
+  const g = GLOSSARY[key];
+  if (!g) return '';
+  return `<button type="button" class="ii" data-info="${key}"
+    aria-label="What does ${esc(g.term)} mean?" title="${esc(g.term)}"></button>`;
+}
+
+let infoOpenFor = null;
+
+function hideInfo() {
+  $('#info-pop').classList.add('hidden');
+  $$('.ii.on').forEach((b) => b.classList.remove('on'));
+  infoOpenFor = null;
+}
+
+function showInfo(btn) {
+  const g = GLOSSARY[btn.dataset.info];
+  if (!g) return;
+
+  const pop = $('#info-pop');
+  $('#ip-term').textContent = g.term;
+  $('#ip-plain').textContent = g.plain;
+  $('#ip-more').textContent = g.more || '';
+  $('#ip-src').innerHTML = srcTag(g.src);
+
+  $$('.ii.on').forEach((b) => b.classList.remove('on'));
+  btn.classList.add('on');
+  pop.classList.remove('hidden');
+
+  /* Placed after it is visible, so the measured height is the real one, and
+     flipped above the icon when there is no room below. */
+  const r = btn.getBoundingClientRect();
+  const pr = pop.getBoundingClientRect();
+  let left = r.left + r.width / 2 - pr.width / 2;
+  left = Math.max(10, Math.min(left, innerWidth - pr.width - 10));
+  let top = r.bottom + 8;
+  if (top + pr.height > innerHeight - 10) top = r.top - pr.height - 8;
+  /* Both branches are relative to the icon, and the icon can be off-screen —
+     scrolled below the fold of a panel, say. Clamp to the viewport last, so a
+     definition is always readable even when the thing it defines is not. */
+  top = Math.max(10, Math.min(top, innerHeight - pr.height - 10));
+  pop.style.left = `${Math.round(left)}px`;
+  pop.style.top = `${Math.round(top)}px`;
+
+  infoOpenFor = btn;
+}
+
+function bindInfo() {
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('.ii');
+    if (btn) {
+      e.preventDefault();
+      e.stopPropagation();
+      if (infoOpenFor === btn) hideInfo(); else showInfo(btn);
+      return;
+    }
+    if (!e.target.closest('#info-pop')) hideInfo();
+  });
+
+  // Hover is a convenience on the desktop; click is the real interaction.
+  document.addEventListener('mouseover', (e) => {
+    const btn = e.target.closest('.ii');
+    if (btn && !infoOpenFor) showInfo(btn);
+  });
+  document.addEventListener('mouseout', (e) => {
+    const btn = e.target.closest('.ii');
+    if (btn && infoOpenFor === btn && !btn.matches(':focus-visible')) hideInfo();
+  });
+
+  addEventListener('keydown', (e) => { if (e.code === 'Escape') hideInfo(); });
+  addEventListener('scroll', hideInfo, true);
+  addEventListener('resize', hideInfo);
 }
 
 function bindChrome() {
@@ -1994,6 +2136,7 @@ function bindChrome() {
   });
 
   bindTour();
+  bindInfo();
 
   addEventListener('keydown', (e) => {
     if (e.target.tagName === 'INPUT' && e.target.type !== 'range') return;
@@ -2001,9 +2144,12 @@ function bindChrome() {
     // While the tour has the floor, the transport keys drive the tour.
     if (tour.on) {
       if (e.code === 'Escape') { tourExit(); return; }
-      if (e.code === 'ArrowLeft') { e.preventDefault(); tourSetPaused(true); tourGo(tour.i - 1); return; }
-      if (e.code === 'ArrowRight') { e.preventDefault(); tourSetPaused(true); tourGo(tour.i + 1); return; }
-      if (e.code === 'Space') { e.preventDefault(); tourSetPaused(!tour.paused); return; }
+      if (e.code === 'ArrowLeft') { e.preventDefault(); tourGo(tour.i - 1); return; }
+      if (e.code === 'ArrowRight' || e.code === 'Space') {
+        e.preventDefault();
+        if (TOUR_STEPS[tour.i].last) tourExit(); else tourGo(tour.i + 1);
+        return;
+      }
     }
 
     if (e.code === 'Space') { e.preventDefault(); $('#btn-play').click(); }

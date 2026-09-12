@@ -14,7 +14,7 @@ import {
 } from './projection.js';
 import {
   FLIGHTS, MIL_FLIGHTS, PLACES, DEBRIS, GIBNEY, CLAIM_ROUTE,
-  CRITIC_NODES, CRITIC_CHAIN, DISTRIBUTION,
+  CRITIC_NODES, CRITIC_CHAIN, DISTRIBUTION, hms,
 } from './data.js';
 import { samplePath, gcPoints, haversineMi } from './geo.js';
 import {
@@ -373,19 +373,79 @@ export class Map3D {
       if (dashed) line.computeLineDistances();
       line.visible = false;
       this.criticGroup.add(line);
+      // The apex of the arc: the one point on the line guaranteed not to be
+      // sitting under a node marker or another arc.
+      line.userData.apex = pts[Math.floor(pts.length / 2)].clone();
+      line.userData.dest = toKey;
       return line;
     };
 
+    /* The lateral pushes all leave the same place for the same addressees, so
+       drawn at one height they land exactly on top of each other: three
+       messages rendering as one arc, with only one label able to fit. Each
+       gets its own arc height instead, so the fans nest and the map shows
+       what the record shows — that NSA pushed the CRITIC out more than once. */
+    let lateral = 0;
     for (const c of CRITIC_CHAIN) {
       const lines = [];
       if (c.to) {
         lines.push(arc(c.from, c.to, 14, false));
       } else {
-        // A lateral push: one dashed arc per designed recipient.
-        for (const dest of DISTRIBUTION.to) lines.push(arc(c.from, dest, 5, true));
+        const lift = 5 + lateral * 4.5;
+        lateral += 1;
+        for (const dest of DISTRIBUTION.to) lines.push(arc(c.from, dest, lift, true));
       }
       this.criticLinks.push({ c, lines });
     }
+  }
+
+  /* Which CRITIC arcs are live right now, and what each one should be called.
+
+     A line that appears silently is just a red streak across the country. The
+     label is what makes it a message: who sent it, to whom, and at what time
+     on a morning where the timing is the entire argument. `fresh` marks the
+     first 90 seconds after it fires, so the label can announce itself and then
+     settle down. */
+  criticLabels() {
+    if (!this.criticGroup.visible) return [];
+    const t = this._t ?? 0;
+    const out = [];
+    let lateral = 0;
+
+    for (const { c, lines } of this.criticLinks) {
+      if (t < c.t) continue;
+      const fresh = (t - c.t) < 90;
+
+      const when = hms(c.t).slice(0, 5);
+
+      if (c.to) {
+        const l = lines[0];
+        if (!l.visible) continue;
+        out.push({
+          key: `critic:${c.id}`,
+          pos: l.userData.apex,
+          text: `${c.mapLabel || 'CRITIC'} · ${when} · `
+            + `${CRITIC_NODES[c.from].short || c.from} → ${CRITIC_NODES[c.to].short || c.to}`,
+          fresh,
+        });
+      } else {
+        /* The lateral pushes leave the same place for the same addressees, so
+           anchoring each at the middle of its fan puts three labels in one
+           spot and the declutter keeps only one. Each message labels a
+           DIFFERENT arc of its fan instead, which spreads them across the
+           recipients they are actually going to. */
+        const l = lines[lateral % lines.length];
+        lateral += 1;
+        if (!l || !l.visible) continue;
+        out.push({
+          key: `critic:${c.id}`,
+          pos: l.userData.apex,
+          text: `${c.mapLabel || 'CRITIC'} · ${when} · ${lines.length} addressees, withheld`,
+          fresh,
+        });
+      }
+    }
+    return out;
   }
 
   /* Reachability rings and weapon engagement zones.

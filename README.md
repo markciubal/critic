@@ -71,10 +71,25 @@ There is no package manager and no runtime dependency. Three.js is vendored in
 
 The map legend carries a **vertical scale** control: `1x true`, `2x`, `5x`.
 
+### Plain language, with the jargon one click away
+
+The app was written by someone who had just read a lot of NTSB studies, and it
+showed. "Placarded to Mach 1.6", "combat radius", "primary returns", "DTG" — all
+correct, all a wall to anyone who had not spent a week in the same documents. A
+page that argues carefully and then loses the reader at the vocabulary has not
+argued carefully.
+
+So the prose now says it in ordinary words, and the precise term sits behind a
+small **(i)**. Nothing is dumbed down and nothing is removed; the reader chooses
+the depth. Every term is defined once in `src/glossary.js`, shown through a
+single shared popover, and listed in full under **Layers → Plain-English
+glossary**.
+
 ### The steelman tour
 
 **Steelman tour** in the top bar plays a scripted walk through the argument in
-`src/steelman.js` — twelve steps, about three and a half minutes unattended.
+`src/steelman.js` — twelve steps, written for someone who has never opened an
+accident report.
 
 It exists because the steelman is the one thing here that cannot be read out of
 order. It grants ten assumptions, and the whole point lives in the sequence: six
@@ -88,16 +103,25 @@ sets all four, so what is being said and what is being shown cannot drift apart.
 Step bodies are functions over the live model rather than fixed prose, so the
 callout cannot print a figure the panel beside it disagrees with.
 
+**It never advances on its own.** An earlier version ran on a timer, which is
+the wrong shape for this: the point is to look at the map while you read, and a
+clock running underneath turns that into a race. You advance it, every time.
+
+What replaces the timer is a signal rather than a deadline. Each step moves the
+camera and opens a panel, and those take about a second to settle; once they
+have, the map labels pulse, the panel holding that step's evidence flashes, and
+the Next control lights to say there is more. The ◉ button replays that signal
+if you looked away.
+
 | | |
 |---|---|
-| Space | Pause / resume the tour |
-| ← / → | Previous / next step |
+| Space or → | Next step |
+| ← | Previous step |
 | Esc | Leave |
 
-Taking the camera by hand pauses the tour rather than being overridden on the
-next tick. Leaving by any route — the tour button, the ✕, Esc, or running off
-the end — restores the clock, the layers, the camera and the open tab exactly as
-they were. The tour borrows the app; it does not redecorate it.
+Leaving by any route — the tour button, the ✕, Esc, or finishing the last step —
+restores the clock, the layers, the camera and the open tab exactly as they
+were. The tour borrows the app; it does not redecorate it.
 
 ## What's in it
 
@@ -414,6 +438,7 @@ src/
   critic.js         DIRNSA CRITIC 1-2001: the chain, the alert network, the gaps
   reachability.js   travel envelopes, the AIM-9 engagement zone, the scale ratio
   steelman.js       the claim's best possible case, and what survives it
+  glossary.js       every technical term, in plain words, behind the (i) marks
   tour.js           the guided walk through that argument — steps as data
   analysis.js       the feasibility engine
   geo.js            haversine, great-circle interpolation, Mach

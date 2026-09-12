@@ -712,7 +712,6 @@ ul.plain li { font-size: 12.5px; color: var(--ink-dim); line-height: 1.55; margi
   display: block; height: 100%; width: 0;
   background: var(--tour-accent, var(--ui)); transition: width .25s linear;
 }
-#tour.paused .tour-bar > i { opacity: .35; }
 
 .tour-head { display: flex; align-items: center; gap: 8px; padding: 9px 12px 0; }
 .tour-chapter {
@@ -780,6 +779,105 @@ ul.plain li { font-size: 12.5px; color: var(--ink-dim); line-height: 1.55; margi
    half-hidden under a card reads as a bug. */
 body.touring #legend { opacity: 0; pointer-events: none; transition: opacity .25s; }
 
+
+/* --- (i) info icons ---------------------------------------------------------
+   The prose says it plainly; the exact term lives behind one of these. Sized
+   to sit inside a line of body text without breaking the leading, and given a
+   real hit area for touch even though it renders small. */
+.ii {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 13px; height: 13px; margin: 0 1px 0 3px; padding: 0;
+  vertical-align: 1px;
+  background: transparent; color: var(--ui);
+  border: 1px solid currentColor; border-radius: 50%;
+  font: 700 9px/1 var(--mono); font-style: normal;
+  cursor: help; opacity: .72; transition: opacity .15s, background .15s;
+}
+.ii::before { content: 'i'; }
+.ii:hover, .ii:focus-visible { opacity: 1; background: rgba(74,143,231,.22); outline: none; }
+.ii.on { opacity: 1; background: var(--ui); color: #fff; border-color: var(--ui); }
+
+#info-pop {
+  position: fixed; z-index: 90; width: 286px; max-width: calc(100vw - 24px);
+  background: var(--bg-2); border: 1px solid var(--line-2); border-radius: 7px;
+  padding: 11px 13px 10px;
+  box-shadow: 0 14px 40px rgba(0,0,0,.6);
+  animation: ip-in .14s ease-out;
+}
+#info-pop.hidden { display: none; }
+@keyframes ip-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+.ip-term {
+  font: 700 10px/1 var(--mono); letter-spacing: 1px; text-transform: uppercase;
+  color: var(--ui); margin-bottom: 6px;
+}
+.ip-plain { margin: 0; font-size: 12.5px; line-height: 1.55; color: var(--ink); }
+.ip-more {
+  margin: 8px 0 0; font-size: 11.5px; line-height: 1.55; color: var(--ink-dim);
+  padding-top: 8px; border-top: 1px solid var(--line);
+}
+.ip-more:empty { display: none; }
+.ip-src { margin-top: 9px; }
+
+/* --- tour: the flash that replaced the timer --------------------------------
+   The tour no longer advances on its own, so it needs some other way of saying
+   "this bit, here" once the camera has stopped moving. One pulse on the map
+   labels, one on the panel that holds the evidence, and a lit Next control. */
+.tour-bar > i { transition: width .3s ease-out; }
+
+#tour-next.ready {
+  border-color: var(--tour-accent, var(--ui));
+  color: var(--ink);
+  animation: next-ready 1.1s ease-out 2;
+}
+@keyframes next-ready {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255,255,255,0); }
+  40%      { box-shadow: 0 0 0 3px rgba(255,255,255,.16); }
+}
+
+#labels.flash .map-label { animation: lbl-flash 1.5s ease-out 1; }
+@keyframes lbl-flash {
+  0%   { transform: scale(1);    filter: brightness(1); }
+  18%  { transform: scale(1.16); filter: brightness(1.9); }
+  100% { transform: scale(1);    filter: brightness(1); }
+}
+
+/* The evidence panel pulse, stronger than before now that it is the main
+   signal rather than a decoration on top of a progress bar. */
+.tour-lit { animation: tour-lit 1.5s ease-out 2; border-radius: 6px; }
+@keyframes tour-lit {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(74,143,231,0); }
+  30%      { box-shadow: 0 0 0 4px rgba(74,143,231,.5); }
+}
+
+/* --- CRITIC line labels -----------------------------------------------------
+   The arcs used to appear unannounced, which made them decoration. Naming them
+   makes them messages: sender, recipient, and the minute it went. `fresh` runs
+   for the first 90 seconds of clock time after one fires, so it arrives with
+   some weight and then settles. */
+.map-label.critic-line {
+  background: var(--critic); color: #fff; font-weight: 700;
+  border-color: #ff6b80; letter-spacing: .4px; padding: 3px 8px;
+  text-shadow: 0 1px 2px rgba(0,0,0,.45);
+  box-shadow: 0 3px 14px rgba(255,31,61,.35);
+}
+.map-label.critic-line.fresh { animation: critic-arrive 1.1s ease-out 3; }
+@keyframes critic-arrive {
+  0%, 100% { box-shadow: 0 3px 14px rgba(255,31,61,.35); }
+  45%      { box-shadow: 0 0 0 5px rgba(255,31,61,.45), 0 3px 14px rgba(255,31,61,.5); }
+}
+
+/* --- glossary ---------------------------------------------------------------
+   The same definitions the (i) marks show, gathered in one place for anyone
+   who would rather read the vocabulary up front than meet it in passing. */
+.gl-row { padding: 9px 0; border-top: 1px solid var(--line); }
+.gl-row:first-of-type { border-top: 0; }
+.gl-term {
+  font: 700 10px/1 var(--mono); letter-spacing: 1px; text-transform: uppercase;
+  color: var(--ui); margin-bottom: 4px;
+}
+.gl-plain { font-size: 12.5px; line-height: 1.55; color: var(--ink); }
+.gl-more { font-size: 11.5px; line-height: 1.55; color: var(--ink-faint); margin-top: 5px; }
+
 </style>
 </head>
 <body>
@@ -835,6 +933,14 @@ body.touring #legend { opacity: 0; pointer-events: none; transition: opacity .25
 
   <button id="aside-toggle" title="Show / hide panel">›</button>
 
+  <!-- One popover, shared by every (i) on the page. -->
+  <div id="info-pop" class="hidden" role="dialog" aria-label="Definition">
+    <div class="ip-term" id="ip-term"></div>
+    <p class="ip-plain" id="ip-plain"></p>
+    <p class="ip-more" id="ip-more"></p>
+    <div class="ip-src" id="ip-src"></div>
+  </div>
+
   <!-- The guided tour's callout. Lives over the map, because the map is what
        it is talking about. -->
   <section id="tour" class="hidden" aria-live="polite" aria-label="Steelman tour">
@@ -850,8 +956,8 @@ body.touring #legend { opacity: 0; pointer-events: none; transition: opacity .25
       <div id="tour-dots" class="tour-dots"></div>
       <div class="tour-ctl">
         <button id="tour-prev" title="Previous step (&larr;)">&lsaquo;</button>
-        <button id="tour-toggle" title="Pause / resume"><span id="tour-glyph">&#10074;&#10074;</span></button>
-        <button id="tour-next" title="Next step (&rarr;)">&rsaquo;</button>
+        <button id="tour-replay" title="Show me where to look again">&#9673;</button>
+        <button id="tour-next" title="Next step (space or &rarr;)">&rsaquo;</button>
       </div>
     </div>
   </section>
@@ -54504,6 +54610,7 @@ const CRITIC_CHAIN = [
     t: at(9, 49, 0),
     dtg: '111349ZSEP01',
     title: 'NORAD originates the CRITIC',
+    mapLabel: 'CRITIC ORIGINATED',
     from: 'NORAD', to: 'NSAF',
     kind: 'origination',
     body: 'NORAD places the hijackings into the national warning channel — the mechanism designed to reach the President within minutes.',
@@ -54516,6 +54623,7 @@ const CRITIC_CHAIN = [
     t: at(9, 52, 0),
     dtg: '111352ZSEP01',
     title: 'NSA NSOC retransmits — LATERAL CRITIC',
+    mapLabel: 'DIRNSA CRITIC 1-2001',
     from: 'NSAF', to: null,
     kind: 'lateral',
     body: 'NSOC pushes the CRITIC laterally across the interagency watch community. Designated DIRNSA CRITIC 1-2001 — the first of the year.',
@@ -54528,6 +54636,7 @@ const CRITIC_CHAIN = [
     t: at(10, 14, 0),
     dtg: '111414ZSEP01',
     title: 'FOLLOW-UP-1',
+    mapLabel: 'CRITIC FOLLOW-UP 1',
     from: 'NSAF', to: null,
     kind: 'followup',
     body: 'First follow-up to DIRNSA CRITIC 1-2001.',
@@ -54540,6 +54649,7 @@ const CRITIC_CHAIN = [
     t: at(10, 48, 0),
     dtg: '111448ZSEP01',
     title: 'FOLLOW-UP-2 AND FINAL',
+    mapLabel: 'CRITIC FOLLOW-UP 2 — FINAL',
     from: 'NSAF', to: null,
     kind: 'followup',
     body: 'Second and final follow-up. The CRITIC sequence closes.',
@@ -56755,6 +56865,173 @@ function losVsWez(hypoAltFt, targetAltFt, rMaxMi) {
   };
 })();
 
+__m["glossary"] = (function () {
+
+/* =============================================================================
+   glossary.js — every technical term this app uses, explained once.
+
+   The app was written by someone who had just read a lot of NTSB studies and
+   it showed. "Placarded to Mach 1.6", "combat radius", "primary returns",
+   "DTG" — all correct, all opaque to anyone who has not spent a week in the
+   same documents. A page that argues carefully and then loses the reader at
+   the vocabulary has not argued carefully.
+
+   So the rule now is: the prose says it in plain words, and the precise term
+   lives behind an (i). Nothing is dumbed down and nothing is removed — the
+   jargon is still there for anyone who wants it, one click away, with its
+   provenance attached. The reader chooses the depth.
+
+   `plain` is the one-sentence version, written for someone who has never
+   thought about this before. `more` is the detail, and may be omitted.
+   ========================================================================== */
+
+const GLOSSARY = {
+  steelman: {
+    term: 'Steelman',
+    plain: 'Building the strongest possible version of an argument you disagree with, then testing that instead of an easy version.',
+    more: 'It is the opposite of a straw man. If you only ever knock down the weakest form of a claim, you never find out which of your objections actually mattered — so this app grants the claim every favourable assumption at once and looks at what is still standing.',
+    src: 'derived',
+  },
+
+  mach: {
+    term: 'Mach',
+    plain: 'Speed measured against the speed of sound. Mach 1 is the speed of sound; Mach 2 is twice that.',
+    more: 'The speed of sound is not a fixed number — it falls as air gets colder, so it is slower high up. At 31,000 ft it is about 675 mph, against about 761 mph at sea level. That is why the same aircraft has different Mach limits at different heights.',
+    src: 'derived',
+  },
+
+  placard: {
+    term: 'Placarded limit',
+    plain: 'The maximum speed the aircraft is legally and structurally allowed to fly in a given configuration — literally written on a placard in the cockpit.',
+    more: 'An F-16 carrying external fuel tanks and wingtip missiles is limited to 600 knots indicated or Mach 1.6, whichever comes first. The famous "Mach 2" figure applies only to a clean jet carrying nothing, which no aircraft flying across the country could be.',
+    src: 'press',
+  },
+
+  dropTanks: {
+    term: 'External fuel tanks',
+    plain: 'Extra fuel tanks bolted to the outside of the aircraft, because a fighter carries very little fuel internally.',
+    more: 'Two 370-gallon tanks under the wings plus one 300-gallon tank on the belly add about 1,040 gallons, roughly doubling what the jet carries. They cost speed and agility, which is why they are not fitted for combat patrols.',
+    src: 'press',
+  },
+
+  ferryRange: {
+    term: 'Ferry range',
+    plain: 'How far the aircraft can fly one way on a full load of fuel, in a straight line, with nothing left over.',
+    more: 'It is the absolute maximum — no combat, no circling, no diversion, no reserve for a missed approach. Real missions never use all of it, which is why "inside ferry range" is a weaker statement than it sounds.',
+    src: 'press',
+  },
+
+  combatRadius: {
+    term: 'Combat radius',
+    plain: 'How far out the aircraft can go, fight, and still get home — so it is much less than half the ferry range.',
+    more: 'Fighting burns fuel fast, so a large slice is set aside for it. For a one-way trip with no fight and no return, combat radius is the wrong yardstick, and an earlier version of this app used it wrongly. That error is logged in the discrepancy register.',
+    src: 'press',
+  },
+
+  sidewinder: {
+    term: 'AIM-9 Sidewinder',
+    plain: 'A short-range, heat-seeking missile. It finds a target by its engine heat, and only works close in.',
+    more: 'The AIM-9M was the version in US service in 2001. Published maximum range is about 11 miles in ideal conditions; it also has a minimum range of about half a mile, below which the missile has not armed itself. So the zone it can hit is a ring, not a circle.',
+    src: 'press',
+  },
+
+  wez: {
+    term: 'Engagement zone',
+    plain: 'The ring of distances where a missile could actually reach its target — not too far, and not too close.',
+    more: 'Drawn on the map as a ring rather than a disc, because a missile fired from inside the minimum range has not finished arming and will not guide.',
+    src: 'derived',
+  },
+
+  lineOfSight: {
+    term: 'Line-of-sight horizon',
+    plain: 'How far apart two aircraft can be and still see each other, before the curve of the Earth gets in the way.',
+    more: 'It rises with height: from 31,000 ft against a target at 5,000 ft, two aircraft can see each other about 360 miles apart. That is roughly thirty times further than a Sidewinder can shoot — so seeing the target was never the hard part.',
+    src: 'derived',
+  },
+
+  transponder: {
+    term: 'Transponder',
+    plain: 'A box on the aircraft that answers radar with its identity and altitude. Switch it off and controllers lose the readout, though a faint blip may remain.',
+    more: 'What is left is called a primary return — an echo off the airframe itself, with no identity and no altitude attached. Three of the four hijacked aircraft had their transponders switched off.',
+    src: 'commission',
+  },
+
+  fdr: {
+    term: 'Flight data recorder',
+    plain: 'The "black box" — it records what the aircraft actually did, second by second, and it is the best evidence there is.',
+    more: 'Only two of the four recorders were recovered: United 93 and American 77. That is why those two flights have real altitudes on this map and the other two have estimates. The NTSB published a Flight Path Study for each.',
+    src: 'ntsb',
+  },
+
+  neads: {
+    term: 'NEADS',
+    plain: 'The Northeast Air Defense Sector — the military unit responsible for scrambling fighters over that part of the country.',
+    more: 'Based in Rome, New York. Its tapes are one of the best sources for the morning, and they show it did not know United 93 existed until 10:07, four minutes after the aircraft had already hit the ground.',
+    src: 'commission',
+  },
+
+  critic: {
+    term: 'CRITIC',
+    plain: 'The highest-priority message in US intelligence, meant to reach the President within ten minutes.',
+    more: 'Short for Critical Intelligence Communication. It is reserved for events of immediate national consequence. Four were sent on the morning of 11 September; their contents are still withheld, which is what the FOIA request behind this app is asking for.',
+    src: 'foia',
+  },
+
+  dtg: {
+    term: 'Date-time group',
+    plain: 'The military timestamp on a message — day, hour, minute, and a letter for the time zone.',
+    more: '111349ZSEP01 means the 11th day, 13:49, zone Z (which is GMT), September 2001. Zulu time is five hours ahead of New York that month, so 13:49Z is 09:49 in the morning in New York.',
+    src: 'derived',
+  },
+
+  twoSeat: {
+    term: 'Two-seat F-16',
+    plain: 'A version of the F-16 with a second seat behind the pilot — the only kind that can carry a passenger.',
+    more: 'Designated F-16B or F-16D. The second cockpit takes space that would otherwise hold fuel, so it carries about 17% less internally than the single-seat version. Gibney was carrying a passenger, so his aircraft had to be one of these.',
+    src: 'derived',
+  },
+
+  airfone: {
+    term: 'Airfone',
+    plain: 'The seatback telephone airlines fitted in the 1990s. You swiped a credit card and it connected through a ground network — nothing to do with mobile phones.',
+    more: 'On United 93 they were installed in the seatbacks of rows 23 to 34. Thirty-five of the thirty-seven calls from that aircraft went through them; only two were mobile calls, both made low down during the descent.',
+    src: 'commission',
+  },
+
+  knots: {
+    term: 'Knots',
+    plain: 'Nautical miles per hour, the unit aviation uses. One knot is about 1.15 mph.',
+    src: 'derived',
+  },
+
+  provenance: {
+    term: 'Provenance badges',
+    plain: 'The small coloured tags on every claim, saying where it came from and how much weight it can carry.',
+    more: 'Green means the documentary record — commission reports, transcripts, recorders. Blue means something reconstructed or calculated here. Red means an allegation being tested, not a finding. Nothing on this page is asserted without one.',
+    src: 'derived',
+  },
+
+  foia: {
+    term: 'FOIA',
+    plain: 'The Freedom of Information Act — the law that lets anyone ask a US government agency for its records.',
+    more: 'Agencies may withhold material under specific exemptions, and they must say which one they are using. This app is a companion to a pending request for the text of the 11 September CRITIC messages.',
+    src: 'foia',
+  },
+};
+
+/* Ordered for a glossary panel: alphabetical by display term. */
+function glossaryList() {
+  return Object.entries(GLOSSARY)
+    .map(([key, v]) => ({ key, ...v }))
+    .sort((a, b) => a.term.localeCompare(b.term));
+}
+
+  return {
+    GLOSSARY,
+    glossaryList
+  };
+})();
+
 __m["tour"] = (function () {
   const { F16 } = __m["data"];
   const { AIM9 } = __m["reachability"];
@@ -56763,7 +57040,7 @@ __m["tour"] = (function () {
    tour.js — a guided walk through the steelman argument.
 
    The steelman is the most demanding thing in this app to read cold. It grants
-   ten things, and the whole point lives in the order: six concessions are free,
+   ten things, and the whole point lives in the order: the concessions are free,
    the kinematics then survive, and only after that do four separate blockers
    land. Someone scrubbing a timeline at random will never assemble that order,
    and the argument collapses into "a fast jet could have got there", which is
@@ -56773,12 +57050,18 @@ __m["tour"] = (function () {
    each step sets the clock, moves the camera and opens the panel that carries
    the evidence, so the claim is being *watched* while it is being explained.
 
-   Steps are data. Every body is a function taking a live context — the built
-   steelman track, the line-of-sight comparison — so the tour cannot quote a
-   figure the panel beside it disagrees with. The first draft did exactly that:
-   it said "Mach 1.26 over 1,012 miles" from the prose in steelman.js while the
+   WRITTEN FOR SOMEONE WHO HAS NEVER READ AN NTSB REPORT
+
+   The first version of this was written in the vocabulary of the sources it
+   came from — "placarded to Mach 1.6", "combat radius", "primary returns".
+   All correct, and all a wall to anyone who had not spent a week in the same
+   documents. Every step now says it in plain words and puts the exact term
+   behind an (i), so nothing is lost and nothing is in the way.
+
+   Bodies are functions over a live context, so the tour cannot quote a figure
+   the panel beside it disagrees with. The first draft did exactly that: it
+   said "Mach 1.26 over 1,012 miles" from the prose in steelman.js while the
    panel three inches away computed Mach 1.22 over 990 miles from the model.
-   Both came from the same allegation; only one was being calculated.
 
    `view` kinds:
      reset                  the whole country
@@ -56793,8 +57076,8 @@ __m["tour"] = (function () {
 
 const at = (h, m, s = 0) => h * 3600 + m * 60 + s;
 
-/* The three acts, used for the chapter strip and the accent colour. A step's
-   tone is a claim about what the step is doing to the argument, not a mood. */
+/* The acts, used for the chapter strip and the accent colour. A step's tone is
+   a claim about what the step is doing to the argument, not a mood. */
 const TONES = {
   setup:    { label: 'The claim',      color: '#a2b5cf' },
   grant:    { label: 'What we grant',  color: '#ffd447' },
@@ -56806,146 +57089,152 @@ const TONES = {
 const blocking = CONCESSIONS.filter((c) => c.blocking);
 const free = CONCESSIONS.filter((c) => !c.blocking);
 
+/* Each body takes (c, i): `c` is the live context, `i` is the info-icon
+   helper, handed in from main.js so this module needs to know nothing about
+   how the popover works. */
 const TOUR_STEPS = [
   {
     id: 'why',
     tone: 'setup',
-    title: 'Why build the best version of a claim you think is wrong',
-    body: (c) => `
-      Everything else in this app tests Major Rick Gibney's account. This tests the
-      <em>strongest possible</em> version of it.
-      <p>Arguing only against the weakest reading teaches you nothing: you never find out which
-      of your objections were load-bearing and which were decoration. So the next few minutes
-      grant the claim <strong>${CONCESSIONS.length} favourable assumptions at once</strong> —
-      fuel, missiles, a perfect launch, a perfect heading — and then ask what is still standing.</p>
-      <p class="tour-warn"><strong>${HYPO.callsign} is a construct.</strong> ${HYPO.disclaimer}</p>`,
+    title: 'Start by making the claim as strong as possible',
+    body: (c, i) => `
+      There is a story that a fighter pilot shot down United 93. This app exists to test it.
+      <p>The useful way to test a claim is not to argue with its weakest version. It is to build
+      the <em>best</em> version you can — give it every benefit of the doubt at once — and then
+      see what is still wrong with it. That is called steelmanning ${i('steelman')}.</p>
+      <p>So over the next few minutes this app hands the story
+      <strong>everything it could reasonably want</strong>: the right aircraft, the right
+      weapons, a perfect takeoff time, a perfect route. Then we look at what is left.</p>
+      <p class="tour-warn"><strong>Nothing you are about to see on the map is real.</strong>
+      The aircraft we draw, ${HYPO.callsign}, never existed. It is drawn in white dashes to show
+      what the story would have needed, not to suggest any of it happened.</p>`,
     t: at(7, 59, 0),
     tab: 'claim',
     view: 'reset',
     layers: { hypo: false, envelope: false, wez: false },
-    dwellMs: 15000,
   },
 
   {
     id: 'account',
     tone: 'setup',
-    title: 'What the account actually says',
-    body: (c) => `
-      Gibney is a North Dakota Air National Guard pilot. On 11 September he flew New York
-      emergency-management director <strong>Ed Jacoby Jr.</strong> from Montana to Albany —
-      that part is documented and Jacoby has described it on the record.
-      <p>The allegation added later is that between those two points he was scrambled from
-      <strong>Fargo</strong>, intercepted <strong>United 93</strong> over Somerset County,
-      Pennsylvania, and shot it down.</p>
-      <p>Two routes, then: the one with witnesses, and the one without. The map is showing both.</p>`,
+    title: 'What the story actually says',
+    body: (c, i) => `
+      Rick Gibney was a real Air National Guard pilot in North Dakota. On 11 September he really
+      did fly a state official, <strong>Ed Jacoby Jr.</strong>, from Montana back to Albany, New
+      York. Jacoby has talked about the flight. That part is not in dispute.
+      <p>The accusation, which surfaced years later, is that in between he was sent up from
+      <strong>Fargo</strong>, caught <strong>United 93</strong> over Pennsylvania, and shot it
+      down.</p>
+      <p>So there are two versions of his day on the map: the one with witnesses, and the one
+      without.</p>`,
     t: at(8, 42, 0),
     tab: 'claim',
     view: 'reset',
     layers: { routeDoc: true, routeClaim: true, hypo: false },
-    dwellMs: 15000,
   },
 
   {
     id: 'grant-hardware',
     tone: 'grant',
-    title: 'The fuel is not a concession — it is proven',
-    body: (c) => `
-      This app used to hand the claim its drop tanks as a favour. That was too generous, and
-      the correction is worth making out loud.
-      <p><strong>Fuel.</strong> The undisputed part of Gibney's day includes Bozeman to Albany
-      in one leg: <strong>${Math.round(c.fuel.legBA).toLocaleString()} miles</strong>. Tanks
-      roughly double internal fuel, so a clean jet reaches about
-      ${Math.round(c.fuel.cleanFerryMi).toLocaleString()} — and carrying a passenger forces a
-      two-seat D-model with 17% less, down to about
-      <strong>${Math.round(c.fuel.twoSeatCleanMi).toLocaleString()}</strong>. The leg is
-      <strong>${c.fuel.shortfall.toFixed(1)}×</strong> that, with no aerial refuelling
-      available. The tanks are established by the mission, not granted here.</p>
-      <p><strong>Missiles.</strong> ${free[1].detail} Tanks take the wing and centreline
-      stations; the wingtip rails stay free. The placard describes carrying both.</p>
-      <p>So Fargo to the intercept — ${Math.round(c.steel.miles).toLocaleString()} miles,
-      ${Math.round(c.steel.ferryFraction * 100)}% of ferry range — is comfortably inside the
-      envelope on the map. Any argument against this claim that leans on fuel is leaning on the
-      wrong thing. <em>Hold on to that, because it comes back.</em></p>`,
+    title: 'He had the fuel. That is not a favour — it is a fact.',
+    body: (c, i) => `
+      This app used to treat the extra fuel as something it was generously handing the story.
+      That was wrong, and the correction is worth making out loud.
+      <p>A fighter jet carries very little fuel on its own, so for long trips it bolts spare
+      tanks to the outside ${i('dropTanks')}. The undisputed part of Gibney's day includes
+      Montana to Albany <strong>in one hop of
+      ${Math.round(c.fuel.legBA).toLocaleString()} miles</strong>. Without the extra tanks, a
+      jet like his runs out at roughly
+      ${Math.round(c.fuel.twoSeatCleanMi).toLocaleString()} miles ${i('twoSeat')} — and there
+      was no refuelling in mid-air. He must have had the tanks. It is proven by the trip he
+      actually made.</p>
+      <p>He would also have had the missiles. They are short-range heat-seekers
+      ${i('sidewinder')} that hang on the wingtips, and the tanks hang underneath, so carrying
+      both at once is completely normal.</p>
+      <p><em>Remember the fuel. It comes back later, and not in the way you would expect.</em></p>`,
     t: at(8, 46, 40),
     tab: 'claim',
     view: 'place:KFAR',
     viewDist: 120,
     layers: { envelope: true, wez: false, hypo: false, routeDoc: false, routeClaim: true },
     highlight: '#reach-out',
-    dwellMs: 22000,
   },
 
   {
     id: 'grant-launch',
     tone: 'grant',
-    title: 'Granted: he launches the instant anyone could have',
-    body: (c) => `
-      The clock is at <strong>08:46:40</strong> — American 11 striking the North Tower. It is
-      the first moment in the entire day that anyone, anywhere, had a reason to act.
-      <p>So the tour hands the claim a launch at that exact second. Not a minute of hesitation,
-      no briefing, no start-up, no taxi.</p>
-      <p>${free[2].cost}</p>`,
+    title: 'He took off the very first second anyone could have',
+    body: (c, i) => `
+      The clock above reads <strong>08:46:40</strong>. That is the moment the first aircraft hit
+      the World Trade Center — the first instant anybody in the country had any reason to think
+      something was wrong.
+      <p>We are giving the story a takeoff at that exact second. No hesitation, no briefing, no
+      time starting the engine, no taxiing to the runway.</p>
+      <p>Even that is a gift, and it is worth naming: <strong>no record anywhere says what time
+      Gibney actually took off.</strong> We picked the time that helps the story most.</p>`,
     t: at(8, 46, 40),
     tab: 'claim',
     view: 'place:KFAR',
     viewDist: 90,
     layers: { envelope: true, hypo: false },
-    dwellMs: 14000,
   },
 
   {
     id: 'grant-heading',
     tone: 'grant',
-    title: 'Granted: the perfect heading, flown perfectly',
-    body: (c) => `
-      ${free[3].detail}
-      <p>No air-traffic vectors, no jet stream, no weather deviation, no time on the ground.
-      The two-seat problem — that carrying Jacoby needs an F-16B/D with 17% less internal fuel
-      — is waved away too.</p>
-      <p>That is <strong>${free.length} of the ${CONCESSIONS.length} concessions</strong>, all
-      free or nearly so. ${HYPO.callsign} is now on the map, drawn dashed and white because it
-      is a construct and nothing else on this map is.</p>`,
+    title: 'And he flew a flawless route',
+    body: (c, i) => `
+      Straight line from Fargo, dead on course, to the exact spot where United 93 will be over
+      an hour later.
+      <p>No being redirected by air traffic control, no headwind, no weather, no time spent on
+      the ground anywhere. We also ignore a real problem: to carry a passenger he needed the
+      two-seat version of the jet ${i('twoSeat')}, which holds less fuel.</p>
+      <p>That is every easy assumption granted at once. The white dashed line now on the map is
+      that perfect flight. It is the best case the story can possibly have.</p>`,
     t: at(9, 20, 0),
     tab: 'claim',
     view: 'hypo',
     viewDist: 90,
     layers: { hypo: true, envelope: true },
     highlight: '#steel-out',
-    dwellMs: 16000,
   },
 
   {
     id: 'survives',
     tone: 'survives',
-    title: 'And it works. The kinematics are not the problem.',
-    body: (c) => `
-      This is the honest result, and the reason the steelman was worth building.
-      <p>The run needs <strong>${Math.round(c.steel.mph).toLocaleString()} mph</strong> —
-      <strong>Mach ${c.steel.mach.toFixed(2)}</strong> sustained. The placarded limit with
-      tanks is ${F16.maxWithTanksMph.toLocaleString()} mph, so the claim fits
-      <em>inside</em> it. The jet can physically do this.</p>
-      <p>Anyone who tells you Gibney's account is impossible because an F-16 is too slow or
-      too short-legged has not checked. Speed and fuel do not stop this claim. Something else
-      has to, or nothing does.</p>`,
+    title: 'And it works. The jet really could have got there.',
+    body: (c, i) => `
+      This is the honest result, and it is the reason building the best case was worth doing.
+      <p>To cover the distance in the time available he would need about
+      <strong>${Math.round(c.steel.mph).toLocaleString()} mph</strong> — roughly
+      <strong>${c.steel.mach.toFixed(1)} times the speed of sound</strong> ${i('mach')}. His jet
+      was allowed up to about ${F16.maxWithTanksMph.toLocaleString()} mph with the tanks fitted
+      ${i('placard')}. So it fits, with room to spare.</p>
+      <p>Anyone who tells you the story is impossible because the aircraft was too slow, or
+      could not carry enough fuel, has not checked. <strong>Speed and fuel do not sink this
+      story.</strong> Something else has to, or nothing does.</p>`,
     t: at(9, 48, 0),
     tab: 'claim',
     view: 'hypo',
     viewDist: 70,
     layers: { hypo: true, envelope: true, wez: false },
     highlight: '#steel-out',
-    dwellMs: 16000,
   },
 
   {
     id: 'block-knowledge',
     tone: 'blocks',
-    title: `Blocker 1 — he has to know at 08:46 what happens at 09:28`,
-    body: (c) => `
-      Look at the clock, and look at United 93.
-      <p>It is <strong>08:46</strong>. United 93 is four minutes out of Newark, climbing,
-      entirely normal. Its hijacking is <strong>42 minutes away</strong>. Nobody aboard knows,
-      nobody on the ground knows, and there is nothing whatsoever to intercept.</p>
-      <p>${blocking[0].cost}</p>
+    title: 'Problem 1: he would have to know the future',
+    body: (c, i) => `
+      Look at the clock, and look at United 93 on the map.
+      <p>It is <strong>08:46</strong>. United 93 left Newark four minutes ago and is climbing
+      normally. Nothing has happened to it. It will not be hijacked for another
+      <strong>42 minutes</strong>.</p>
+      <p>So to take off now, pointed at it, somebody has to already know that this particular
+      ordinary flight is going to be hijacked at 09:28 — and where it is going to be at 09:58,
+      an hour and a quarter from now.</p>
+      <p>That is not a story about intelligence. That is a story about knowing in advance, which
+      is a far bigger and completely different accusation.</p>
       <p class="tour-warn">${FOREKNOWLEDGE.caution}</p>`,
     t: at(8, 46, 40),
     tab: 'claim',
@@ -56953,114 +57242,121 @@ const TOUR_STEPS = [
     viewDist: 60,
     layers: { hypo: true, UA93: true },
     highlight: '#fk-out',
-    dwellMs: 18000,
   },
 
   {
     id: 'block-tracking',
     tone: 'blocks',
-    title: 'Blocker 2 — nobody could have vectored him onto it',
-    body: (c) => `
-      Grant the foreknowledge anyway. He still has to be <em>steered</em> onto a target
-      crossing Pennsylvania at 400-odd miles an hour.
-      <p>${blocking[1].cost}</p>
-      <p>The clock is now at <strong>10:07</strong> — the moment NEADS first learned United 93
-      existed. It had already been on the ground for four minutes.</p>`,
+    title: 'Problem 2: nobody could have guided him to it',
+    body: (c, i) => `
+      Say we grant the impossible knowledge anyway. He still has to be steered onto an airliner
+      crossing Pennsylvania at 400-odd miles an hour, and a pilot cannot find that alone.
+      <p>The unit that would have done the steering ${i('neads')} <strong>did not know United 93
+      existed until 10:07</strong> — which is the time now on the clock, and four minutes
+      <em>after</em> the aircraft was already on the ground.</p>
+      <p>There was nothing to point him at. And Gibney was flying a passenger that day, not
+      sitting on the air-defence radio net.</p>`,
     t: at(10, 7, 0),
     tab: 'military',
     view: 'place:SHKV',
     viewDist: 90,
     layers: { hypo: true },
-    dwellMs: 17000,
   },
 
   {
     id: 'block-order',
     tone: 'blocks',
-    title: 'Blocker 3 — no order to fire existed',
-    body: (c) => `
-      Grant the tracking too. He still needs authority to destroy a civilian airliner with
-      forty people aboard.
-      <p>${blocking[3].cost}</p>
-      <p>The alleged shot is at <strong>09:58</strong>. The clock is at <strong>10:31</strong>
-      — thirty-three minutes later, and the authorisation has only just reached the sector
-      that never passed it on.</p>`,
+    title: 'Problem 3: nobody had permission to shoot',
+    body: (c, i) => `
+      Grant the guidance too. He still needs an order authorising him to destroy a passenger
+      aircraft with forty people on board. No pilot does that on his own judgement.
+      <p>Permission to shoot down civilian airliners was passed down at about 10:10 and reached
+      the air-defence sector at <strong>10:31</strong> — the time on the clock now. That sector
+      then never passed it on to its own pilots at all.</p>
+      <p>The shot is supposed to have happened at <strong>09:58</strong>. That is
+      <strong>33 minutes before</strong> the permission existed anywhere in the chain of
+      command.</p>`,
     t: at(10, 31, 0),
     tab: 'critic',
     view: 'reset',
     layers: { hypo: true, critic: true },
-    dwellMs: 17000,
   },
 
   {
     id: 'block-jacoby',
     tone: 'blocks',
-    title: 'Blocker 4 — the easy version erases the only witness',
-    body: (c) => `
-      This is the one that does the most damage, and it is self-inflicted.
-      <p>The shortest flyable version of the claim runs Fargo → intercept → Albany:
-      <strong>${Math.round(c.steel.totalMi).toLocaleString()} miles</strong>,
-      <strong>${Math.round(c.steel.totalFerryFraction * 100)}%</strong> of ferry range —
-      inside one tankful. That is the routing ${HYPO.callsign} is flying. It never goes near
-      Bozeman.</p>
-      <p><strong>And here the fuel comes back.</strong> The mission that proved the tanks is
-      the same mission that proves the route. Put Bozeman back and the run to the intercept
-      goes from ${Math.round(c.boz.directMi).toLocaleString()} miles to
-      <strong>${Math.round(c.boz.viaMi).toLocaleString()}</strong> in the same
-      ${Math.round(c.boz.hours * 60)} minutes: Mach ${c.boz.directMach.toFixed(2)} becomes
-      <strong>Mach ${c.boz.viaMach.toFixed(2)}</strong> —
-      <strong>${c.boz.overPlacard.toFixed(1)}×</strong> the placarded limit for a tanked jet,
-      and that grants zero seconds on the ground at Bozeman for landing and boarding a
-      civilian.</p>
-      <p>${blocking[2].cost}</p>
-      <p>So one piece of evidence is doing both jobs, in opposite directions. Use the
-      documented mission to establish the fuel and you have also established the route. The
-      claim needs the first and cannot survive the second.</p>`,
+    title: 'Problem 4: the easy version deletes the only witness',
+    body: (c, i) => `
+      This one is self-inflicted, and it is the most damaging.
+      <p>The version we have been flying goes Fargo → intercept → Albany. It is
+      ${Math.round(c.steel.totalMi).toLocaleString()} miles, comfortably within one load of
+      fuel — and <strong>it never goes to Montana</strong>. That is the only reason it fits so
+      easily.</p>
+      <p>But Montana is where Ed Jacoby was standing. He was picked up, he got to Albany, and he
+      has said so himself. He is the one first-hand witness to the whole day.</p>
+      <p><strong>And here is where the fuel comes back.</strong> The Montana trip is what proved
+      Gibney had the extra tanks. But it also proves where he went. Put Montana back into the
+      route and the trip to the intercept grows from
+      ${Math.round(c.boz.directMi).toLocaleString()} to
+      <strong>${Math.round(c.boz.viaMi).toLocaleString()} miles</strong> in the same
+      ${Math.round(c.boz.hours * 60)} minutes. That needs
+      <strong>${c.boz.viaMach.toFixed(1)} times the speed of sound</strong> —
+      <strong>${c.boz.overPlacard.toFixed(1)} times faster than his jet was allowed to go</strong>
+      ${i('placard')}, and that is granting him zero seconds on the ground in Montana to land
+      and collect a passenger.</p>
+      <p>So the same fact does both jobs, in opposite directions. Use the Montana trip to prove
+      he had the fuel, and you have also proved he went to Montana — which makes the interception
+      impossible. <strong>The story needs the first and cannot survive the second.</strong></p>`,
     t: at(10, 20, 0),
     tab: 'claim',
     view: 'fit:KBZN,KFAR,KALB',
     layers: { hypo: true, routeDoc: true, places: true },
     highlight: '#concessions',
-    dwellMs: 26000,
   },
 
   {
     id: 'scale',
     tone: 'blocks',
-    title: 'And the shot itself is a twenty-mile coincidence',
-    body: (c) => `
-      Every ring on this map has been generous. This one is not.
-      <p>To fire, he must be within <strong>${c.los.wezMi} miles</strong> of United 93 — and no
-      nearer than ${AIM9.rMinMi}, because a Sidewinder has a minimum range too. Set that beside
-      the <strong>${Math.round(c.los.losMi)} miles</strong> at which the two aircraft could
-      merely <em>see</em> each other: a ratio of
-      <strong>${Math.round(c.los.ratio)} to 1</strong>.</p>
-      <p>${LOS_HORIZON.note} Seeing was never the constraint. Being inside a twenty-mile circle around one airliner
-      at one instant is — and nothing in the record puts him there, or anywhere else.</p>`,
+    title: 'And the shot itself needs a twenty-mile coincidence',
+    body: (c, i) => `
+      Every circle drawn on this map so far has been generous to the story. This one is not.
+      <p>His missiles ${i('sidewinder')} only reach about
+      <strong>${c.los.wezMi} miles</strong>, and they will not work closer than about half a
+      mile either, so the area he could actually hit is a thin ring ${i('wez')}.</p>
+      <p>Compare that with how far apart the two aircraft could be and still <em>see</em> each
+      other: about <strong>${Math.round(c.los.losMi)} miles</strong> ${i('lineOfSight')}. That is
+      <strong>${Math.round(c.los.ratio)} times bigger</strong>.</p>
+      <p>Spotting the airliner was never the difficult part. Being inside a twenty-mile circle
+      around one specific aircraft at one specific instant is — and nothing in the record puts
+      him there, or anywhere else.</p>`,
     t: at(9, 58, 0),
     tab: 'claim',
     view: 'ua93',
     viewDist: 40,
     layers: { hypo: true, wez: true, envelope: true },
     highlight: '#wez-out',
-    dwellMs: 18000,
   },
 
   {
     id: 'verdict',
     tone: 'verdict',
-    title: VERDICT.headline,
-    body: (c) => `
-      <p>${VERDICT.body}</p>
-      <p>That is a more useful conclusion than "impossible", and a much harder one to wave
-      away. A claim refuted on arithmetic invites a better arithmetician. A claim refuted on
-      knowledge, authority and first-hand testimony has nowhere left to go.</p>
-      <p class="tour-warn">${HYPO.callsign} has been removed from the map. It was never there.</p>`,
+    title: 'The flying works. Nothing else does.',
+    body: (c, i) => `
+      <p>Give the story the best jet, the best fuel, the fastest possible takeoff and a perfect
+      route, and the flight itself is achievable. That is worth saying plainly, because it is
+      true and because most people arguing against this story get it wrong.</p>
+      <p>What defeats it is everything that is not flying: that he would have to know about a
+      hijacking 42 minutes before it happened, that nobody was tracking the aircraft to guide
+      him, that permission to shoot did not exist for another half hour, and that the trip which
+      proves he had the fuel also proves he was somewhere else.</p>
+      <p>That is a more useful answer than "impossible". A claim beaten on arithmetic just
+      invites better arithmetic. A claim beaten on knowledge, permission and an eyewitness has
+      nowhere left to go.</p>
+      <p class="tour-warn">${HYPO.callsign} has been taken off the map. It was never there.</p>`,
     t: at(9, 58, 0),
     tab: 'claim',
     view: 'reset',
     layers: { hypo: false, wez: false },
-    dwellMs: 22000,
     last: true,
   },
 ];
@@ -57088,7 +57384,7 @@ function tourChapters() {
 __m["map3d"] = (function () {
   const { readStates } = __m["topo"];
   const { projectForState, projectLL, altToY, OMITTED_FIPS, UNITS_PER_MILE, setAltExaggeration } = __m["projection"];
-  const { FLIGHTS, MIL_FLIGHTS, PLACES, DEBRIS, GIBNEY, CLAIM_ROUTE, CRITIC_NODES, CRITIC_CHAIN, DISTRIBUTION } = __m["data"];
+  const { FLIGHTS, MIL_FLIGHTS, PLACES, DEBRIS, GIBNEY, CLAIM_ROUTE, CRITIC_NODES, CRITIC_CHAIN, DISTRIBUTION, hms } = __m["data"];
   const { samplePath, gcPoints, haversineMi, destinationPoint } = __m["geo"];
   const { BANDS, FUEL_RING, FERRY_RING, HALF_FERRY_RING, ringPoints, reachMi, MAX_DRAW_MI, AIM9, bandRadii, evidenceCeilingMi, DEPARTURE_BOUNDS } = __m["reachability"];
   const { HYPO, LOS_HORIZON, horizonSmi } = __m["steelman"];
@@ -57451,19 +57747,79 @@ class Map3D {
       if (dashed) line.computeLineDistances();
       line.visible = false;
       this.criticGroup.add(line);
+      // The apex of the arc: the one point on the line guaranteed not to be
+      // sitting under a node marker or another arc.
+      line.userData.apex = pts[Math.floor(pts.length / 2)].clone();
+      line.userData.dest = toKey;
       return line;
     };
 
+    /* The lateral pushes all leave the same place for the same addressees, so
+       drawn at one height they land exactly on top of each other: three
+       messages rendering as one arc, with only one label able to fit. Each
+       gets its own arc height instead, so the fans nest and the map shows
+       what the record shows — that NSA pushed the CRITIC out more than once. */
+    let lateral = 0;
     for (const c of CRITIC_CHAIN) {
       const lines = [];
       if (c.to) {
         lines.push(arc(c.from, c.to, 14, false));
       } else {
-        // A lateral push: one dashed arc per designed recipient.
-        for (const dest of DISTRIBUTION.to) lines.push(arc(c.from, dest, 5, true));
+        const lift = 5 + lateral * 4.5;
+        lateral += 1;
+        for (const dest of DISTRIBUTION.to) lines.push(arc(c.from, dest, lift, true));
       }
       this.criticLinks.push({ c, lines });
     }
+  }
+
+  /* Which CRITIC arcs are live right now, and what each one should be called.
+
+     A line that appears silently is just a red streak across the country. The
+     label is what makes it a message: who sent it, to whom, and at what time
+     on a morning where the timing is the entire argument. `fresh` marks the
+     first 90 seconds after it fires, so the label can announce itself and then
+     settle down. */
+  criticLabels() {
+    if (!this.criticGroup.visible) return [];
+    const t = this._t ?? 0;
+    const out = [];
+    let lateral = 0;
+
+    for (const { c, lines } of this.criticLinks) {
+      if (t < c.t) continue;
+      const fresh = (t - c.t) < 90;
+
+      const when = hms(c.t).slice(0, 5);
+
+      if (c.to) {
+        const l = lines[0];
+        if (!l.visible) continue;
+        out.push({
+          key: `critic:${c.id}`,
+          pos: l.userData.apex,
+          text: `${c.mapLabel || 'CRITIC'} · ${when} · `
+            + `${CRITIC_NODES[c.from].short || c.from} → ${CRITIC_NODES[c.to].short || c.to}`,
+          fresh,
+        });
+      } else {
+        /* The lateral pushes leave the same place for the same addressees, so
+           anchoring each at the middle of its fan puts three labels in one
+           spot and the declutter keeps only one. Each message labels a
+           DIFFERENT arc of its fan instead, which spreads them across the
+           recipients they are actually going to. */
+        const l = lines[lateral % lines.length];
+        lateral += 1;
+        if (!l || !l.visible) continue;
+        out.push({
+          key: `critic:${c.id}`,
+          pos: l.userData.apex,
+          text: `${c.mapLabel || 'CRITIC'} · ${when} · ${lines.length} addressees, withheld`,
+          fresh,
+        });
+      }
+    }
+    return out;
   }
 
   /* Reachability rings and weapon engagement zones.
@@ -58352,10 +58708,12 @@ __m["main"] = (function () {
   const { BANDS, FUEL_RING, FERRY_RING, HALF_FERRY_RING, AIM9, shanksvilleTest, reachMi, scaleComparison, TOLERANCES, DEPARTURE_BOUNDS, bandRadii, evidenceCeilingMi, CONFIG_TRADE } = __m["reachability"];
   const { HYPO, CONCESSIONS, VERDICT, buildHypoTrack, FOREKNOWLEDGE, HIJACK_T, foreknowledgeVerdict, fuelProof, bozemanCost, wezWindow, LOS_HORIZON, losVsWez, mutualHorizonSmi } = __m["steelman"];
   const { CALLS, CALL_TOTALS, FARADAY, WHY_THEY_MATTER } = __m["calls"];
+  const { GLOSSARY, glossaryList } = __m["glossary"];
   const { TOUR_STEPS, TONES } = __m["tour"];
 /* =============================================================================
    main.js — app wiring: playback clock, scrubber, panels, labels.
    ========================================================================== */
+
 
 
 
@@ -58853,13 +59211,17 @@ function renderClaimTab() {
       </p>
       <div class="chip-row">
         <button class="chip" data-act="show-envelope">Draw the envelope</button>
-        <button class="chip" data-act="show-wez">Draw the engagement zone</button>
+        <button class="chip" data-act="show-wez">Draw the missile range</button>
       </div>
     </div>
 
     <div class="card">
       <h3>What he would have had to hit it with</h3>
-      <p><strong>${esc(AIM9.designation)}</strong> — ${esc(AIM9.inService)} ${srcTag(AIM9.src)}</p>
+      <p><strong>${esc(AIM9.designation)}</strong> ${info('sidewinder')} — ${esc(AIM9.inService)} ${srcTag(AIM9.src)}</p>
+      <p style="font-size:12px;color:var(--ink-dim);line-height:1.55">In plain terms: a short-range
+      missile that steers towards the heat of an engine. It has to be fired from fairly close, and
+      not too close — inside about half a mile it has not armed itself yet. So the area it can
+      actually reach is a ring, not a circle ${info('wez')}.</p>
       <dl class="kv">
         <dt>Seeker</dt><dd>${esc(AIM9.seeker)}</dd>
         <dt>Speed</dt><dd>${esc(AIM9.speed)}</dd>
@@ -58874,7 +59236,8 @@ function renderClaimTab() {
     <div class="card steel">
       <h3>The strongest possible version</h3>
       <p>Everything else here tests the allegation. This grants it every favourable assumption at once and asks what still fails — which is the only way to find out which objections were load-bearing.</p>
-      <p class="hypo-warn"><strong>${esc(HYPO.callsign)} — ${esc(HYPO.status)}.</strong> ${esc(HYPO.disclaimer)}</p>
+      <p class="hypo-warn"><strong>${esc(HYPO.callsign)} — ${esc(HYPO.status)}.</strong> ${esc(HYPO.disclaimer)}
+      This is a <em>steelman</em> ${info('steelman')}: the claim's best possible case, built so it can be tested properly.</p>
       <div id="steel-out"></div>
       <div id="concessions"></div>
       <div class="chip-row">
@@ -59235,24 +59598,43 @@ function renderReachPanel() {
 
 function renderWezPanel() {
   const sc = scaleComparison(state.claimDepart, state.t);
+
+  /* Before the claimed takeoff the envelope has zero radius, so the ratio is a
+     division by nothing and the panel used to read "ratio 1 : 0 ... 1 part in
+     0". That is not a small number, it is an undefined one, and printing it as
+     a finding is exactly the sort of thing this app exists to complain about.
+     Say plainly that the clock has not reached the comparison yet. */
+  const started = sc.envelopeDiameterMi > 1 && Number.isFinite(sc.ratio) && sc.ratio > 0;
+
   $('#wez-out').innerHTML = `
     <div class="leg" style="border-color:#6b2b2b;background:rgba(255,89,100,.05)">
       <div class="leg-head">
-        <span class="leg-name">The zone he had to be inside</span>
+        <span class="leg-name">The ring he had to be inside</span>
         <span class="leg-dist">${(AIM9.rMaxMi * 2).toFixed(0)} mi across</span>
       </div>
       <p style="margin:0 0 8px;font-size:12.5px;color:var(--ink-dim);line-height:1.5">
         To fire, he must have been within about <strong style="color:var(--ink)">${AIM9.rMaxMi} miles</strong> of United 93 — and no closer than ${AIM9.rMinMi}. The map draws that ring at Fargo, the one place the record puts him, so its size can be read against the envelope it sits inside.
       </p>
+      ${started ? `
       <div class="leg-mach">
-        Envelope now <strong style="color:var(--ink)">${Math.round(sc.envelopeDiameterMi).toLocaleString()} mi</strong> across ·
-        engagement zone <strong style="color:var(--ink)">${Math.round(sc.wezDiameterMi)} mi</strong> ·
+        How far he could have got by now: <strong style="color:var(--ink)">${Math.round(sc.envelopeDiameterMi).toLocaleString()} mi</strong> across ·
+        how far the missile reaches: <strong style="color:var(--ink)">${Math.round(sc.wezDiameterMi)} mi</strong> ·
         ratio <strong class="v-impossible">1 : ${Math.round(sc.ratio).toLocaleString()}</strong>
       </div>
       <p style="margin:9px 0 0;font-size:12px;color:var(--ink-dim);line-height:1.5">
         By area that is about <strong class="v-impossible">1 part in ${Math.round(sc.areaRatio).toLocaleString()}</strong>.
         The question was never whether he could reach Pennsylvania. It is whether he was inside a twenty-mile circle around one airliner at one instant — and nothing in the record puts him there, or anywhere else.
-      </p>
+      </p>` : `
+      <div class="leg-mach">
+        The clock is at ${hms(state.t).slice(0, 5)}, before the takeoff this app grants him at
+        ${hms(state.claimDepart).slice(0, 5)}. He has gone nowhere yet, so there is nothing to
+        compare the missile's reach against.
+      </div>
+      <p style="margin:9px 0 0;font-size:12px;color:var(--ink-dim);line-height:1.5">
+        Move the clock past ${hms(state.claimDepart).slice(0, 5)} and this becomes the whole
+        argument: the area he could be in grows every second, while the area he could shoot into
+        stays ${(AIM9.rMaxMi * 2).toFixed(0)} miles across and never moves.
+      </p>`}
     </div>`;
 }
 
@@ -59451,13 +59833,18 @@ function renderCriticTab() {
   $('#critic-body').innerHTML = `
     <div class="card">
       <h3>${esc(CRITIC_BACKGROUND.title)}</h3>
+      <p style="font-size:12.5px;color:var(--ink);line-height:1.55">
+        In plain terms: a <strong>CRITIC</strong> ${info('critic')} is the most urgent message
+        type US intelligence has. It is supposed to be in front of the President within ten
+        minutes. Four went out that morning, and what they said is still withheld — which is
+        what the public-records request ${info('foia')} behind this app is asking for.</p>
       ${CRITIC_BACKGROUND.paras.map((t) => `<p>${esc(t)}</p>`).join('')}
       <div>${srcTag(CRITIC_BACKGROUND.src)}</div>
     </div>
 
     <div class="card">
       <h3>DIRNSA CRITIC 1-2001 — the chain</h3>
-      <p style="font-size:11.5px;color:var(--ink-faint)">Date-time groups are NSA's own, from its FOIA release. Times are EDT, four hours behind the Zulu stamps. ${srcTag('foia')}</p>
+      <p style="font-size:11.5px;color:var(--ink-faint)">The codes beside each time are military timestamps ${info('dtg')} — NSA's own, from its records release. Clock times here are New York time. ${srcTag('foia')}</p>
       ${CRITIC_CHAIN.map(msg).join('')}
       <div class="leg critic-msg" style="opacity:.75">
         <div class="leg-head">
@@ -59785,6 +60172,20 @@ function renderLayersTab() {
     </div>
 
     <div class="card">
+      <h3>Plain-English glossary</h3>
+      <p style="font-size:12px;color:var(--ink-dim);line-height:1.55">Every technical term this
+      app uses, in ordinary words. The same definitions sit behind the small
+      <span class="ii" style="cursor:default;pointer-events:none"></span> marks throughout the
+      page &mdash; click one wherever you see it.</p>
+      ${glossaryList().map((g) => `
+        <div class="gl-row">
+          <div class="gl-term">${esc(g.term)}</div>
+          <div class="gl-plain">${esc(g.plain)}</div>
+          ${g.more ? `<div class="gl-more">${esc(g.more)}</div>` : ''}
+        </div>`).join('')}
+    </div>
+
+    <div class="card">
       <h3>How to read this map ${conflictChip('DATA')}</h3>
       <p>States are real geometry — US Census cartographic boundaries at 1:10,000,000, extruded. Alaska, Hawaii and Puerto Rico sit in the conventional insets and are <em>not</em> at true position or scale. ${srcTag('geo')}</p>
       <p>The vertical axis defaults to <strong>true scale</strong> — the same units up as across. That makes the tracks look nearly flat, which is the honest picture: a cruising airliner is about 1:${Math.round(trueScaleRatio()).toLocaleString()} against the width of the country. The control in the map legend raises it to 2× or 5× when you need to read altitude structure, and says so whenever it is not 1.</p>
@@ -59872,6 +60273,17 @@ function drawLabels() {
       pos: map.hypoMarker.position,
       text: `${HYPO.callsign} — STEELMAN, CONSTRUCTED · ${Math.round((sm?.altFt ?? 0) / 100) * 100} ft`,
       cls: 'flight hypo', color: '#ffffff', rank: 1.2,
+    });
+  }
+
+  /* The CRITIC arcs, named as each message fires. These outrank almost
+     everything else on the map: the withheld messages are the subject. */
+  for (const cl of map.criticLabels()) {
+    wanted.set(cl.key, {
+      pos: cl.pos,
+      text: cl.text,
+      cls: `critic-line${cl.fresh ? ' fresh' : ''}`,
+      rank: 0.2,
     });
   }
 
@@ -60040,18 +60452,22 @@ function hideTip() { $('#tooltip').classList.add('hidden'); }
       button, or falling off the end — puts all of them back. The tour borrows
       the app, it does not redecorate it.
 
-   2. Auto-advance is a convenience, never a cage. Prev/next work at any time,
-      the first interaction with the map pauses it rather than fighting the
-      user for the camera, and the progress bar always says how long is left.
+   2. It never moves on its own. An earlier version advanced on a timer, which
+      is the wrong shape for this: the whole point is to look at the map while
+      you read, and a clock running underneath turns that into a race. The
+      reader advances it, every time.
+
+      What replaces the timer is a signal rather than a deadline. Each step
+      moves the camera and opens a panel, and those take about a second to
+      settle; once they have, the thing the step is talking about flashes
+      briefly, and the Next control lights to say there is more. Nothing is
+      taken away if you ignore it.
    ========================================================================== */
 
 const tour = {
   on: false,
   i: 0,
-  paused: false,
-  stepStart: 0,
-  elapsed: 0,          // ms consumed on the current step, across pauses
-  raf: null,
+  settle: null,        // timer that flashes the step's UI once the camera lands
   saved: null,
 };
 
@@ -60069,7 +60485,6 @@ function tourEnter() {
 
   tour.on = true;
   tour.i = 0;
-  tour.paused = false;
   setPlaying(false);
   setFollow(false);
 
@@ -60083,11 +60498,12 @@ function tourEnter() {
 function tourExit() {
   if (!tour.on) return;
   tour.on = false;
-  cancelAnimationFrame(tour.raf);
+  clearTimeout(tour.settle);
   $('#tour').classList.add('hidden');
   $('#btn-tour').classList.remove('on');
   document.body.classList.remove('touring');
   $$('.tour-lit').forEach((el) => el.classList.remove('tour-lit'));
+  $('#tour-next').classList.remove('ready');
 
   const sv = tour.saved;
   if (sv) {
@@ -60191,8 +60607,7 @@ function tourGo(i) {
   if (i >= TOUR_STEPS.length) { tourExit(); return; }
 
   tour.i = i;
-  tour.elapsed = 0;
-  tour.stepStart = performance.now();
+  clearTimeout(tour.settle);
 
   const step = TOUR_STEPS[i];
   const tone = TONES[step.tone] || TONES.setup;
@@ -60209,12 +60624,16 @@ function tourGo(i) {
 
   const el = $('#tour');
   el.style.setProperty('--tour-accent', tone.color);
-  el.classList.toggle('paused', tour.paused);
   $('#tour-chapter').textContent = tone.label;
   $('#tour-count').textContent = `${i + 1} / ${TOUR_STEPS.length}`;
   $('#tour-title').textContent = step.title;
-  $('#tour-body').innerHTML = typeof step.body === 'function' ? step.body(tourContext()) : step.body;
+  $('#tour-body').innerHTML = typeof step.body === 'function'
+    ? step.body(tourContext(), info)
+    : step.body;
   $('#tour-body').scrollTop = 0;
+
+  // The position bar now says where you are, not how long you have left.
+  $('#tour-bar-fill').style.width = `${((i + 1) / TOUR_STEPS.length * 100).toFixed(1)}%`;
 
   $('#tour-prev').disabled = i === 0;
   $('#tour-next').textContent = step.last ? '✓' : '›';
@@ -60225,46 +60644,52 @@ function tourGo(i) {
     dot.classList.toggle('on', n === i);
   });
 
-  /* The panel element carrying this step's evidence gets a brief ring, and is
-     scrolled into view — a tour that talks about a number the reader has to go
-     hunting for has not finished its job. */
+  /* Nothing flashes yet. The camera tween runs ~620 ms and the panel has to
+     lay out and scroll, so flashing now would draw the eye to something still
+     moving. Wait for it to settle, then point. */
   $$('.tour-lit').forEach((x) => x.classList.remove('tour-lit'));
+  $('#tour-next').classList.remove('ready');
+  tour.settle = setTimeout(() => tourSettled(step), 900);
+}
+
+/* The camera has stopped and the panel is in place: now say where to look. */
+function tourSettled(step) {
+  if (!tour.on) return;
+
   if (step.highlight) {
     const target = $(step.highlight);
     if (target) {
-      target.classList.add('tour-lit');
       target.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      // Restart the animation even if the class is already present.
+      target.classList.remove('tour-lit');
+      void target.offsetWidth;
+      target.classList.add('tour-lit');
     }
   }
 
-  cancelAnimationFrame(tour.raf);
-  tour.raf = requestAnimationFrame(tourTick);
+  /* And the map: whatever labels this step put on screen get one pulse, so the
+     eye is pulled to the thing being described rather than hunting the map. */
+  flashMapLabels();
+
+  if (!step.last) $('#tour-next').classList.add('ready');
 }
 
-function tourTick(now) {
-  if (!tour.on) return;
-  const step = TOUR_STEPS[tour.i];
-  const dwell = step.dwellMs || 14000;
+/* One brief pulse across the live map labels. Cheap, and it works for every
+   step without the step having to name what it drew.
 
-  if (!tour.paused) tour.elapsed += now - tour.stepStart;
-  tour.stepStart = now;
+   The class goes on the CONTAINER, not the labels. drawLabels() rewrites every
+   label's className on every frame — so a class set on a label survives about
+   16 milliseconds, which is how the first version of this silently did nothing
+   at all. The container is never touched by the label loop. */
+let labelFlashTimer = null;
 
-  const f = Math.min(1, tour.elapsed / dwell);
-  $('#tour-bar-fill').style.width = `${(f * 100).toFixed(1)}%`;
-
-  if (f >= 1 && !tour.paused) {
-    if (step.last) { tourExit(); return; }
-    tourGo(tour.i + 1);
-    return;
-  }
-  tour.raf = requestAnimationFrame(tourTick);
-}
-
-function tourSetPaused(v) {
-  tour.paused = v;
-  $('#tour').classList.toggle('paused', v);
-  $('#tour-glyph').textContent = v ? '▶' : '❚❚';
-  $('#tour-toggle').title = v ? 'Resume' : 'Pause';
+function flashMapLabels() {
+  const box = $('#labels');
+  clearTimeout(labelFlashTimer);
+  box.classList.remove('flash');
+  void box.offsetWidth;                 // restart the animation
+  box.classList.add('flash');
+  labelFlashTimer = setTimeout(() => box.classList.remove('flash'), 1700);
 }
 
 function buildTourDots() {
@@ -60274,22 +60699,96 @@ function buildTourDots() {
 function bindTour() {
   $('#btn-tour').addEventListener('click', () => (tour.on ? tourExit() : tourEnter()));
   $('#tour-close').addEventListener('click', tourExit);
-  $('#tour-prev').addEventListener('click', () => { tourSetPaused(true); tourGo(tour.i - 1); });
+  $('#tour-prev').addEventListener('click', () => tourGo(tour.i - 1));
   $('#tour-next').addEventListener('click', () => {
     if (TOUR_STEPS[tour.i].last) { tourExit(); return; }
-    tourSetPaused(true);
     tourGo(tour.i + 1);
   });
-  $('#tour-toggle').addEventListener('click', () => tourSetPaused(!tour.paused));
+  $('#tour-replay').addEventListener('click', () => tourSettled(TOUR_STEPS[tour.i]));
+}
 
-  /* Taking the camera by hand pauses rather than being overridden on the next
-     tick. Fighting a user for the view is the fastest way to make a tour feel
-     like something happening TO them. */
-  const wasManual = map.onManualCamera;
-  map.onManualCamera = () => {
-    if (tour.on && !tour.paused) tourSetPaused(true);
-    wasManual();
-  };
+/* =============================================================================
+   The (i) mechanism
+
+   One popover, one handler, terms defined once in glossary.js. The prose reads
+   plainly and the precise vocabulary sits behind the icon, so nothing has been
+   removed for the reader who wants it and nothing is in the way of the reader
+   who does not.
+   ========================================================================== */
+
+/* Drop into any template string: `... the speed of sound ${info('mach')}` */
+function info(key) {
+  const g = GLOSSARY[key];
+  if (!g) return '';
+  return `<button type="button" class="ii" data-info="${key}"
+    aria-label="What does ${esc(g.term)} mean?" title="${esc(g.term)}"></button>`;
+}
+
+let infoOpenFor = null;
+
+function hideInfo() {
+  $('#info-pop').classList.add('hidden');
+  $$('.ii.on').forEach((b) => b.classList.remove('on'));
+  infoOpenFor = null;
+}
+
+function showInfo(btn) {
+  const g = GLOSSARY[btn.dataset.info];
+  if (!g) return;
+
+  const pop = $('#info-pop');
+  $('#ip-term').textContent = g.term;
+  $('#ip-plain').textContent = g.plain;
+  $('#ip-more').textContent = g.more || '';
+  $('#ip-src').innerHTML = srcTag(g.src);
+
+  $$('.ii.on').forEach((b) => b.classList.remove('on'));
+  btn.classList.add('on');
+  pop.classList.remove('hidden');
+
+  /* Placed after it is visible, so the measured height is the real one, and
+     flipped above the icon when there is no room below. */
+  const r = btn.getBoundingClientRect();
+  const pr = pop.getBoundingClientRect();
+  let left = r.left + r.width / 2 - pr.width / 2;
+  left = Math.max(10, Math.min(left, innerWidth - pr.width - 10));
+  let top = r.bottom + 8;
+  if (top + pr.height > innerHeight - 10) top = r.top - pr.height - 8;
+  /* Both branches are relative to the icon, and the icon can be off-screen —
+     scrolled below the fold of a panel, say. Clamp to the viewport last, so a
+     definition is always readable even when the thing it defines is not. */
+  top = Math.max(10, Math.min(top, innerHeight - pr.height - 10));
+  pop.style.left = `${Math.round(left)}px`;
+  pop.style.top = `${Math.round(top)}px`;
+
+  infoOpenFor = btn;
+}
+
+function bindInfo() {
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('.ii');
+    if (btn) {
+      e.preventDefault();
+      e.stopPropagation();
+      if (infoOpenFor === btn) hideInfo(); else showInfo(btn);
+      return;
+    }
+    if (!e.target.closest('#info-pop')) hideInfo();
+  });
+
+  // Hover is a convenience on the desktop; click is the real interaction.
+  document.addEventListener('mouseover', (e) => {
+    const btn = e.target.closest('.ii');
+    if (btn && !infoOpenFor) showInfo(btn);
+  });
+  document.addEventListener('mouseout', (e) => {
+    const btn = e.target.closest('.ii');
+    if (btn && infoOpenFor === btn && !btn.matches(':focus-visible')) hideInfo();
+  });
+
+  addEventListener('keydown', (e) => { if (e.code === 'Escape') hideInfo(); });
+  addEventListener('scroll', hideInfo, true);
+  addEventListener('resize', hideInfo);
 }
 
 function bindChrome() {
@@ -60333,6 +60832,7 @@ function bindChrome() {
   });
 
   bindTour();
+  bindInfo();
 
   addEventListener('keydown', (e) => {
     if (e.target.tagName === 'INPUT' && e.target.type !== 'range') return;
@@ -60340,9 +60840,12 @@ function bindChrome() {
     // While the tour has the floor, the transport keys drive the tour.
     if (tour.on) {
       if (e.code === 'Escape') { tourExit(); return; }
-      if (e.code === 'ArrowLeft') { e.preventDefault(); tourSetPaused(true); tourGo(tour.i - 1); return; }
-      if (e.code === 'ArrowRight') { e.preventDefault(); tourSetPaused(true); tourGo(tour.i + 1); return; }
-      if (e.code === 'Space') { e.preventDefault(); tourSetPaused(!tour.paused); return; }
+      if (e.code === 'ArrowLeft') { e.preventDefault(); tourGo(tour.i - 1); return; }
+      if (e.code === 'ArrowRight' || e.code === 'Space') {
+        e.preventDefault();
+        if (TOUR_STEPS[tour.i].last) tourExit(); else tourGo(tour.i + 1);
+        return;
+      }
     }
 
     if (e.code === 'Space') { e.preventDefault(); $('#btn-play').click(); }

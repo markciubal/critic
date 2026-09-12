@@ -698,7 +698,6 @@ ul.plain li { font-size: 12.5px; color: var(--ink-dim); line-height: 1.55; margi
   display: block; height: 100%; width: 0;
   background: var(--tour-accent, var(--ui)); transition: width .25s linear;
 }
-#tour.paused .tour-bar > i { opacity: .35; }
 
 .tour-head { display: flex; align-items: center; gap: 8px; padding: 9px 12px 0; }
 .tour-chapter {
@@ -765,3 +764,102 @@ ul.plain li { font-size: 12.5px; color: var(--ink-dim); line-height: 1.55; margi
    already owned. The legend steps aside rather than being covered: a control
    half-hidden under a card reads as a bug. */
 body.touring #legend { opacity: 0; pointer-events: none; transition: opacity .25s; }
+
+
+/* --- (i) info icons ---------------------------------------------------------
+   The prose says it plainly; the exact term lives behind one of these. Sized
+   to sit inside a line of body text without breaking the leading, and given a
+   real hit area for touch even though it renders small. */
+.ii {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 13px; height: 13px; margin: 0 1px 0 3px; padding: 0;
+  vertical-align: 1px;
+  background: transparent; color: var(--ui);
+  border: 1px solid currentColor; border-radius: 50%;
+  font: 700 9px/1 var(--mono); font-style: normal;
+  cursor: help; opacity: .72; transition: opacity .15s, background .15s;
+}
+.ii::before { content: 'i'; }
+.ii:hover, .ii:focus-visible { opacity: 1; background: rgba(74,143,231,.22); outline: none; }
+.ii.on { opacity: 1; background: var(--ui); color: #fff; border-color: var(--ui); }
+
+#info-pop {
+  position: fixed; z-index: 90; width: 286px; max-width: calc(100vw - 24px);
+  background: var(--bg-2); border: 1px solid var(--line-2); border-radius: 7px;
+  padding: 11px 13px 10px;
+  box-shadow: 0 14px 40px rgba(0,0,0,.6);
+  animation: ip-in .14s ease-out;
+}
+#info-pop.hidden { display: none; }
+@keyframes ip-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+.ip-term {
+  font: 700 10px/1 var(--mono); letter-spacing: 1px; text-transform: uppercase;
+  color: var(--ui); margin-bottom: 6px;
+}
+.ip-plain { margin: 0; font-size: 12.5px; line-height: 1.55; color: var(--ink); }
+.ip-more {
+  margin: 8px 0 0; font-size: 11.5px; line-height: 1.55; color: var(--ink-dim);
+  padding-top: 8px; border-top: 1px solid var(--line);
+}
+.ip-more:empty { display: none; }
+.ip-src { margin-top: 9px; }
+
+/* --- tour: the flash that replaced the timer --------------------------------
+   The tour no longer advances on its own, so it needs some other way of saying
+   "this bit, here" once the camera has stopped moving. One pulse on the map
+   labels, one on the panel that holds the evidence, and a lit Next control. */
+.tour-bar > i { transition: width .3s ease-out; }
+
+#tour-next.ready {
+  border-color: var(--tour-accent, var(--ui));
+  color: var(--ink);
+  animation: next-ready 1.1s ease-out 2;
+}
+@keyframes next-ready {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255,255,255,0); }
+  40%      { box-shadow: 0 0 0 3px rgba(255,255,255,.16); }
+}
+
+#labels.flash .map-label { animation: lbl-flash 1.5s ease-out 1; }
+@keyframes lbl-flash {
+  0%   { transform: scale(1);    filter: brightness(1); }
+  18%  { transform: scale(1.16); filter: brightness(1.9); }
+  100% { transform: scale(1);    filter: brightness(1); }
+}
+
+/* The evidence panel pulse, stronger than before now that it is the main
+   signal rather than a decoration on top of a progress bar. */
+.tour-lit { animation: tour-lit 1.5s ease-out 2; border-radius: 6px; }
+@keyframes tour-lit {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(74,143,231,0); }
+  30%      { box-shadow: 0 0 0 4px rgba(74,143,231,.5); }
+}
+
+/* --- CRITIC line labels -----------------------------------------------------
+   The arcs used to appear unannounced, which made them decoration. Naming them
+   makes them messages: sender, recipient, and the minute it went. `fresh` runs
+   for the first 90 seconds of clock time after one fires, so it arrives with
+   some weight and then settles. */
+.map-label.critic-line {
+  background: var(--critic); color: #fff; font-weight: 700;
+  border-color: #ff6b80; letter-spacing: .4px; padding: 3px 8px;
+  text-shadow: 0 1px 2px rgba(0,0,0,.45);
+  box-shadow: 0 3px 14px rgba(255,31,61,.35);
+}
+.map-label.critic-line.fresh { animation: critic-arrive 1.1s ease-out 3; }
+@keyframes critic-arrive {
+  0%, 100% { box-shadow: 0 3px 14px rgba(255,31,61,.35); }
+  45%      { box-shadow: 0 0 0 5px rgba(255,31,61,.45), 0 3px 14px rgba(255,31,61,.5); }
+}
+
+/* --- glossary ---------------------------------------------------------------
+   The same definitions the (i) marks show, gathered in one place for anyone
+   who would rather read the vocabulary up front than meet it in passing. */
+.gl-row { padding: 9px 0; border-top: 1px solid var(--line); }
+.gl-row:first-of-type { border-top: 0; }
+.gl-term {
+  font: 700 10px/1 var(--mono); letter-spacing: 1px; text-transform: uppercase;
+  color: var(--ui); margin-bottom: 4px;
+}
+.gl-plain { font-size: 12.5px; line-height: 1.55; color: var(--ink); }
+.gl-more { font-size: 11.5px; line-height: 1.55; color: var(--ink-faint); margin-top: 5px; }
