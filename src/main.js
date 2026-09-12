@@ -86,6 +86,7 @@ async function loadTopology() {
     map.onManualCamera = () => setFollow(false);
     window.__map = map;
 
+    buildFlag90();
     buildTimelineUI();
     buildFlightStrip();
     renderEvents();
@@ -2181,6 +2182,82 @@ function bindInfo() {
   addEventListener('keydown', (e) => { if (e.code === 'Escape') hideInfo(); });
   addEventListener('scroll', hideInfo, true);
   addEventListener('resize', hideInfo);
+}
+
+/* =============================================================================
+   The brand flag
+
+   A 1990s animated GIF, rebuilt honestly. Those things worked by slicing the
+   flag into vertical columns and displacing each one on a sine a frame out of
+   step with its neighbour — the ripple is the phase offset, nothing more. This
+   does the same with CSS animation delays, so it costs a few hundred bytes
+   rather than forty kilobytes and it can be switched off for anyone who has
+   asked the operating system for less motion.
+
+   The flag is drawn to a 49x26 canvas and scaled up with pixelated rendering,
+   so the chunky edges are real pixels rather than a filter pretending. Stripes
+   are two pixels each, which is the smallest that stays crisp. Fifty stars do
+   not fit in a twenty-pixel canton and never did; the originals used a dot
+   field and so does this.
+   ========================================================================== */
+
+const FLAG_SLICES = 14;
+
+function flagDataURL() {
+  const STRIPE = 2;                       // pixels per stripe
+  const H = STRIPE * 13;                  // 26
+  const W = Math.round(H * 1.9);          // 49 — the official 1.9:1 ratio
+  const c = document.createElement('canvas');
+  c.width = W; c.height = H;
+  const g = c.getContext('2d');
+
+  // Thirteen stripes, red first and last.
+  for (let i = 0; i < 13; i++) {
+    g.fillStyle = i % 2 === 0 ? '#b22234' : '#f4f6f9';
+    g.fillRect(0, i * STRIPE, W, STRIPE);
+  }
+
+  // Canton: seven stripes tall, 0.76 of the hoist wide.
+  const cw = Math.round(H * 0.76), ch = STRIPE * 7;
+  g.fillStyle = '#3c3b6e';
+  g.fillRect(0, 0, cw, ch);
+
+  /* A dot field rather than fifty stars. At a fourteen-pixel canton a star is
+     one pixel, so drawing fifty of them would be a claim the resolution cannot
+     support — and the GIFs this is imitating did not manage it either. */
+  g.fillStyle = '#ffffff';
+  for (let row = 0; row < 5; row++) {
+    const y = 1 + row * 3;
+    const odd = row % 2 === 1;
+    for (let col = 0; col < (odd ? 4 : 5); col++) {
+      g.fillRect(2 + col * 4 + (odd ? 2 : 0), y, 1, 1);
+    }
+  }
+
+  return c.toDataURL('image/png');
+}
+
+function buildFlag90() {
+  const host = $('#flag90');
+  if (!host) return;
+  const src = `url("${flagDataURL()}")`;
+  host.style.setProperty('--flag-src', src);
+  host.innerHTML = '';
+
+  for (let i = 0; i < FLAG_SLICES; i++) {
+    const slice = document.createElement('i');
+    // Each column shows its own portion of the same image and runs the same
+    // animation, one step behind the column to its left.
+    /* Percentage background-position is NOT a pixel offset: the browser
+       computes P x (elementWidth - imageWidth), and that bracket is already
+       negative when the image is wider than the box. Writing a minus sign here
+       flips it and pushes every slice but the first off to the right, which is
+       how the first version of this rendered as a six-pixel sliver. */
+    slice.style.backgroundPosition =
+      `${((i * 100) / (FLAG_SLICES - 1)).toFixed(4)}% 0`;
+    slice.style.animationDelay = `${(-i * 0.08).toFixed(3)}s`;
+    host.appendChild(slice);
+  }
 }
 
 function bindChrome() {

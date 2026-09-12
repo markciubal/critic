@@ -111,13 +111,39 @@ body.panel-hidden #panel { opacity: 0; pointer-events: none; }
   -webkit-mask-image: linear-gradient(90deg, #000 0 46%, transparent 100%);
   mask-image: linear-gradient(90deg, #000 0 46%, transparent 100%);
 }
-.brand { position: relative; padding-left: 15px; }
-.brand::before {
-  content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%);
-  width: 4px; height: 32px; border-radius: 1px;
-  background: linear-gradient(180deg,
-    var(--flag-red) 0 33.34%, #f7f9fc 33.34% 66.67%, var(--flag-blue) 66.67% 100%);
-  box-shadow: 0 0 0 1px rgba(0,0,0,.35);
+.brand { position: relative; display: flex; align-items: center; gap: 11px; }
+.brand-text { min-width: 0; }
+
+/* --- the 1990s flag --------------------------------------------------------
+   Sliced into columns, each running the same wave one step behind the last.
+   That phase offset IS the ripple; it is how the original GIFs did it. */
+.flag90 {
+  flex: none; display: flex; align-items: stretch;
+  width: 54px; height: 29px;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.55));
+}
+.flag90 i {
+  flex: 1 1 0; min-width: 0;
+  background-image: var(--flag-src);
+  background-repeat: no-repeat;
+  background-size: 1400% 100%;          /* FLAG_SLICES columns across */
+  image-rendering: pixelated;           /* real pixels, not a filter */
+  animation: flag90 1.15s linear infinite;
+  will-change: transform;
+}
+
+@keyframes flag90 {
+  0%   { transform: translateY(0)      scaleY(1);    filter: brightness(1); }
+  25%  { transform: translateY(-1.6px) scaleY(1.05); filter: brightness(1.22); }
+  50%  { transform: translateY(0)      scaleY(1);    filter: brightness(1); }
+  75%  { transform: translateY(1.6px)  scaleY(0.95); filter: brightness(0.82); }
+  100% { transform: translateY(0)      scaleY(1);    filter: brightness(1); }
+}
+
+/* A waving flag is decoration, and decoration is the first thing that should
+   hold still when someone has asked for less motion. */
+@media (prefers-reduced-motion: reduce) {
+  .flag90 i { animation: none; }
 }
 .brand h1 {
   margin: 0; font-size: 15px; font-weight: 650; letter-spacing: .2px;
