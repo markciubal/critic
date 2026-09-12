@@ -192,7 +192,7 @@ export function criticEvents() {
     src: c.src,
     kind: 'critic',
     label: 'CRITIC',
-    color: 0xff7ad9,
+    color: 0xff1f3d,
     criticId: c.id,
   }));
   return out;

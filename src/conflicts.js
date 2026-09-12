@@ -212,6 +212,20 @@ export const CONFLICTS = [
 
 CONFLICTS.push(
   {
+    id: 'fuel-yardstick',
+    subject: 'Fuel as a constraint on the Pennsylvania leg — this app overstated it',
+    tags: ['CLAIM', 'DATA'],
+    status: 'resolved',
+    why: 'Fuel was presented as the constraint that closed the claim. It is not, and the error ran in the app\'s favour, which is the direction an error here is least excusable.',
+    readings: [
+      { v: 'Ferry range with external tanks is about 2,450 miles, one way. Fargo to Somerset County is 1,012 — roughly 41% of it.', who: 'Published F-16 figures with 2 x 370 gal wing tanks and a 300 gal centreline', src: 'press', weight: 'The right yardstick for a one-way transit. An ordinary leg for a tanked fighter.' },
+      { v: 'Unrefuelled combat radius is about 340 miles, so Somerset County is 3.0x it and "never enters it, however long you wait".', who: 'This app, until corrected', src: 'derived', weight: 'True of a combat radius — out, fight, and back — and the wrong measure for the leg actually claimed.' },
+      { v: 'The full itinerary is 4,522 miles, about 1.85x maximum ferry range.', who: 'Computed here', src: 'derived', weight: 'This part survives: the whole day needs at least one refuelling stop.' },
+    ],
+    reading: 'Fuel does not rule out the flight to Pennsylvania. It only rules out doing the entire claimed itinerary without refuelling — and refuelling is possible, though a tanker rendezvous leaves scheduling and crew records. The load-bearing arguments are the geometric and evidentiary ones: a 22-mile engagement zone at one instant, NEADS not knowing United 93 existed until 10:07, no order having reached any pilot, and the unit and passenger placing him over Montana.',
+    appSays: 'Corrected. The map now draws two fuel rings — combat radius and ferry range with tanks — both labelled, instead of only the restrictive one. The fastest speed band dropped from Mach 2.0 (a clean-configuration number) to Mach 1.6, the placarded limit with tanks fitted. A related overclaim, that tanks would preclude carrying Sidewinders, was never made and would have been wrong: tanks sit on the wing and centreline stations, Sidewinders on the wingtip rails.',
+  },
+  {
     id: 'critic-substance',
     subject: 'DIRNSA CRITIC 1-2001 — the substance of all four messages',
     tags: ['CRITIC'],

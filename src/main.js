@@ -16,9 +16,11 @@ import {
 } from './analysis.js';
 import { CONFLICTS, STATUS_META, conflictsFor, openCount } from './conflicts.js';
 import {
-  BANDS, FUEL_RING, AIM9, shanksvilleTest, reachMi, scaleComparison,
-  TOLERANCES, DEPARTURE_BOUNDS, bandRadii, evidenceCeilingMi,
+  BANDS, FUEL_RING, FERRY_RING, HALF_FERRY_RING, AIM9, shanksvilleTest, reachMi,
+  scaleComparison, TOLERANCES, DEPARTURE_BOUNDS, bandRadii, evidenceCeilingMi,
+  CONFIG_TRADE,
 } from './reachability.js';
+import { HYPO, CONCESSIONS, VERDICT, buildHypoTrack } from './steelman.js';
 
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => [...document.querySelectorAll(s)];
@@ -43,7 +45,7 @@ const state = {
     PANTA: true, QUIT: true, GOFER: true, BULLY: true,
     debris: false, routeDoc: false, routeClaim: false, places: true,
     critic: true,
-    envelope: true, wez: true,
+    envelope: true, wez: true, hypo: false,
   },
 };
 
@@ -144,6 +146,7 @@ function setTime(t) {
   updateFlightStrip();
   map.followPoints(focusPoints());
   updateReach();
+  if (state.layers.hypo) updateHypo();
   throttledReachPanels();
 }
 
@@ -165,17 +168,38 @@ function throttledReachPanels(force = false) {
   if (!$('#reach-out')) return;
   renderReachPanel();
   renderWezPanel();
+  renderSteelPanel();
 }
 
 /* United 93's live position is the target the alleged shot needs. Once it is
    down, the geometry freezes at the crater — the question of who was within
    ten miles of it does not go away at 10:03:11. */
-function ua93Position() {
+function ua93PositionAt(t) {
   const f = FLIGHTS.find((x) => x.id === 'UA93');
-  const last = f.path[f.path.length - 1];
-  if (state.t >= last[0]) return { lat: last[1], lon: last[2] };
-  const sm = samplePath(f.path, state.t);
+  const first = f.path[0], last = f.path[f.path.length - 1];
+  if (t <= first[0]) return { lat: first[1], lon: first[2] };
+  if (t >= last[0]) return { lat: last[1], lon: last[2] };
+  const sm = samplePath(f.path, t);
   return sm ? { lat: sm.lat, lon: sm.lon } : null;
+}
+
+function ua93Position() { return ua93PositionAt(state.t); }
+
+/* The steelman is a fixed scenario — Fargo to wherever United 93 is at the
+   alleged moment — so it is anchored on the intercept time, not the clock.
+   Sampling "now" left the panel blank before 08:42, when United 93 had not
+   yet taken off. */
+function hypoTarget() { return ua93PositionAt(state.interceptT); }
+
+/* The constructed track is rebuilt whenever the departure hypothesis moves,
+   and sampled against the clock like any other aircraft. */
+function updateHypo() {
+  const target = hypoTarget();
+  const track = target
+    ? buildHypoTrack(target, state.claimDepart, state.interceptT)
+    : null;
+  map.setHypo(track, state.t);
+  return track;
 }
 
 function updateReach() {
@@ -279,7 +303,7 @@ function buildTimelineUI() {
   for (const ev of EVENTS) {
     const m = document.createElement('div');
     const major = /Impact|crashed|Impact,|strikes/i.test(ev.text) || ev.kind === 'claim';
-    m.className = `emark${major ? ' big' : ''}`;
+    m.className = `emark${major ? ' big' : ''}${ev.kind === 'critic' ? ' critic-mark' : ''}`;
     m.style.left = `${((ev.t - T0) / (T1 - T0)) * 100}%`;
     m.style.background = hex(ev.color);
     m.style.color = hex(ev.color);
@@ -333,7 +357,7 @@ function updateFlightStrip() {
 
 function renderEvents() {
   $('#event-list').innerHTML = EVENTS.map((ev, i) => `
-    <div class="ev future${ev.kind === 'claim' ? ' claim-ev' : ''}" data-ev="${i}" data-t="${ev.t}">
+    <div class="ev future${ev.kind === 'claim' ? ' claim-ev' : ''}${ev.kind === 'critic' ? ' critic-ev' : ''}" data-ev="${i}" data-t="${ev.t}">
       <div class="ev-t">${hms(ev.t)}</div>
       <div>
         <div class="ev-label" style="color:${hex(ev.color)}">${esc(ev.label)}</div>
@@ -487,6 +511,31 @@ function renderClaimTab() {
       ${AIM9.notes.map((n) => `<p style="margin-top:9px;font-size:12px">${esc(n.text)} ${srcTag(n.src)}</p>`).join('')}
     </div>
 
+    <div class="card steel">
+      <h3>The strongest possible version</h3>
+      <p>Everything else here tests the allegation. This grants it every favourable assumption at once and asks what still fails — which is the only way to find out which objections were load-bearing.</p>
+      <p class="hypo-warn"><strong>${esc(HYPO.callsign)} — ${esc(HYPO.status)}.</strong> ${esc(HYPO.disclaimer)}</p>
+      <div id="steel-out"></div>
+      <div id="concessions"></div>
+      <div class="chip-row">
+        <button class="chip" data-act="show-hypo">Plot ${esc(HYPO.callsign)}</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>${esc(CONFIG_TRADE.title)}</h3>
+      <p>Nobody observed the aircraft, so no speed can be excluded by eyewitness. But speed and range come off the same wing stations.</p>
+      <div class="cmd-row">
+        <div class="t" style="color:#fff">${CONFIG_TRADE.clean.topMph} mph</div>
+        <div class="x"><strong style="color:var(--ink)">${esc(CONFIG_TRADE.clean.label)}</strong> — ${esc(CONFIG_TRADE.clean.note)}</div>
+      </div>
+      <div class="cmd-row">
+        <div class="t" style="color:${hex(0xff8a5c)}">${CONFIG_TRADE.tanked.topMph} mph</div>
+        <div class="x"><strong style="color:var(--ink)">${esc(CONFIG_TRADE.tanked.label)}</strong> — ${esc(CONFIG_TRADE.tanked.note)}</div>
+      </div>
+      <p style="margin-top:11px"><strong>${esc(CONFIG_TRADE.reading)}</strong> ${srcTag(CONFIG_TRADE.src)}</p>
+    </div>
+
     <div class="card">
       <h3>What the claim actually requires</h3>
       <div id="findings"></div>
@@ -559,6 +608,15 @@ function renderClaimTab() {
   });
 
   $$('#claim-body .chip').forEach((b) => b.addEventListener('click', () => {
+    if (b.dataset.act === 'show-hypo') {
+      state.layers.hypo = true;
+      map.setHypoVisible(true);
+      updateHypo();
+      syncLayerChecks();
+      setFollow(false);
+      map.resetView();
+      return;
+    }
     if (b.dataset.act === 'show-envelope' || b.dataset.act === 'show-wez') {
       const k = b.dataset.act === 'show-envelope' ? 'envelope' : 'wez';
       state.layers[k] = true;
@@ -582,6 +640,7 @@ function renderClaimTab() {
   updateSpeedPanel();
   renderReachPanel();
   renderWezPanel();
+  renderSteelPanel();
   renderRouteCompare();
 }
 
@@ -607,6 +666,45 @@ function setTolerance(min) {
   $('#tol-note').textContent = t.note;
   updateReach();
   throttledReachPanels(true);
+}
+
+function renderSteelPanel() {
+  const target = hypoTarget();
+  if (!target || !$('#steel-out')) return;
+  const h = buildHypoTrack(target, state.claimDepart, state.interceptT);
+
+  $('#steel-out').innerHTML = `
+    <div class="leg hypo-leg">
+      <div class="leg-head">
+        <span class="leg-name" style="font-family:var(--mono)">${esc(HYPO.callsign)}</span>
+        <span class="leg-dist">${Math.round(h.miles)} mi · bearing ${Math.round(h.bearing)}°</span>
+      </div>
+      <div class="leg-speed ${h.withinTankedLimit ? 'v-hard' : 'v-impossible'}">
+        ${Math.round(h.mph).toLocaleString()}<small>mph required</small>
+      </div>
+      <div class="leg-mach">
+        Mach ${h.mach.toFixed(2)} · ${h.withinTankedLimit
+          ? 'inside the Mach 1.6 placard for a tanked jet'
+          : 'beyond the tanked placard — needs a clean jet, which has no external fuel'} ·
+        ${Math.round(h.ferryFraction * 100)}% of ferry range
+      </div>
+    </div>`;
+
+  $('#concessions').innerHTML = `
+    <p style="font-size:11.5px;color:var(--ink-faint);margin:12px 0 6px">
+      Granted simultaneously. The last three cannot be bought at any price.
+    </p>
+    ${CONCESSIONS.map((c) => `
+      <div class="concession ${c.blocking ? 'blocking' : 'free'}">
+        <div class="cn-grant">${esc(c.grant)}</div>
+        <div class="cn-detail">${esc(c.detail)}</div>
+        <div class="cn-cost">${esc(c.cost)}</div>
+      </div>`).join('')}
+    <div class="verdict" style="margin-top:12px">
+      <h3>${esc(VERDICT.headline)}</h3>
+      <p>${esc(VERDICT.body)}</p>
+      <div style="margin-top:8px">${srcTag(VERDICT.src)}</div>
+    </div>`;
 }
 
 function renderReachPanel() {
@@ -646,9 +744,23 @@ function renderReachPanel() {
     </div>
     ${rows}
     <div class="cmd-row" style="border-top:1px solid var(--line-2)">
-      <div class="t" style="color:${hex(FUEL_RING.color)}">never</div>
-      <div class="x"><strong style="color:var(--ink)">${esc(FUEL_RING.label)}</strong> — fixed at ${FUEL_RING.miles} mi.
-      Somerset County is <strong class="v-impossible">${t.fuel.radii.toFixed(1)}×</strong> that radius and never enters it, however long you wait. ${esc(FUEL_RING.note)}</div>
+      <div class="t" style="color:${hex(FUEL_RING.color)}">${FUEL_RING.miles} mi</div>
+      <div class="x"><strong style="color:var(--ink)">${esc(FUEL_RING.label)}</strong> — Somerset County is
+      <strong class="v-impossible">${t.fuel.radii.toFixed(1)}×</strong> this, or ${t.fuel.radiiWithTanks.toFixed(1)}× with tanks fitted.
+      This is an out-and-back figure.</div>
+    </div>
+    <div class="cmd-row">
+      <div class="t" style="color:${hex(HALF_FERRY_RING.color)}">${HALF_FERRY_RING.miles.toLocaleString()} mi</div>
+      <div class="x"><strong style="color:var(--ink)">Ferry half-radius</strong> — the furthest point he could reach and still
+      return on the same tanks. Somerset County is <strong class="v-routine">${Math.round(t.miles / HALF_FERRY_RING.miles * 100)}%</strong> of it,
+      so even the round trip is not excluded by fuel alone.</div>
+    </div>
+    <div class="cmd-row">
+      <div class="t" style="color:${hex(FERRY_RING.color)}">${FERRY_RING.miles.toLocaleString()} mi</div>
+      <div class="x"><strong style="color:var(--ink)">${esc(FERRY_RING.label)}</strong> — Somerset County is
+      <strong class="v-routine">${(t.fuel.ferryFraction * 100).toFixed(0)}%</strong> of this, well inside it.
+      <strong>Fuel does not rule out the Pennsylvania leg.</strong> What it rules out is the full 4,522-mile itinerary,
+      about 1.85× ferry range, which needs a refuelling stop. ${srcTag('press')}</div>
     </div>`;
 }
 
@@ -1100,6 +1212,11 @@ function renderLayersTab() {
         <span class="swatch" style="background:#ff4d4d"></span>
         <span>Sidewinder engagement zone</span><span class="meta">${AIM9.rMaxMi} mi</span>
       </label>
+      <label class="toggle">
+        <input type="checkbox" data-layer="hypo" ${state.layers.hypo ? 'checked' : ''}>
+        <span class="swatch" style="background:#fff"></span>
+        <span>${esc(HYPO.callsign)} — best-case track</span><span class="meta">constructed</span>
+      </label>
       <p style="font-size:11.5px;color:var(--ink-faint);margin-top:8px">
         Rings grow from the departure time set on the claim tab. The red ring around United 93 is the zone a shooter had to be inside; at national zoom it is a dot, which is the honest impression. ${srcTag('derived')}
       </p>
@@ -1146,6 +1263,7 @@ function renderLayersTab() {
     }
     else if (k === 'debris') map.setDebrisVisible(cb.checked);
     else if (k === 'critic') map.setCriticVisible(cb.checked);
+    else if (k === 'hypo') { map.setHypoVisible(cb.checked); if (cb.checked) updateHypo(); }
     else if (k === 'envelope' || k === 'wez') {
       map.setReachVisible(state.layers.envelope || state.layers.wez);
       updateReach();
@@ -1190,10 +1308,20 @@ function drawLabels() {
     }
   }
 
+  if (map.hypoGroup && map.hypoGroup.visible && map.hypoMarker.visible) {
+    const sm = map._hypoSample;
+    wanted.set('hypo', {
+      pos: map.hypoMarker.position,
+      text: `${HYPO.callsign} · CONSTRUCTED · ${Math.round((sm?.altFt ?? 0) / 100) * 100} ft`,
+      cls: 'flight', color: '#ffffff', rank: 1.2,
+    });
+  }
+
   if (map.reachGroup.visible && map.reachLabelAnchors) {
     for (const a of map.reachLabelAnchors) {
       wanted.set(`r:${a.text}`, {
-        pos: a.pos, text: a.text, cls: 'ring', color: hex(a.color), rank: 2.5,
+        pos: a.pos, candidates: a.candidates, text: a.text,
+        cls: 'ring', color: hex(a.color), rank: 2.5,
       });
     }
   }
@@ -1211,7 +1339,20 @@ function drawLabels() {
 
   const host = $('#labels');
   const W = host.clientWidth, H = host.clientHeight;
-  const taken = [];
+
+  /* Seed the declutter with the HUD and legend boxes so a label never lands
+     underneath them. They are HTML siblings, not part of the scene, so the
+     layout has no other way to know they are in the way. */
+  const hostBox = host.getBoundingClientRect();
+  const taken = ['#hud', '#legend', '#aside-toggle'].map((sel) => {
+    const el = $(sel);
+    if (!el) return null;
+    const r = el.getBoundingClientRect();
+    return {
+      l: r.left - hostBox.left - 6, r: r.right - hostBox.left + 6,
+      t: r.top - hostBox.top - 6, b: r.bottom - hostBox.top + 6,
+    };
+  }).filter(Boolean);
 
   const ordered = [...wanted.entries()].sort((a, b) => (a[1].rank ?? 9) - (b[1].rank ?? 9));
 
@@ -1226,7 +1367,20 @@ function drawLabels() {
     el.className = `map-label ${w.cls}`;
     if (w.color) el.style.color = w.color;
 
-    const s = map.toScreen(w.pos);
+    /* Ring labels try each candidate point around their ring and take the
+       first that lands on screen, so a ring whose preferred anchor is off the
+       edge still gets labelled somewhere the reader can see. */
+    let s = map.toScreen(w.pos);
+    if (w.candidates) {
+      const M = 8, fits = (q) => !q.behind
+        && q.x > M && q.y > M && q.x < W - M && q.y < H - M;
+      if (!fits(s)) {
+        for (const c of w.candidates) {
+          const q = map.toScreen(c);
+          if (fits(q)) { s = q; break; }
+        }
+      }
+    }
     if (s.behind || s.x < -60 || s.y < -30 || s.x > W + 60 || s.y > H + 30) {
       el.style.display = 'none';
       continue;

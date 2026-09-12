@@ -18,9 +18,10 @@ import {
 } from './data.js';
 import { samplePath, gcPoints } from './geo.js';
 import {
-  BANDS, FUEL_RING, ringPoints, reachMi, MAX_DRAW_MI, AIM9,
-  bandRadii, evidenceCeilingMi, DEPARTURE_BOUNDS,
+  BANDS, FUEL_RING, FERRY_RING, HALF_FERRY_RING, ringPoints, reachMi,
+  MAX_DRAW_MI, AIM9, bandRadii, evidenceCeilingMi, DEPARTURE_BOUNDS,
 } from './reachability.js';
+import { HYPO } from './steelman.js';
 import { destinationPoint } from './geo.js';
 
 const COL = {
@@ -31,7 +32,7 @@ const COL = {
   edgeHi: 0x7fb3d5,
   doc: 0x35d6a4,
   claim: 0xffd447,
-  critic: 0xff7ad9,
+  critic: 0xff1f3d,
   debris: 0xff8a5c,
   crater: 0xff4d4d,
 };
@@ -75,6 +76,7 @@ export class Map3D {
     this._buildDebris();
     this._buildCritic();
     this._buildReach();
+    this._buildHypo();
     this._buildPlaces();
 
     // Follow mode: the camera continuously reframes whatever is airborne.
@@ -417,6 +419,10 @@ export class Map3D {
     // The hard limit set by first knowledge, drawn once, brightly.
     this.ceilingRing = mkRing(0xffffff, 0.32, true);
     this.fuelRing = mkRing(FUEL_RING.color, 0.95, true);
+    // The one-way limit with drop tanks, which is the yardstick the claim
+    // actually needs. Drawn alongside the combat radius, not instead of it.
+    this.ferryRing = mkRing(FERRY_RING.color, 0.55, true);
+    this.halfFerryRing = mkRing(HALF_FERRY_RING.color, 0.6, true);
     this.reachLabelAnchors = [];
     // The engagement zone: an annulus, because a Sidewinder has a minimum
     // range as well as a maximum.
@@ -444,16 +450,25 @@ export class Map3D {
     if (!this.reachGroup.visible || !opts) return;
     const { anchor, now, depart, toleranceMin, target, showWez, showEnvelope } = opts;
 
-    // Labels are anchored on a bearing that runs out over empty map rather
-    // than through the northeast, where everything else already is.
+    /* A ring label has to sit ON its ring, and most of these rings run well
+       off the edge of the view. So each one offers a fan of candidate points
+       around the ring and the label layer takes the first that is actually on
+       screen. The fan starts at 202 degrees — out over empty map rather than
+       through the crowded northeast — and spreads either side from there, so
+       placement stays stable while the camera is still and only moves when it
+       has to. */
     const LABEL_BEARING = 202;
+    const FAN = [0];
+    for (let d = 12; d <= 180; d += 12) FAN.push(d, -d);
+
     this.reachLabelAnchors = [];
     const anchorAt = (r, text, color) => {
-      const p = destinationPoint(anchor, LABEL_BEARING, r);
-      const [x, z] = projectLL(p);
-      this.reachLabelAnchors.push({
-        pos: new THREE.Vector3(x, STATE_DEPTH + 0.6, z), text, color,
+      const candidates = FAN.map((d) => {
+        const p = destinationPoint(anchor, (LABEL_BEARING + d + 360) % 360, r);
+        const [x, z] = projectLL(p);
+        return new THREE.Vector3(x, STATE_DEPTH + 0.6, z);
       });
+      this.reachLabelAnchors.push({ pos: candidates[0], candidates, text, color });
     };
 
     for (const { band, outer, inner } of this.reachRings) {
@@ -480,7 +495,23 @@ export class Map3D {
     this.fuelRing.visible = showEnvelope;
     if (showEnvelope) {
       this._writeRing(this.fuelRing, ringPoints(anchor, FUEL_RING.miles, 120));
-      anchorAt(FUEL_RING.miles, `Unrefuelled combat radius · ${FUEL_RING.miles} mi`, FUEL_RING.color);
+      anchorAt(FUEL_RING.miles, `${FUEL_RING.label} · ${FUEL_RING.miles} mi`, FUEL_RING.color);
+    }
+
+    const halfOn = showEnvelope && HALF_FERRY_RING.miles < MAX_DRAW_MI;
+    this.halfFerryRing.visible = halfOn;
+    if (halfOn) {
+      this._writeRing(this.halfFerryRing, ringPoints(anchor, HALF_FERRY_RING.miles, 120));
+      anchorAt(HALF_FERRY_RING.miles,
+        `Ferry half-radius · ${HALF_FERRY_RING.miles.toLocaleString()} mi · furthest he could still return from`,
+        HALF_FERRY_RING.color);
+    }
+
+    const ferryOn = showEnvelope && FERRY_RING.miles < MAX_DRAW_MI;
+    this.ferryRing.visible = ferryOn;
+    if (ferryOn) {
+      this._writeRing(this.ferryRing, ringPoints(anchor, FERRY_RING.miles, 120));
+      anchorAt(FERRY_RING.miles, `${FERRY_RING.label} · ${FERRY_RING.miles.toLocaleString()} mi`, FERRY_RING.color);
     }
 
     const wezOn = showWez && !!target;
@@ -500,6 +531,70 @@ export class Map3D {
   setReachVisible(v) {
     this.reachGroup.visible = v;
     if (v) this.setReach(this._reachOpts);
+  }
+
+  /* HYPO 01 — the steelman. Drawn dashed and white because it is a construct,
+     and labelled as one wherever it appears. It is off by default. */
+  _buildHypo() {
+    this.hypoGroup = new THREE.Group();
+    this.hypoGroup.visible = false;
+    this.scene.add(this.hypoGroup);
+
+    const geom = new THREE.BufferGeometry();
+    geom.setAttribute('position', new THREE.BufferAttribute(new Float32Array(150 * 3), 3));
+    this.hypoLine = new THREE.Line(geom, new THREE.LineDashedMaterial({
+      color: HYPO.color, dashSize: 2.2, gapSize: 1.6, transparent: true, opacity: 0.85,
+    }));
+    this.hypoLine.frustumCulled = false;
+    this.hypoGroup.add(this.hypoLine);
+
+    this.hypoMarker = new THREE.Mesh(
+      new THREE.ConeGeometry(0.85, 2.6, 5),
+      new THREE.MeshBasicMaterial({ color: HYPO.color, transparent: true, opacity: 0.9 }),
+    );
+    this.hypoMarker.rotation.x = Math.PI / 2;
+    this.hypoMarker.visible = false;
+    this.hypoMarker.userData = { kind: 'hypo' };
+    this.hypoGroup.add(this.hypoMarker);
+  }
+
+  /* `track` is the object from buildHypoTrack, or null. */
+  setHypo(track, t) {
+    this._hypo = track;
+    if (!this.hypoGroup || !this.hypoGroup.visible || !track) {
+      if (this.hypoMarker) this.hypoMarker.visible = false;
+      return;
+    }
+    const pts = track.path.map(([, la, lo, alt]) => {
+      const [x, z] = projectLL({ lat: la, lon: lo });
+      return new THREE.Vector3(x, altToY(alt) + STATE_DEPTH + 0.05, z);
+    });
+    const attr = this.hypoLine.geometry.attributes.position;
+    for (let i = 0; i < attr.count; i++) {
+      const p = pts[Math.min(i, pts.length - 1)];
+      attr.setXYZ(i, p.x, p.y, p.z);
+    }
+    attr.needsUpdate = true;
+    this.hypoLine.computeLineDistances();
+
+    const s = samplePath(track.path, t);
+    if (s) {
+      const [x, z] = projectLL(s);
+      this.hypoMarker.position.set(x, altToY(s.altFt) + STATE_DEPTH + 0.05, z);
+      this.hypoMarker.rotation.set(Math.PI / 2, 0, 0);
+      this.hypoMarker.rotateOnWorldAxis(Y_AXIS, Math.PI - s.headingDeg * Math.PI / 180);
+      this.hypoMarker.scale.setScalar(this._markerScale);
+      this.hypoMarker.visible = true;
+      this._hypoSample = s;
+    } else {
+      this.hypoMarker.visible = false;
+      this._hypoSample = null;
+    }
+  }
+
+  setHypoVisible(v) {
+    this.hypoGroup.visible = v;
+    this.setHypo(this._hypo, this._t ?? 0);
   }
 
   _buildPlaces() {

@@ -19,26 +19,37 @@
    ========================================================================== */
 
 :root {
-  --bg:        #070a0f;
-  --bg-2:      #0c1119;
-  --bg-3:      #121926;
-  --line:      #1e2a3a;
-  --line-2:    #2b3a4e;
-  --ink:       #dfe8f2;
-  --ink-dim:   #8fa2b8;
-  --ink-faint: #5e7288;
+  /* Navy, white and red. Restrained on purpose — the subject is a memorial
+     one, so the flag palette is used at the weight of an official document
+     rather than a celebration. Colour still does the same job it always did
+     here: telling evidence apart from allegation. */
+  --bg:        #060b16;
+  --bg-2:      #0a1324;
+  --bg-3:      #101d33;
+  --line:      #1b2b47;
+  --line-2:    #2b4166;
+  --ink:       #eef3fa;
+  --ink-dim:   #a2b5cf;
+  --ink-faint: #6d84a6;
 
-  --aa11:  #ff5964;
-  --ua175: #ffa23e;
-  --aa77:  #6fd3ff;
+  /* Flag colours. --critic is the loudest thing on the page by design: the
+     withheld messages are the subject, so they get the red. */
+  --flag-red:  #c8102e;
+  --flag-blue: #0a3161;
+  --critic:    #ff1f3d;
+  --ui:        #4a8fe7;
+
+  /* Aircraft. AA11 moved from red to coral so nothing competes with CRITIC. */
+  --aa11:  #ff8c7a;
+  --ua175: #ffbe4d;
+  --aa77:  #74c7ff;
   --ua93:  #8cf27a;
-  --mil:   #c9a6ff;
+  --mil:   #b9a6ff;
   --claim: #ffd447;
-  --critic:#ff7ad9;
   --doc:   #35d6a4;
   --debris:#ff8a5c;
 
-  --topbar-h: 58px;
+  --topbar-h: 62px;
   --timeline-h: 118px;
   --panel-w: 430px;
 
@@ -75,7 +86,7 @@ body.panel-hidden #panel { opacity: 0; pointer-events: none; }
 .boot-inner { text-align: center; color: var(--ink-dim); }
 .spinner {
   width: 30px; height: 30px; margin: 0 auto 14px;
-  border: 2px solid var(--line-2); border-top-color: var(--aa77);
+  border: 2px solid var(--line-2); border-top-color: var(--ui);
   border-radius: 50%; animation: spin 0.9s linear infinite;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
@@ -103,7 +114,7 @@ body.panel-hidden #panel { opacity: 0; pointer-events: none; }
   background: var(--bg-3); border: 1px solid var(--line-2); color: var(--ink);
   font-size: 13px;
 }
-.icon-btn:hover { border-color: var(--aa77); }
+.icon-btn:hover { border-color: var(--ui); }
 .rate-group { display: flex; border: 1px solid var(--line-2); border-radius: 7px; overflow: hidden; }
 .rate-group button {
   background: var(--bg-3); border: 0; color: var(--ink-dim); cursor: pointer;
@@ -111,12 +122,12 @@ body.panel-hidden #panel { opacity: 0; pointer-events: none; }
   border-right: 1px solid var(--line-2);
 }
 .rate-group button:last-child { border-right: 0; }
-.rate-group button.on { background: var(--aa77); color: #05131c; font-weight: 700; }
+.rate-group button.on { background: var(--ui); color: #04101f; font-weight: 700; }
 .ghost-btn {
   background: transparent; border: 1px solid var(--line-2); color: var(--ink-dim);
   border-radius: 7px; padding: 7px 11px; cursor: pointer; font-size: 11px;
 }
-.ghost-btn:hover { color: var(--ink); border-color: var(--aa77); }
+.ghost-btn:hover { color: var(--ink); border-color: var(--ui); }
 
 /* --- stage --------------------------------------------------------------- */
 #stage { grid-area: stage; position: relative; overflow: hidden; }
@@ -178,7 +189,7 @@ body.panel-hidden #aside-toggle { transform: translateY(-50%) rotate(180deg); bo
   color: var(--claim); vertical-align: super;
 }
 #tabs button:hover { color: var(--ink-dim); }
-#tabs button.on { color: var(--ink); border-bottom-color: var(--aa77); background: rgba(111,211,255,.05); }
+#tabs button.on { color: var(--ink); border-bottom-color: var(--ui); background: rgba(74,143,231,.09); }
 
 .tab-body { overflow-y: auto; padding: 14px; flex: 1 1 auto; }
 .tab-body.hidden { display: none; }
@@ -220,7 +231,7 @@ body.panel-hidden #aside-toggle { transform: translateY(-50%) rotate(180deg); bo
 }
 .ev:hover { background: var(--bg-3); }
 .ev.future { opacity: .34; }
-.ev.now { background: rgba(111,211,255,.09); border-left-color: var(--aa77); }
+.ev.now { background: rgba(74,143,231,.12); border-left-color: var(--ui); }
 .ev-t { font-family: var(--mono); font-size: 11.5px; color: var(--ink-faint); padding-top: 1px; }
 .ev.now .ev-t, .ev.past .ev-t { color: var(--ink-dim); }
 .ev-label { font-size: 10px; letter-spacing: .4px; text-transform: uppercase; margin-bottom: 3px; font-weight: 650; }
@@ -290,7 +301,7 @@ ul.plain li { font-size: 12.5px; color: var(--ink-dim); line-height: 1.55; margi
   font-size: 11px; padding: 5px 9px; border-radius: 6px; cursor: pointer;
   background: var(--bg); border: 1px solid var(--line-2); color: var(--ink-dim);
 }
-.chip:hover { color: var(--ink); border-color: var(--aa77); }
+.chip:hover { color: var(--ink); border-color: var(--ui); }
 
 /* --- layers --------------------------------------------------------------- */
 .toggle {
@@ -298,7 +309,7 @@ ul.plain li { font-size: 12.5px; color: var(--ink-dim); line-height: 1.55; margi
   border-radius: 7px; cursor: pointer; font-size: 12.5px;
 }
 .toggle:hover { background: var(--bg-3); }
-.toggle input { accent-color: var(--aa77); width: 15px; height: 15px; cursor: pointer; }
+.toggle input { accent-color: var(--ui); width: 15px; height: 15px; cursor: pointer; }
 .toggle .swatch { width: 10px; height: 10px; border-radius: 2px; flex: 0 0 auto; }
 .toggle .meta { margin-left: auto; font-family: var(--mono); font-size: 10px; color: var(--ink-faint); }
 
@@ -391,7 +402,7 @@ ul.plain li { font-size: 12.5px; color: var(--ink-dim); line-height: 1.55; margi
 
 /* --- follow toggle --------------------------------------------------------- */
 #btn-follow.on {
-  color: #05131c; background: var(--aa77); border-color: var(--aa77); font-weight: 650;
+  color: #04101f; background: var(--ui); border-color: var(--ui); font-weight: 650;
 }
 #btn-follow.on::before { content: '\25C9\00a0'; }
 #btn-follow:not(.on)::before { content: '\25CB\00a0'; opacity: .55; }
@@ -412,7 +423,7 @@ ul.plain li { font-size: 12.5px; color: var(--ink-dim); line-height: 1.55; margi
 .cflag.bad:hover { background: rgba(255,89,100,.2); }
 
 .card.conflict { border-left: 2px solid var(--line-2); }
-.card.conflict.cf-hit { border-left-color: var(--aa77); box-shadow: 0 0 0 1px rgba(111,211,255,.35); }
+.card.conflict.cf-hit { border-left-color: var(--ui); box-shadow: 0 0 0 1px rgba(74,143,231,.45); }
 
 .cf-head { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; }
 .cf-tags { margin-left: auto; font-family: var(--mono); font-size: 9.5px; color: var(--ink-faint); }
@@ -505,7 +516,7 @@ ul.plain li { font-size: 12.5px; color: var(--ink-dim); line-height: 1.55; margi
 }
 .alt-group button:last-child { border-right: 0; }
 .alt-group button:hover { color: var(--ink); }
-.alt-group button.on { background: var(--aa77); color: #05131c; font-weight: 700; }
+.alt-group button.on { background: var(--ui); color: #04101f; font-weight: 700; }
 #alt-note { line-height: 1.45; }
 #alt-note b { color: var(--claim); font-family: var(--mono); }
 
@@ -519,6 +530,82 @@ ul.plain li { font-size: 12.5px; color: var(--ink-dim); line-height: 1.55; margi
   letter-spacing: .2px;
 }
 #tol-group { margin-top: 2px; }
+
+
+/* --- flag rule -------------------------------------------------------------
+   A three-band rule under the header. It is the only decorative element in
+   the app and it is three pixels tall, which is about the right weight for
+   the subject. */
+#topbar { position: relative; }
+#topbar::after {
+  content: ''; position: absolute; left: 0; right: 0; bottom: -1px; height: 3px;
+  background: linear-gradient(90deg,
+    var(--flag-blue) 0 34%, #f7f9fc 34% 67%, var(--flag-red) 67% 100%);
+  opacity: .85;
+}
+
+/* --- CRITIC: red and unmistakable ------------------------------------------
+   DIRNSA CRITIC 1-2001 is what this app is named for and built around, so it
+   gets the strongest treatment on the page: red everywhere, a lit tab, and a
+   highlighted band on its timeline entries. */
+
+#tabs button[data-tab="critic"] { color: var(--critic); font-weight: 650; letter-spacing: .3px; }
+#tabs button[data-tab="critic"]:hover { color: #ff5c72; }
+#tabs button[data-tab="critic"].on {
+  color: var(--critic); border-bottom-color: var(--critic);
+  background: rgba(255,31,61,.10);
+}
+
+/* Timeline entries for the CRITIC chain. */
+.ev.critic-ev {
+  border-left-color: var(--critic);
+  background: linear-gradient(90deg, rgba(255,31,61,.14), rgba(255,31,61,.03));
+}
+.ev.critic-ev .ev-label { color: var(--critic) !important; letter-spacing: .7px; }
+.ev.critic-ev.now {
+  background: linear-gradient(90deg, rgba(255,31,61,.26), rgba(255,31,61,.06));
+  border-left-color: var(--critic);
+  box-shadow: inset 0 0 0 1px rgba(255,31,61,.35);
+}
+.ev.critic-ev .ev-text { color: var(--ink); }
+
+/* Timeline scrubber ticks for CRITIC messages. */
+.emark.critic-mark { width: 3px; height: 26px; top: 0; opacity: 1; box-shadow: 0 0 8px var(--critic); }
+
+.critic-msg { border-left-width: 3px; border-left-color: var(--critic); }
+.dtg { color: var(--critic); font-weight: 600; }
+.redact { border-color: rgba(255,31,61,.45); background: rgba(255,31,61,.07); }
+.glimpse { border-color: rgba(255,31,61,.45); background: rgba(255,31,61,.05); }
+.kernel-card { border-color: #2c5f47; }
+
+
+/* --- the steelman ----------------------------------------------------------
+   Deliberately styled as a construct: white, dashed borders, and a standing
+   warning. It must never read as a record. */
+
+.card.steel { border-color: var(--line-2); background: linear-gradient(180deg, rgba(255,255,255,.035), transparent); }
+.hypo-warn {
+  border: 1px dashed rgba(255,255,255,.45); border-radius: 6px;
+  padding: 8px 10px; font-size: 11.5px; color: var(--ink-dim);
+  background: rgba(255,255,255,.04);
+}
+.hypo-warn strong { color: #fff; letter-spacing: .3px; }
+.leg.hypo-leg { border-style: dashed; border-color: rgba(255,255,255,.4); background: rgba(255,255,255,.03); }
+.leg.hypo-leg .leg-name { color: #fff; }
+
+.concession {
+  padding: 8px 0 8px 10px; border-left: 2px solid var(--line-2);
+  border-bottom: 1px solid var(--line);
+}
+.concession.free { border-left-color: var(--doc); }
+.concession.blocking { border-left-color: var(--flag-red); background: rgba(200,16,46,.07); }
+.cn-grant { font-size: 12.5px; color: var(--ink); font-weight: 600; }
+.concession.blocking .cn-grant::after {
+  content: ' — cannot be granted'; color: var(--critic); font-weight: 400; font-size: 11px;
+}
+.cn-detail { font-size: 11.5px; color: var(--ink-dim); line-height: 1.45; margin-top: 3px; }
+.cn-cost { font-size: 11.5px; color: var(--ink-faint); line-height: 1.45; margin-top: 3px; font-style: italic; }
+.concession.blocking .cn-cost { color: #ffb3bd; font-style: normal; }
 
 </style>
 </head>
@@ -54000,7 +54087,7 @@ const MIL_FLIGHTS = [
     unit: '102nd Fighter Wing, Massachusetts ANG',
     base: 'Otis ANGB, Cape Cod',
     armed: 'Armed',
-    color: 0xc9a6ff,
+    color: 0xb9a6ff,
     src: 'recon',
     path: [
       [at(8, 53, 0), 41.6584, -70.5214, 0],
@@ -54324,7 +54411,7 @@ function criticEvents() {
     src: c.src,
     kind: 'critic',
     label: 'CRITIC',
-    color: 0xff7ad9,
+    color: 0xff1f3d,
     criticId: c.id,
   }));
   return out;
@@ -54414,7 +54501,7 @@ const FLIGHTS = [
     reg: 'N334AA',
     from: 'KBOS', to: 'KLAX',
     souls: 92,
-    color: 0xff5964,
+    color: 0xff8c7a,
     src: 'recon',
     path: [
       [at(7, 59, 0), 42.3656, -71.0096, 0],
@@ -54682,13 +54769,21 @@ const DOC_ROUTE = {
 const F16 = {
   model: 'F-16C/D Fighting Falcon (General Dynamics / Lockheed Martin)',
   cruiseMph: 577,
-  maxSeaLevelMph: 915,       // ~Mach 1.2 at sea level
-  maxAltitudeMph: 1320,      // ~Mach 2.0 at 40,000 ft, clean
-  combatRadiusMi: 340,       // hi-lo-hi with 2x2000lb bombs; air-to-air profile similar order
-  ferryRangeMi: 2277,        // with external tanks, no reserves for combat
+  maxSeaLevelMph: 915,       // ~Mach 1.2 at sea level, CLEAN
+  maxAltitudeMph: 1320,      // ~Mach 2.0 at 40,000 ft, CLEAN — not available here
+  maxWithTanksMph: 1050,     // ~Mach 1.6 at altitude: the placarded limit with tanks
+  combatRadiusMi: 340,       // unrefuelled, no external tanks
+  combatRadiusTanksMi: 578,  // ~70% more with external tanks
+  ferryRangeMi: 2450,        // one way, max external fuel, no combat allowance
+  ferryRangeAltMi: 2277,     // a lower published figure; see the discrepancy register
+  tanks: '2 x 370 US gal on the wing stations plus 1 x 300 gal centreline — about 1,040 gallons external, which roughly doubles the fuel.',
+  placard: '600 KIAS or Mach 1.6, whichever is lower, with that tank fit and wingtip AIM-9s.',
   notes: [
     { text: 'Mach 2.0 is a clean-configuration dash number held for minutes, not a cruise speed. Carrying external tanks — which any transcontinental sortie requires — caps you far below it.', src: 'press' },
-    { text: 'Unrefuelled combat radius is roughly 340 miles. Anything substantially beyond that needs tanker support, which leaves its own paper trail in air-refuelling records.', src: 'press' },
+    { text: 'External tanks change this picture and an earlier version of this app understated them. Two 370-gallon wing tanks and a 300-gallon centreline add about 1,040 gallons — roughly doubling the fuel — for something like a 70% increase in operational radius, and a one-way ferry range around 2,450 miles.', src: 'press' },
+    { text: 'So fuel does NOT rule out the Fargo-to-Pennsylvania leg. At 1,012 miles that is about 41% of ferry range: an ordinary transit for a tanked fighter. What fuel rules out is the whole claimed itinerary — 4,522 miles is roughly 1.85x maximum ferry range, so it needs at least one refuelling stop somewhere.', src: 'derived' },
+    { text: 'Tanks cost speed. That fit, with wingtip Sidewinders, is placarded to 600 KIAS or Mach 1.6, whichever is lower — so the Mach 2.0 figure above is unavailable to any aircraft configured for this mission, and the fastest envelope drawn on the map uses Mach 1.6 instead.', src: 'press' },
+    { text: 'Tanks do not cost armament, and it would be wrong to argue otherwise. Tanks occupy the wing and centreline stations; Sidewinders live on the wingtip rails. The published placard above explicitly describes carrying both at once.', src: 'press' },
     { text: 'Carrying a passenger requires a two-seat F-16B/D. A civilian in the back seat of a jet that then prosecutes an air-to-air kill is its own separate problem for the claim. This inference is the app\'s, not a sourced finding.', src: 'derived' },
   ],
 };
@@ -54979,6 +55074,20 @@ const CONFLICTS = [
 
 CONFLICTS.push(
   {
+    id: 'fuel-yardstick',
+    subject: 'Fuel as a constraint on the Pennsylvania leg — this app overstated it',
+    tags: ['CLAIM', 'DATA'],
+    status: 'resolved',
+    why: 'Fuel was presented as the constraint that closed the claim. It is not, and the error ran in the app\'s favour, which is the direction an error here is least excusable.',
+    readings: [
+      { v: 'Ferry range with external tanks is about 2,450 miles, one way. Fargo to Somerset County is 1,012 — roughly 41% of it.', who: 'Published F-16 figures with 2 x 370 gal wing tanks and a 300 gal centreline', src: 'press', weight: 'The right yardstick for a one-way transit. An ordinary leg for a tanked fighter.' },
+      { v: 'Unrefuelled combat radius is about 340 miles, so Somerset County is 3.0x it and "never enters it, however long you wait".', who: 'This app, until corrected', src: 'derived', weight: 'True of a combat radius — out, fight, and back — and the wrong measure for the leg actually claimed.' },
+      { v: 'The full itinerary is 4,522 miles, about 1.85x maximum ferry range.', who: 'Computed here', src: 'derived', weight: 'This part survives: the whole day needs at least one refuelling stop.' },
+    ],
+    reading: 'Fuel does not rule out the flight to Pennsylvania. It only rules out doing the entire claimed itinerary without refuelling — and refuelling is possible, though a tanker rendezvous leaves scheduling and crew records. The load-bearing arguments are the geometric and evidentiary ones: a 22-mile engagement zone at one instant, NEADS not knowing United 93 existed until 10:07, no order having reached any pilot, and the unit and passenger placing him over Montana.',
+    appSays: 'Corrected. The map now draws two fuel rings — combat radius and ferry range with tanks — both labelled, instead of only the restrictive one. The fastest speed band dropped from Mach 2.0 (a clean-configuration number) to Mach 1.6, the placarded limit with tanks fitted. A related overclaim, that tanks would preclude carrying Sidewinders, was never made and would have been wrong: tanks sit on the wing and centreline stations, Sidewinders on the wingtip rails.',
+  },
+  {
     id: 'critic-substance',
     subject: 'DIRNSA CRITIC 1-2001 — the substance of all four messages',
     tags: ['CRITIC'],
@@ -55069,7 +55178,7 @@ const ASSUMPTIONS = [
 function classify(mph) {
   if (mph <= F16.cruiseMph) return { key: 'routine', label: 'Routine cruise', rank: 0 };
   if (mph <= F16.maxSeaLevelMph) return { key: 'hard', label: 'Hard, sustained — burns fuel fast', rank: 1 };
-  if (mph <= F16.maxAltitudeMph) return { key: 'dash', label: 'Beyond any sustainable cruise', rank: 2 };
+  if (mph <= F16.maxWithTanksMph) return { key: 'dash', label: 'Beyond any sustainable cruise', rank: 2 };
   return { key: 'impossible', label: 'Exceeds the airframe outright', rank: 3 };
 }
 
@@ -55124,9 +55233,9 @@ function claimFindings(dash, back, deliver, totalMi) {
   });
 
   f.push({
-    weight: 'hard',
-    title: 'Fuel, not speed, is the binding constraint',
-    text: `The F-16's unrefuelled combat radius is about ${F16.combatRadiusMi} miles. The dash leg alone is ${dash.radiiSpent.toFixed(1)}x that radius, one way. Even flown perfectly it needs tanker support, and air-refuelling tracks are logged, scheduled and crewed — they are not the kind of thing that leaves no trace.`,
+    weight: 'soft',
+    title: 'Fuel is weaker than it first looks — and this app overstated it',
+    text: `An earlier version of this analysis called fuel the binding constraint. With external tanks it is not. Two 370-gallon wing tanks and a 300-gallon centreline roughly double the fuel and give a one-way ferry range near ${F16.ferryRangeMi.toLocaleString()} miles, so the ${Math.round(dash.miles)}-mile run to Pennsylvania is about ${Math.round(dash.miles / F16.ferryRangeMi * 100)}% of it — an ordinary transit. Fuel only bites on the full itinerary, which needs a refuelling stop somewhere.`,
   });
 
   f.push({
@@ -55252,17 +55361,67 @@ const BANDS = [
     note: 'What a fighter actually transits at. Anything faster is bought with fuel.' },
   { key: 'sustained', label: 'Max, low altitude', mph: F16.maxSeaLevelMph, color: 0xffd447,
     note: 'About Mach 1.2 down low. Sustainable for minutes, not hours.' },
-  { key: 'dash', label: 'Max, high altitude', mph: F16.maxAltitudeMph, color: 0xff8a5c,
-    note: 'Mach 2.0 clean. A dash number, and unavailable with the external tanks a transcontinental sortie requires.' },
+  { key: 'dash', label: 'Max with tanks', mph: F16.maxWithTanksMph, color: 0xff8a5c,
+    note: 'About Mach 1.6 — the placarded limit with two wing tanks, a centreline tank and wingtip Sidewinders.' },
+  { key: 'clean', label: 'Max clean', mph: F16.maxAltitudeMph, color: 0xffffff,
+    note: 'Mach 2.0 at altitude, and nobody saw anything, so it cannot be excluded on observation. But it is a CLEAN number: clean means no external tanks, which means the 340-mile ring is the one that applies. The speed and the range are bought with the same stations. You can have either.' },
 ];
 
-/* The fuel ring does not grow with the clock. That is the point of it. */
+/* The trade the two fastest bands describe, stated once so it is not buried
+   in a tooltip. It is the most useful single fact about the airframe here. */
+const CONFIG_TRADE = {
+  title: 'Speed and range are the same stations',
+  clean: {
+    label: 'Clean',
+    topMph: F16.maxAltitudeMph,
+    radiusMi: F16.combatRadiusMi,
+    note: 'Mach 2.0 available. No external fuel, so the 340-mile combat radius applies and Somerset County is 3.0x it.',
+  },
+  tanked: {
+    label: 'With tanks',
+    topMph: F16.maxWithTanksMph,
+    radiusMi: F16.combatRadiusTanksMi,
+    note: 'Ferry range near 2,450 miles, so the distance is easy. Placarded to Mach 1.6, so the top band is not available.',
+  },
+  reading: 'No single configuration gives both. The claim needs the range of a tanked jet and, if it is to outrun anything, the speed of a clean one. Nobody observed the aircraft, so neither can be excluded by eyewitness — but they cannot both be true of the same airframe on the same sortie.',
+  src: 'derived',
+};
+
+/* Two fuel limits, because one of them was the wrong yardstick.
+
+   An earlier version of this app drew only the combat radius and said Somerset
+   County "never enters it, however long you wait". True of a combat radius —
+   out, fight, and back — and misleading about a one-way transit by a fighter
+   carrying drop tanks, which is what the claim actually needs. Both are drawn
+   now so the reader picks the right one rather than being handed the
+   restrictive one by default.
+
+   Neither grows with the clock. That remains the point of them: time buys
+   distance, fuel does not. */
 const FUEL_RING = {
   key: 'fuel',
-  label: 'Unrefuelled combat radius',
+  label: 'Combat radius, no tanks',
   miles: F16.combatRadiusMi,
   color: 0xff5964,
-  note: 'Fixed at roughly 340 miles regardless of how long you wait. Time buys distance; fuel does not.',
+  note: 'Out and back with no external fuel. About 578 miles with tanks fitted.',
+};
+
+const FERRY_RING = {
+  key: 'ferry',
+  label: 'Ferry range with tanks, one way',
+  miles: F16.ferryRangeMi,
+  color: 0xff8a5c,
+  note: 'One way, maximum external fuel, no combat allowance and no reserve. Somerset County sits well inside this, which is why fuel does not rule out the Pennsylvania leg on its own.',
+};
+
+/* Half of ferry range is the more useful number of the two, because it is the
+   furthest point you can reach and still come back on the same tanks. */
+const HALF_FERRY_RING = {
+  key: 'halfferry',
+  label: 'Ferry half-radius — furthest point he could still return from',
+  miles: Math.round(F16.ferryRangeMi / 2),
+  color: 0xffbe4d,
+  note: 'Out and back on one tankful, with nothing spent on combat and no reserve. Somerset County is inside this too, at about 83% of it — so even the round trip is not excluded by fuel alone.',
 };
 
 /* --- ring geometry --------------------------------------------------------
@@ -55377,6 +55536,9 @@ function shanksvilleTest(departEDT) {
     fuel: {
       reachable: miles <= FUEL_RING.miles,
       radii: miles / FUEL_RING.miles,
+      radiiWithTanks: miles / F16.combatRadiusTanksMi,
+      ferryFraction: miles / FERRY_RING.miles,
+      insideFerry: miles <= FERRY_RING.miles,
     },
   };
 }
@@ -55428,7 +55590,10 @@ function scaleComparison(departEDT, nowEDT) {
 
   return {
     BANDS,
+    CONFIG_TRADE,
     FUEL_RING,
+    FERRY_RING,
+    HALF_FERRY_RING,
     ringPoints,
     reachMi,
     DEPARTURE_BOUNDS,
@@ -55443,12 +55608,176 @@ function scaleComparison(departEDT, nowEDT) {
   };
 })();
 
+__m["steelman"] = (function () {
+  const { PLACES, F16 } = __m["data"];
+  const { haversineMi, bearingDeg, gcInterp, machAt } = __m["geo"];
+/* =============================================================================
+   steelman.js — the claim's best possible case.
+
+   Everything else in this app tests the allegation. This builds the strongest
+   version of it that physics and the calendar permit, and plots it.
+
+   That is not a concession to the claim; it is the only way to find out what
+   the claim actually rests on. If you only ever argue against the weakest
+   reading, you never learn which of your own objections were load-bearing and
+   which were decoration. Granting every favourable assumption at once and
+   seeing what still fails is a better test than any of them separately.
+
+   THE AIRCRAFT IS NOT REAL. Callsign HYPO 01 is a construct. It corresponds to
+   no aircraft, no sortie and no record; it is drawn dashed, in white, labelled
+   as constructed at every appearance, and it is off by default. No F-16 flew
+   this track. The point of drawing it is to show what would have had to be
+   true, not to suggest that it was.
+
+   WHAT IT GRANTS
+
+   Fuel, missiles, a perfect launch time, a perfect heading, no air-traffic
+   routing, no weather, no turnaround, the two-seat problem waved away, and an
+   order that did not exist. Every one of those is granted simultaneously.
+
+   WHAT SURVIVES ANYWAY
+
+   The kinematics work. That is the honest result and it is worth stating
+   plainly: at the earliest departure the record permits, the run to Somerset
+   County needs about Mach 1.26 sustained, which is inside the placarded limit
+   for a tanked F-16. Speed and fuel do not stop this.
+
+   What stops it is everything that is not physics. To launch at 08:46 on a
+   heading that intercepts United 93 at 09:58, someone has to know at 08:46
+   that United 93 will be hijacked at 09:28 and where it will be ninety minutes
+   later. The air defence sector did not know the aircraft existed until 10:07.
+   No order to fire had reached any pilot. And the same jet has to be in
+   Montana and then New York the same day.
+
+   So the claim does not fail on the airframe. It fails on knowledge, on
+   authority, and on the testimony of the people involved — which is a more
+   useful conclusion than "impossible", and a harder one to wave away.
+   ========================================================================== */
+
+
+
+const HYPO = {
+  callsign: 'HYPO 01',
+  status: 'CONSTRUCTED — NOT A RECORD',
+  type: 'F-16 (hypothetical)',
+  disclaimer: 'A construct, not a sortie. No aircraft flew this track. It is drawn to show what the claim requires, not to suggest it happened.',
+  color: 0xffffff,
+  src: 'derived',
+};
+
+/* Each concession, what it grants, and what granting it costs. The last
+   column is the point: three of these cannot be bought at any price. */
+const CONCESSIONS = [
+  {
+    grant: 'He has the fuel',
+    detail: 'Two 370-gallon wing tanks and a 300-gallon centreline, roughly doubling internal fuel.',
+    cost: 'Free. This is an ordinary fit, and 1,012 miles is about 41% of ferry range.',
+    blocking: false,
+  },
+  {
+    grant: 'He has the missiles',
+    detail: 'AIM-9M Sidewinders on the wingtip rails.',
+    cost: 'Free. Tanks occupy the wing and centreline stations; the wingtips stay available. The published placard describes carrying both.',
+    blocking: false,
+  },
+  {
+    grant: 'He launches at the earliest moment the record permits',
+    detail: '08:46:40 — the first impact, the first instant anyone had reason to act.',
+    cost: 'Cheap, but it is already an assumption: no departure time for Gibney has ever been published.',
+    blocking: false,
+  },
+  {
+    grant: 'He flies the perfect heading',
+    detail: 'A great circle from Fargo, 111 degrees, direct to where United 93 will be.',
+    cost: 'Free in geometry. Not free in knowledge — see below.',
+    blocking: false,
+  },
+  {
+    grant: 'No routing, no weather, no turnaround',
+    detail: 'No ATC vectors, no jet stream, no time on the ground.',
+    cost: 'Free. The app grants these everywhere else too.',
+    blocking: false,
+  },
+  {
+    grant: 'The two-seat problem is waved away',
+    detail: 'Ignore that carrying Jacoby requires an F-16B/D with 17% less internal fuel.',
+    cost: 'Cheap on its own.',
+    blocking: false,
+  },
+  {
+    grant: 'He knows where United 93 will be',
+    detail: 'To launch at 08:46 on an intercept heading, someone must already know that United 93 — airborne four minutes, entirely normal — will be seized at 09:28 and be over Somerset County at 09:58.',
+    cost: 'This is foreknowledge of the hijacking, not intelligence about it. It cannot be granted without making the claim into a much larger and entirely different allegation.',
+    blocking: true,
+  },
+  {
+    grant: 'Someone is tracking it for him',
+    detail: 'A controller vectoring him onto the target in real time.',
+    cost: 'NEADS did not know United 93 existed until 10:07, four minutes after it hit the ground. There was no track to vector anyone onto, and Gibney was on a transport tasking, not the air defence net.',
+    blocking: true,
+  },
+  {
+    grant: 'He has an order',
+    detail: 'Authority to fire on a civilian airliner.',
+    cost: 'The shootdown authorisation was conveyed around 10:10 and reached NEADS at 10:31, which did not pass it to its pilots. At 09:58 no such order existed anywhere in the chain.',
+    blocking: true,
+  },
+];
+
+/* Build the best-case track. The target position is sampled from United 93's
+   own path rather than hard-coded, so this stays correct if that path is
+   ever revised. */
+function buildHypoTrack(targetLatLon, departEDT, interceptEDT) {
+  const from = PLACES.KFAR;
+  const miles = haversineMi(from, targetLatLon);
+  const seconds = Math.max(1, interceptEDT - departEDT);
+  const mph = miles / (seconds / 3600);
+
+  const path = [];
+  const STEPS = 24;
+  for (let i = 0; i <= STEPS; i++) {
+    const f = i / STEPS;
+    const p = gcInterp(from, targetLatLon, f);
+    // Climb out, cruise, and let down onto the target's altitude band.
+    const alt = f < 0.12 ? (f / 0.12) * 31000
+      : f > 0.9 ? 31000 - ((f - 0.9) / 0.1) * 24000
+        : 31000;
+    path.push([departEDT + seconds * f, p.lat, p.lon, alt]);
+  }
+
+  return {
+    path,
+    miles,
+    seconds,
+    mph,
+    mach: machAt(mph, 31000),
+    bearing: bearingDeg(from, targetLatLon),
+    withinTankedLimit: mph <= F16.maxWithTanksMph,
+    ferryFraction: miles / F16.ferryRangeMi,
+  };
+}
+
+const VERDICT = {
+  headline: 'The kinematics work. Nothing else does.',
+  body: 'Granting fuel, missiles, the earliest permitted launch and a perfect heading, the run to Somerset County needs roughly Mach 1.26 sustained — inside the placarded limit for a tanked F-16, and about 41% of its ferry range. Speed and fuel do not stop this, and an argument that leans on them is leaning on the wrong thing. What stops it is that the launch requires knowing at 08:46 what would not happen until 09:28, that the sector had no track on the aircraft until four minutes after it crashed, that no order to fire existed at 09:58, and that the pilot, his unit and his passenger all place him over Montana.',
+  src: 'derived',
+};
+
+  return {
+    HYPO,
+    CONCESSIONS,
+    buildHypoTrack,
+    VERDICT
+  };
+})();
+
 __m["map3d"] = (function () {
   const { readStates } = __m["topo"];
   const { projectForState, projectLL, altToY, OMITTED_FIPS, UNITS_PER_MILE, setAltExaggeration } = __m["projection"];
   const { FLIGHTS, MIL_FLIGHTS, PLACES, DEBRIS, GIBNEY, CLAIM_ROUTE, CRITIC_NODES, CRITIC_CHAIN, DISTRIBUTION } = __m["data"];
   const { samplePath, gcPoints, destinationPoint } = __m["geo"];
-  const { BANDS, FUEL_RING, ringPoints, reachMi, MAX_DRAW_MI, AIM9, bandRadii, evidenceCeilingMi, DEPARTURE_BOUNDS } = __m["reachability"];
+  const { BANDS, FUEL_RING, FERRY_RING, HALF_FERRY_RING, ringPoints, reachMi, MAX_DRAW_MI, AIM9, bandRadii, evidenceCeilingMi, DEPARTURE_BOUNDS } = __m["reachability"];
+  const { HYPO } = __m["steelman"];
 /* =============================================================================
    map3d.js — the 3D map.
 
@@ -55467,7 +55796,7 @@ const COL = {
   edgeHi: 0x7fb3d5,
   doc: 0x35d6a4,
   claim: 0xffd447,
-  critic: 0xff7ad9,
+  critic: 0xff1f3d,
   debris: 0xff8a5c,
   crater: 0xff4d4d,
 };
@@ -55511,6 +55840,7 @@ class Map3D {
     this._buildDebris();
     this._buildCritic();
     this._buildReach();
+    this._buildHypo();
     this._buildPlaces();
 
     // Follow mode: the camera continuously reframes whatever is airborne.
@@ -55853,6 +56183,10 @@ class Map3D {
     // The hard limit set by first knowledge, drawn once, brightly.
     this.ceilingRing = mkRing(0xffffff, 0.32, true);
     this.fuelRing = mkRing(FUEL_RING.color, 0.95, true);
+    // The one-way limit with drop tanks, which is the yardstick the claim
+    // actually needs. Drawn alongside the combat radius, not instead of it.
+    this.ferryRing = mkRing(FERRY_RING.color, 0.55, true);
+    this.halfFerryRing = mkRing(HALF_FERRY_RING.color, 0.6, true);
     this.reachLabelAnchors = [];
     // The engagement zone: an annulus, because a Sidewinder has a minimum
     // range as well as a maximum.
@@ -55880,16 +56214,25 @@ class Map3D {
     if (!this.reachGroup.visible || !opts) return;
     const { anchor, now, depart, toleranceMin, target, showWez, showEnvelope } = opts;
 
-    // Labels are anchored on a bearing that runs out over empty map rather
-    // than through the northeast, where everything else already is.
+    /* A ring label has to sit ON its ring, and most of these rings run well
+       off the edge of the view. So each one offers a fan of candidate points
+       around the ring and the label layer takes the first that is actually on
+       screen. The fan starts at 202 degrees — out over empty map rather than
+       through the crowded northeast — and spreads either side from there, so
+       placement stays stable while the camera is still and only moves when it
+       has to. */
     const LABEL_BEARING = 202;
+    const FAN = [0];
+    for (let d = 12; d <= 180; d += 12) FAN.push(d, -d);
+
     this.reachLabelAnchors = [];
     const anchorAt = (r, text, color) => {
-      const p = destinationPoint(anchor, LABEL_BEARING, r);
-      const [x, z] = projectLL(p);
-      this.reachLabelAnchors.push({
-        pos: new THREE.Vector3(x, STATE_DEPTH + 0.6, z), text, color,
+      const candidates = FAN.map((d) => {
+        const p = destinationPoint(anchor, (LABEL_BEARING + d + 360) % 360, r);
+        const [x, z] = projectLL(p);
+        return new THREE.Vector3(x, STATE_DEPTH + 0.6, z);
       });
+      this.reachLabelAnchors.push({ pos: candidates[0], candidates, text, color });
     };
 
     for (const { band, outer, inner } of this.reachRings) {
@@ -55916,7 +56259,23 @@ class Map3D {
     this.fuelRing.visible = showEnvelope;
     if (showEnvelope) {
       this._writeRing(this.fuelRing, ringPoints(anchor, FUEL_RING.miles, 120));
-      anchorAt(FUEL_RING.miles, `Unrefuelled combat radius · ${FUEL_RING.miles} mi`, FUEL_RING.color);
+      anchorAt(FUEL_RING.miles, `${FUEL_RING.label} · ${FUEL_RING.miles} mi`, FUEL_RING.color);
+    }
+
+    const halfOn = showEnvelope && HALF_FERRY_RING.miles < MAX_DRAW_MI;
+    this.halfFerryRing.visible = halfOn;
+    if (halfOn) {
+      this._writeRing(this.halfFerryRing, ringPoints(anchor, HALF_FERRY_RING.miles, 120));
+      anchorAt(HALF_FERRY_RING.miles,
+        `Ferry half-radius · ${HALF_FERRY_RING.miles.toLocaleString()} mi · furthest he could still return from`,
+        HALF_FERRY_RING.color);
+    }
+
+    const ferryOn = showEnvelope && FERRY_RING.miles < MAX_DRAW_MI;
+    this.ferryRing.visible = ferryOn;
+    if (ferryOn) {
+      this._writeRing(this.ferryRing, ringPoints(anchor, FERRY_RING.miles, 120));
+      anchorAt(FERRY_RING.miles, `${FERRY_RING.label} · ${FERRY_RING.miles.toLocaleString()} mi`, FERRY_RING.color);
     }
 
     const wezOn = showWez && !!target;
@@ -55936,6 +56295,70 @@ class Map3D {
   setReachVisible(v) {
     this.reachGroup.visible = v;
     if (v) this.setReach(this._reachOpts);
+  }
+
+  /* HYPO 01 — the steelman. Drawn dashed and white because it is a construct,
+     and labelled as one wherever it appears. It is off by default. */
+  _buildHypo() {
+    this.hypoGroup = new THREE.Group();
+    this.hypoGroup.visible = false;
+    this.scene.add(this.hypoGroup);
+
+    const geom = new THREE.BufferGeometry();
+    geom.setAttribute('position', new THREE.BufferAttribute(new Float32Array(150 * 3), 3));
+    this.hypoLine = new THREE.Line(geom, new THREE.LineDashedMaterial({
+      color: HYPO.color, dashSize: 2.2, gapSize: 1.6, transparent: true, opacity: 0.85,
+    }));
+    this.hypoLine.frustumCulled = false;
+    this.hypoGroup.add(this.hypoLine);
+
+    this.hypoMarker = new THREE.Mesh(
+      new THREE.ConeGeometry(0.85, 2.6, 5),
+      new THREE.MeshBasicMaterial({ color: HYPO.color, transparent: true, opacity: 0.9 }),
+    );
+    this.hypoMarker.rotation.x = Math.PI / 2;
+    this.hypoMarker.visible = false;
+    this.hypoMarker.userData = { kind: 'hypo' };
+    this.hypoGroup.add(this.hypoMarker);
+  }
+
+  /* `track` is the object from buildHypoTrack, or null. */
+  setHypo(track, t) {
+    this._hypo = track;
+    if (!this.hypoGroup || !this.hypoGroup.visible || !track) {
+      if (this.hypoMarker) this.hypoMarker.visible = false;
+      return;
+    }
+    const pts = track.path.map(([, la, lo, alt]) => {
+      const [x, z] = projectLL({ lat: la, lon: lo });
+      return new THREE.Vector3(x, altToY(alt) + STATE_DEPTH + 0.05, z);
+    });
+    const attr = this.hypoLine.geometry.attributes.position;
+    for (let i = 0; i < attr.count; i++) {
+      const p = pts[Math.min(i, pts.length - 1)];
+      attr.setXYZ(i, p.x, p.y, p.z);
+    }
+    attr.needsUpdate = true;
+    this.hypoLine.computeLineDistances();
+
+    const s = samplePath(track.path, t);
+    if (s) {
+      const [x, z] = projectLL(s);
+      this.hypoMarker.position.set(x, altToY(s.altFt) + STATE_DEPTH + 0.05, z);
+      this.hypoMarker.rotation.set(Math.PI / 2, 0, 0);
+      this.hypoMarker.rotateOnWorldAxis(Y_AXIS, Math.PI - s.headingDeg * Math.PI / 180);
+      this.hypoMarker.scale.setScalar(this._markerScale);
+      this.hypoMarker.visible = true;
+      this._hypoSample = s;
+    } else {
+      this.hypoMarker.visible = false;
+      this._hypoSample = null;
+    }
+  }
+
+  setHypoVisible(v) {
+    this.hypoGroup.visible = v;
+    this.setHypo(this._hypo, this._t ?? 0);
   }
 
   _buildPlaces() {
@@ -56365,10 +56788,12 @@ __m["main"] = (function () {
   const { ALT_CHOICES, trueScaleRatio } = __m["projection"];
   const { analyseClaim, analyseDocumented, ASSUMPTIONS, COMMAND_CHECK, classify, legAnalysis } = __m["analysis"];
   const { CONFLICTS, STATUS_META, conflictsFor, openCount } = __m["conflicts"];
-  const { BANDS, FUEL_RING, AIM9, shanksvilleTest, reachMi, scaleComparison, TOLERANCES, DEPARTURE_BOUNDS, bandRadii, evidenceCeilingMi } = __m["reachability"];
+  const { BANDS, FUEL_RING, FERRY_RING, HALF_FERRY_RING, AIM9, shanksvilleTest, reachMi, scaleComparison, TOLERANCES, DEPARTURE_BOUNDS, bandRadii, evidenceCeilingMi, CONFIG_TRADE } = __m["reachability"];
+  const { HYPO, CONCESSIONS, VERDICT, buildHypoTrack } = __m["steelman"];
 /* =============================================================================
    main.js — app wiring: playback clock, scrubber, panels, labels.
    ========================================================================== */
+
 
 
 
@@ -56400,7 +56825,7 @@ const state = {
     PANTA: true, QUIT: true, GOFER: true, BULLY: true,
     debris: false, routeDoc: false, routeClaim: false, places: true,
     critic: true,
-    envelope: true, wez: true,
+    envelope: true, wez: true, hypo: false,
   },
 };
 
@@ -56501,6 +56926,7 @@ function setTime(t) {
   updateFlightStrip();
   map.followPoints(focusPoints());
   updateReach();
+  if (state.layers.hypo) updateHypo();
   throttledReachPanels();
 }
 
@@ -56522,17 +56948,38 @@ function throttledReachPanels(force = false) {
   if (!$('#reach-out')) return;
   renderReachPanel();
   renderWezPanel();
+  renderSteelPanel();
 }
 
 /* United 93's live position is the target the alleged shot needs. Once it is
    down, the geometry freezes at the crater — the question of who was within
    ten miles of it does not go away at 10:03:11. */
-function ua93Position() {
+function ua93PositionAt(t) {
   const f = FLIGHTS.find((x) => x.id === 'UA93');
-  const last = f.path[f.path.length - 1];
-  if (state.t >= last[0]) return { lat: last[1], lon: last[2] };
-  const sm = samplePath(f.path, state.t);
+  const first = f.path[0], last = f.path[f.path.length - 1];
+  if (t <= first[0]) return { lat: first[1], lon: first[2] };
+  if (t >= last[0]) return { lat: last[1], lon: last[2] };
+  const sm = samplePath(f.path, t);
   return sm ? { lat: sm.lat, lon: sm.lon } : null;
+}
+
+function ua93Position() { return ua93PositionAt(state.t); }
+
+/* The steelman is a fixed scenario — Fargo to wherever United 93 is at the
+   alleged moment — so it is anchored on the intercept time, not the clock.
+   Sampling "now" left the panel blank before 08:42, when United 93 had not
+   yet taken off. */
+function hypoTarget() { return ua93PositionAt(state.interceptT); }
+
+/* The constructed track is rebuilt whenever the departure hypothesis moves,
+   and sampled against the clock like any other aircraft. */
+function updateHypo() {
+  const target = hypoTarget();
+  const track = target
+    ? buildHypoTrack(target, state.claimDepart, state.interceptT)
+    : null;
+  map.setHypo(track, state.t);
+  return track;
 }
 
 function updateReach() {
@@ -56636,7 +57083,7 @@ function buildTimelineUI() {
   for (const ev of EVENTS) {
     const m = document.createElement('div');
     const major = /Impact|crashed|Impact,|strikes/i.test(ev.text) || ev.kind === 'claim';
-    m.className = `emark${major ? ' big' : ''}`;
+    m.className = `emark${major ? ' big' : ''}${ev.kind === 'critic' ? ' critic-mark' : ''}`;
     m.style.left = `${((ev.t - T0) / (T1 - T0)) * 100}%`;
     m.style.background = hex(ev.color);
     m.style.color = hex(ev.color);
@@ -56690,7 +57137,7 @@ function updateFlightStrip() {
 
 function renderEvents() {
   $('#event-list').innerHTML = EVENTS.map((ev, i) => `
-    <div class="ev future${ev.kind === 'claim' ? ' claim-ev' : ''}" data-ev="${i}" data-t="${ev.t}">
+    <div class="ev future${ev.kind === 'claim' ? ' claim-ev' : ''}${ev.kind === 'critic' ? ' critic-ev' : ''}" data-ev="${i}" data-t="${ev.t}">
       <div class="ev-t">${hms(ev.t)}</div>
       <div>
         <div class="ev-label" style="color:${hex(ev.color)}">${esc(ev.label)}</div>
@@ -56844,6 +57291,31 @@ function renderClaimTab() {
       ${AIM9.notes.map((n) => `<p style="margin-top:9px;font-size:12px">${esc(n.text)} ${srcTag(n.src)}</p>`).join('')}
     </div>
 
+    <div class="card steel">
+      <h3>The strongest possible version</h3>
+      <p>Everything else here tests the allegation. This grants it every favourable assumption at once and asks what still fails — which is the only way to find out which objections were load-bearing.</p>
+      <p class="hypo-warn"><strong>${esc(HYPO.callsign)} — ${esc(HYPO.status)}.</strong> ${esc(HYPO.disclaimer)}</p>
+      <div id="steel-out"></div>
+      <div id="concessions"></div>
+      <div class="chip-row">
+        <button class="chip" data-act="show-hypo">Plot ${esc(HYPO.callsign)}</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>${esc(CONFIG_TRADE.title)}</h3>
+      <p>Nobody observed the aircraft, so no speed can be excluded by eyewitness. But speed and range come off the same wing stations.</p>
+      <div class="cmd-row">
+        <div class="t" style="color:#fff">${CONFIG_TRADE.clean.topMph} mph</div>
+        <div class="x"><strong style="color:var(--ink)">${esc(CONFIG_TRADE.clean.label)}</strong> — ${esc(CONFIG_TRADE.clean.note)}</div>
+      </div>
+      <div class="cmd-row">
+        <div class="t" style="color:${hex(0xff8a5c)}">${CONFIG_TRADE.tanked.topMph} mph</div>
+        <div class="x"><strong style="color:var(--ink)">${esc(CONFIG_TRADE.tanked.label)}</strong> — ${esc(CONFIG_TRADE.tanked.note)}</div>
+      </div>
+      <p style="margin-top:11px"><strong>${esc(CONFIG_TRADE.reading)}</strong> ${srcTag(CONFIG_TRADE.src)}</p>
+    </div>
+
     <div class="card">
       <h3>What the claim actually requires</h3>
       <div id="findings"></div>
@@ -56916,6 +57388,15 @@ function renderClaimTab() {
   });
 
   $$('#claim-body .chip').forEach((b) => b.addEventListener('click', () => {
+    if (b.dataset.act === 'show-hypo') {
+      state.layers.hypo = true;
+      map.setHypoVisible(true);
+      updateHypo();
+      syncLayerChecks();
+      setFollow(false);
+      map.resetView();
+      return;
+    }
     if (b.dataset.act === 'show-envelope' || b.dataset.act === 'show-wez') {
       const k = b.dataset.act === 'show-envelope' ? 'envelope' : 'wez';
       state.layers[k] = true;
@@ -56939,6 +57420,7 @@ function renderClaimTab() {
   updateSpeedPanel();
   renderReachPanel();
   renderWezPanel();
+  renderSteelPanel();
   renderRouteCompare();
 }
 
@@ -56964,6 +57446,45 @@ function setTolerance(min) {
   $('#tol-note').textContent = t.note;
   updateReach();
   throttledReachPanels(true);
+}
+
+function renderSteelPanel() {
+  const target = hypoTarget();
+  if (!target || !$('#steel-out')) return;
+  const h = buildHypoTrack(target, state.claimDepart, state.interceptT);
+
+  $('#steel-out').innerHTML = `
+    <div class="leg hypo-leg">
+      <div class="leg-head">
+        <span class="leg-name" style="font-family:var(--mono)">${esc(HYPO.callsign)}</span>
+        <span class="leg-dist">${Math.round(h.miles)} mi · bearing ${Math.round(h.bearing)}°</span>
+      </div>
+      <div class="leg-speed ${h.withinTankedLimit ? 'v-hard' : 'v-impossible'}">
+        ${Math.round(h.mph).toLocaleString()}<small>mph required</small>
+      </div>
+      <div class="leg-mach">
+        Mach ${h.mach.toFixed(2)} · ${h.withinTankedLimit
+          ? 'inside the Mach 1.6 placard for a tanked jet'
+          : 'beyond the tanked placard — needs a clean jet, which has no external fuel'} ·
+        ${Math.round(h.ferryFraction * 100)}% of ferry range
+      </div>
+    </div>`;
+
+  $('#concessions').innerHTML = `
+    <p style="font-size:11.5px;color:var(--ink-faint);margin:12px 0 6px">
+      Granted simultaneously. The last three cannot be bought at any price.
+    </p>
+    ${CONCESSIONS.map((c) => `
+      <div class="concession ${c.blocking ? 'blocking' : 'free'}">
+        <div class="cn-grant">${esc(c.grant)}</div>
+        <div class="cn-detail">${esc(c.detail)}</div>
+        <div class="cn-cost">${esc(c.cost)}</div>
+      </div>`).join('')}
+    <div class="verdict" style="margin-top:12px">
+      <h3>${esc(VERDICT.headline)}</h3>
+      <p>${esc(VERDICT.body)}</p>
+      <div style="margin-top:8px">${srcTag(VERDICT.src)}</div>
+    </div>`;
 }
 
 function renderReachPanel() {
@@ -57003,9 +57524,23 @@ function renderReachPanel() {
     </div>
     ${rows}
     <div class="cmd-row" style="border-top:1px solid var(--line-2)">
-      <div class="t" style="color:${hex(FUEL_RING.color)}">never</div>
-      <div class="x"><strong style="color:var(--ink)">${esc(FUEL_RING.label)}</strong> — fixed at ${FUEL_RING.miles} mi.
-      Somerset County is <strong class="v-impossible">${t.fuel.radii.toFixed(1)}×</strong> that radius and never enters it, however long you wait. ${esc(FUEL_RING.note)}</div>
+      <div class="t" style="color:${hex(FUEL_RING.color)}">${FUEL_RING.miles} mi</div>
+      <div class="x"><strong style="color:var(--ink)">${esc(FUEL_RING.label)}</strong> — Somerset County is
+      <strong class="v-impossible">${t.fuel.radii.toFixed(1)}×</strong> this, or ${t.fuel.radiiWithTanks.toFixed(1)}× with tanks fitted.
+      This is an out-and-back figure.</div>
+    </div>
+    <div class="cmd-row">
+      <div class="t" style="color:${hex(HALF_FERRY_RING.color)}">${HALF_FERRY_RING.miles.toLocaleString()} mi</div>
+      <div class="x"><strong style="color:var(--ink)">Ferry half-radius</strong> — the furthest point he could reach and still
+      return on the same tanks. Somerset County is <strong class="v-routine">${Math.round(t.miles / HALF_FERRY_RING.miles * 100)}%</strong> of it,
+      so even the round trip is not excluded by fuel alone.</div>
+    </div>
+    <div class="cmd-row">
+      <div class="t" style="color:${hex(FERRY_RING.color)}">${FERRY_RING.miles.toLocaleString()} mi</div>
+      <div class="x"><strong style="color:var(--ink)">${esc(FERRY_RING.label)}</strong> — Somerset County is
+      <strong class="v-routine">${(t.fuel.ferryFraction * 100).toFixed(0)}%</strong> of this, well inside it.
+      <strong>Fuel does not rule out the Pennsylvania leg.</strong> What it rules out is the full 4,522-mile itinerary,
+      about 1.85× ferry range, which needs a refuelling stop. ${srcTag('press')}</div>
     </div>`;
 }
 
@@ -57457,6 +57992,11 @@ function renderLayersTab() {
         <span class="swatch" style="background:#ff4d4d"></span>
         <span>Sidewinder engagement zone</span><span class="meta">${AIM9.rMaxMi} mi</span>
       </label>
+      <label class="toggle">
+        <input type="checkbox" data-layer="hypo" ${state.layers.hypo ? 'checked' : ''}>
+        <span class="swatch" style="background:#fff"></span>
+        <span>${esc(HYPO.callsign)} — best-case track</span><span class="meta">constructed</span>
+      </label>
       <p style="font-size:11.5px;color:var(--ink-faint);margin-top:8px">
         Rings grow from the departure time set on the claim tab. The red ring around United 93 is the zone a shooter had to be inside; at national zoom it is a dot, which is the honest impression. ${srcTag('derived')}
       </p>
@@ -57503,6 +58043,7 @@ function renderLayersTab() {
     }
     else if (k === 'debris') map.setDebrisVisible(cb.checked);
     else if (k === 'critic') map.setCriticVisible(cb.checked);
+    else if (k === 'hypo') { map.setHypoVisible(cb.checked); if (cb.checked) updateHypo(); }
     else if (k === 'envelope' || k === 'wez') {
       map.setReachVisible(state.layers.envelope || state.layers.wez);
       updateReach();
@@ -57547,10 +58088,20 @@ function drawLabels() {
     }
   }
 
+  if (map.hypoGroup && map.hypoGroup.visible && map.hypoMarker.visible) {
+    const sm = map._hypoSample;
+    wanted.set('hypo', {
+      pos: map.hypoMarker.position,
+      text: `${HYPO.callsign} · CONSTRUCTED · ${Math.round((sm?.altFt ?? 0) / 100) * 100} ft`,
+      cls: 'flight', color: '#ffffff', rank: 1.2,
+    });
+  }
+
   if (map.reachGroup.visible && map.reachLabelAnchors) {
     for (const a of map.reachLabelAnchors) {
       wanted.set(`r:${a.text}`, {
-        pos: a.pos, text: a.text, cls: 'ring', color: hex(a.color), rank: 2.5,
+        pos: a.pos, candidates: a.candidates, text: a.text,
+        cls: 'ring', color: hex(a.color), rank: 2.5,
       });
     }
   }
@@ -57568,7 +58119,20 @@ function drawLabels() {
 
   const host = $('#labels');
   const W = host.clientWidth, H = host.clientHeight;
-  const taken = [];
+
+  /* Seed the declutter with the HUD and legend boxes so a label never lands
+     underneath them. They are HTML siblings, not part of the scene, so the
+     layout has no other way to know they are in the way. */
+  const hostBox = host.getBoundingClientRect();
+  const taken = ['#hud', '#legend', '#aside-toggle'].map((sel) => {
+    const el = $(sel);
+    if (!el) return null;
+    const r = el.getBoundingClientRect();
+    return {
+      l: r.left - hostBox.left - 6, r: r.right - hostBox.left + 6,
+      t: r.top - hostBox.top - 6, b: r.bottom - hostBox.top + 6,
+    };
+  }).filter(Boolean);
 
   const ordered = [...wanted.entries()].sort((a, b) => (a[1].rank ?? 9) - (b[1].rank ?? 9));
 
@@ -57583,7 +58147,20 @@ function drawLabels() {
     el.className = `map-label ${w.cls}`;
     if (w.color) el.style.color = w.color;
 
-    const s = map.toScreen(w.pos);
+    /* Ring labels try each candidate point around their ring and take the
+       first that lands on screen, so a ring whose preferred anchor is off the
+       edge still gets labelled somewhere the reader can see. */
+    let s = map.toScreen(w.pos);
+    if (w.candidates) {
+      const M = 8, fits = (q) => !q.behind
+        && q.x > M && q.y > M && q.x < W - M && q.y < H - M;
+      if (!fits(s)) {
+        for (const c of w.candidates) {
+          const q = map.toScreen(c);
+          if (fits(q)) { s = q; break; }
+        }
+      }
+    }
     if (s.behind || s.x < -60 || s.y < -30 || s.x > W + 60 || s.y > H + 30) {
       el.style.display = 'none';
       continue;

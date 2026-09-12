@@ -27,7 +27,7 @@ export const ASSUMPTIONS = [
 export function classify(mph) {
   if (mph <= F16.cruiseMph) return { key: 'routine', label: 'Routine cruise', rank: 0 };
   if (mph <= F16.maxSeaLevelMph) return { key: 'hard', label: 'Hard, sustained — burns fuel fast', rank: 1 };
-  if (mph <= F16.maxAltitudeMph) return { key: 'dash', label: 'Beyond any sustainable cruise', rank: 2 };
+  if (mph <= F16.maxWithTanksMph) return { key: 'dash', label: 'Beyond any sustainable cruise', rank: 2 };
   return { key: 'impossible', label: 'Exceeds the airframe outright', rank: 3 };
 }
 
@@ -82,9 +82,9 @@ function claimFindings(dash, back, deliver, totalMi) {
   });
 
   f.push({
-    weight: 'hard',
-    title: 'Fuel, not speed, is the binding constraint',
-    text: `The F-16's unrefuelled combat radius is about ${F16.combatRadiusMi} miles. The dash leg alone is ${dash.radiiSpent.toFixed(1)}x that radius, one way. Even flown perfectly it needs tanker support, and air-refuelling tracks are logged, scheduled and crewed — they are not the kind of thing that leaves no trace.`,
+    weight: 'soft',
+    title: 'Fuel is weaker than it first looks — and this app overstated it',
+    text: `An earlier version of this analysis called fuel the binding constraint. With external tanks it is not. Two 370-gallon wing tanks and a 300-gallon centreline roughly double the fuel and give a one-way ferry range near ${F16.ferryRangeMi.toLocaleString()} miles, so the ${Math.round(dash.miles)}-mile run to Pennsylvania is about ${Math.round(dash.miles / F16.ferryRangeMi * 100)}% of it — an ordinary transit. Fuel only bites on the full itinerary, which needs a refuelling stop somewhere.`,
   });
 
   f.push({

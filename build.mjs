@@ -41,7 +41,7 @@ const read = (p) => readFileSync(new URL(p, root), 'utf8');
    sort nobody reads. */
 const MODULES = [
   'geo', 'topo', 'projection', 'military', 'critic',
-  'data', 'conflicts', 'analysis', 'reachability', 'map3d', 'main',
+  'data', 'conflicts', 'analysis', 'reachability', 'steelman', 'map3d', 'main',
 ];
 
 const RX = {

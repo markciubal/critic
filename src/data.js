@@ -73,7 +73,7 @@ export const FLIGHTS = [
     reg: 'N334AA',
     from: 'KBOS', to: 'KLAX',
     souls: 92,
-    color: 0xff5964,
+    color: 0xff8c7a,
     src: 'recon',
     path: [
       [at(7, 59, 0), 42.3656, -71.0096, 0],
@@ -341,13 +341,21 @@ export const DOC_ROUTE = {
 export const F16 = {
   model: 'F-16C/D Fighting Falcon (General Dynamics / Lockheed Martin)',
   cruiseMph: 577,
-  maxSeaLevelMph: 915,       // ~Mach 1.2 at sea level
-  maxAltitudeMph: 1320,      // ~Mach 2.0 at 40,000 ft, clean
-  combatRadiusMi: 340,       // hi-lo-hi with 2x2000lb bombs; air-to-air profile similar order
-  ferryRangeMi: 2277,        // with external tanks, no reserves for combat
+  maxSeaLevelMph: 915,       // ~Mach 1.2 at sea level, CLEAN
+  maxAltitudeMph: 1320,      // ~Mach 2.0 at 40,000 ft, CLEAN — not available here
+  maxWithTanksMph: 1050,     // ~Mach 1.6 at altitude: the placarded limit with tanks
+  combatRadiusMi: 340,       // unrefuelled, no external tanks
+  combatRadiusTanksMi: 578,  // ~70% more with external tanks
+  ferryRangeMi: 2450,        // one way, max external fuel, no combat allowance
+  ferryRangeAltMi: 2277,     // a lower published figure; see the discrepancy register
+  tanks: '2 x 370 US gal on the wing stations plus 1 x 300 gal centreline — about 1,040 gallons external, which roughly doubles the fuel.',
+  placard: '600 KIAS or Mach 1.6, whichever is lower, with that tank fit and wingtip AIM-9s.',
   notes: [
     { text: 'Mach 2.0 is a clean-configuration dash number held for minutes, not a cruise speed. Carrying external tanks — which any transcontinental sortie requires — caps you far below it.', src: 'press' },
-    { text: 'Unrefuelled combat radius is roughly 340 miles. Anything substantially beyond that needs tanker support, which leaves its own paper trail in air-refuelling records.', src: 'press' },
+    { text: 'External tanks change this picture and an earlier version of this app understated them. Two 370-gallon wing tanks and a 300-gallon centreline add about 1,040 gallons — roughly doubling the fuel — for something like a 70% increase in operational radius, and a one-way ferry range around 2,450 miles.', src: 'press' },
+    { text: 'So fuel does NOT rule out the Fargo-to-Pennsylvania leg. At 1,012 miles that is about 41% of ferry range: an ordinary transit for a tanked fighter. What fuel rules out is the whole claimed itinerary — 4,522 miles is roughly 1.85x maximum ferry range, so it needs at least one refuelling stop somewhere.', src: 'derived' },
+    { text: 'Tanks cost speed. That fit, with wingtip Sidewinders, is placarded to 600 KIAS or Mach 1.6, whichever is lower — so the Mach 2.0 figure above is unavailable to any aircraft configured for this mission, and the fastest envelope drawn on the map uses Mach 1.6 instead.', src: 'press' },
+    { text: 'Tanks do not cost armament, and it would be wrong to argue otherwise. Tanks occupy the wing and centreline stations; Sidewinders live on the wingtip rails. The published placard above explicitly describes carrying both at once.', src: 'press' },
     { text: 'Carrying a passenger requires a two-seat F-16B/D. A civilian in the back seat of a jet that then prosecutes an air-to-air kill is its own separate problem for the claim. This inference is the app\'s, not a sourced finding.', src: 'derived' },
   ],
 };

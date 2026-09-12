@@ -32,7 +32,7 @@ export const MIL_FLIGHTS = [
     unit: '102nd Fighter Wing, Massachusetts ANG',
     base: 'Otis ANGB, Cape Cod',
     armed: 'Armed',
-    color: 0xc9a6ff,
+    color: 0xb9a6ff,
     src: 'recon',
     path: [
       [at(8, 53, 0), 41.6584, -70.5214, 0],

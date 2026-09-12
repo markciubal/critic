@@ -5,26 +5,37 @@
    ========================================================================== */
 
 :root {
-  --bg:        #070a0f;
-  --bg-2:      #0c1119;
-  --bg-3:      #121926;
-  --line:      #1e2a3a;
-  --line-2:    #2b3a4e;
-  --ink:       #dfe8f2;
-  --ink-dim:   #8fa2b8;
-  --ink-faint: #5e7288;
+  /* Navy, white and red. Restrained on purpose — the subject is a memorial
+     one, so the flag palette is used at the weight of an official document
+     rather than a celebration. Colour still does the same job it always did
+     here: telling evidence apart from allegation. */
+  --bg:        #060b16;
+  --bg-2:      #0a1324;
+  --bg-3:      #101d33;
+  --line:      #1b2b47;
+  --line-2:    #2b4166;
+  --ink:       #eef3fa;
+  --ink-dim:   #a2b5cf;
+  --ink-faint: #6d84a6;
 
-  --aa11:  #ff5964;
-  --ua175: #ffa23e;
-  --aa77:  #6fd3ff;
+  /* Flag colours. --critic is the loudest thing on the page by design: the
+     withheld messages are the subject, so they get the red. */
+  --flag-red:  #c8102e;
+  --flag-blue: #0a3161;
+  --critic:    #ff1f3d;
+  --ui:        #4a8fe7;
+
+  /* Aircraft. AA11 moved from red to coral so nothing competes with CRITIC. */
+  --aa11:  #ff8c7a;
+  --ua175: #ffbe4d;
+  --aa77:  #74c7ff;
   --ua93:  #8cf27a;
-  --mil:   #c9a6ff;
+  --mil:   #b9a6ff;
   --claim: #ffd447;
-  --critic:#ff7ad9;
   --doc:   #35d6a4;
   --debris:#ff8a5c;
 
-  --topbar-h: 58px;
+  --topbar-h: 62px;
   --timeline-h: 118px;
   --panel-w: 430px;
 
@@ -61,7 +72,7 @@ body.panel-hidden #panel { opacity: 0; pointer-events: none; }
 .boot-inner { text-align: center; color: var(--ink-dim); }
 .spinner {
   width: 30px; height: 30px; margin: 0 auto 14px;
-  border: 2px solid var(--line-2); border-top-color: var(--aa77);
+  border: 2px solid var(--line-2); border-top-color: var(--ui);
   border-radius: 50%; animation: spin 0.9s linear infinite;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
@@ -89,7 +100,7 @@ body.panel-hidden #panel { opacity: 0; pointer-events: none; }
   background: var(--bg-3); border: 1px solid var(--line-2); color: var(--ink);
   font-size: 13px;
 }
-.icon-btn:hover { border-color: var(--aa77); }
+.icon-btn:hover { border-color: var(--ui); }
 .rate-group { display: flex; border: 1px solid var(--line-2); border-radius: 7px; overflow: hidden; }
 .rate-group button {
   background: var(--bg-3); border: 0; color: var(--ink-dim); cursor: pointer;
@@ -97,12 +108,12 @@ body.panel-hidden #panel { opacity: 0; pointer-events: none; }
   border-right: 1px solid var(--line-2);
 }
 .rate-group button:last-child { border-right: 0; }
-.rate-group button.on { background: var(--aa77); color: #05131c; font-weight: 700; }
+.rate-group button.on { background: var(--ui); color: #04101f; font-weight: 700; }
 .ghost-btn {
   background: transparent; border: 1px solid var(--line-2); color: var(--ink-dim);
   border-radius: 7px; padding: 7px 11px; cursor: pointer; font-size: 11px;
 }
-.ghost-btn:hover { color: var(--ink); border-color: var(--aa77); }
+.ghost-btn:hover { color: var(--ink); border-color: var(--ui); }
 
 /* --- stage --------------------------------------------------------------- */
 #stage { grid-area: stage; position: relative; overflow: hidden; }
@@ -164,7 +175,7 @@ body.panel-hidden #aside-toggle { transform: translateY(-50%) rotate(180deg); bo
   color: var(--claim); vertical-align: super;
 }
 #tabs button:hover { color: var(--ink-dim); }
-#tabs button.on { color: var(--ink); border-bottom-color: var(--aa77); background: rgba(111,211,255,.05); }
+#tabs button.on { color: var(--ink); border-bottom-color: var(--ui); background: rgba(74,143,231,.09); }
 
 .tab-body { overflow-y: auto; padding: 14px; flex: 1 1 auto; }
 .tab-body.hidden { display: none; }
@@ -206,7 +217,7 @@ body.panel-hidden #aside-toggle { transform: translateY(-50%) rotate(180deg); bo
 }
 .ev:hover { background: var(--bg-3); }
 .ev.future { opacity: .34; }
-.ev.now { background: rgba(111,211,255,.09); border-left-color: var(--aa77); }
+.ev.now { background: rgba(74,143,231,.12); border-left-color: var(--ui); }
 .ev-t { font-family: var(--mono); font-size: 11.5px; color: var(--ink-faint); padding-top: 1px; }
 .ev.now .ev-t, .ev.past .ev-t { color: var(--ink-dim); }
 .ev-label { font-size: 10px; letter-spacing: .4px; text-transform: uppercase; margin-bottom: 3px; font-weight: 650; }
@@ -276,7 +287,7 @@ ul.plain li { font-size: 12.5px; color: var(--ink-dim); line-height: 1.55; margi
   font-size: 11px; padding: 5px 9px; border-radius: 6px; cursor: pointer;
   background: var(--bg); border: 1px solid var(--line-2); color: var(--ink-dim);
 }
-.chip:hover { color: var(--ink); border-color: var(--aa77); }
+.chip:hover { color: var(--ink); border-color: var(--ui); }
 
 /* --- layers --------------------------------------------------------------- */
 .toggle {
@@ -284,7 +295,7 @@ ul.plain li { font-size: 12.5px; color: var(--ink-dim); line-height: 1.55; margi
   border-radius: 7px; cursor: pointer; font-size: 12.5px;
 }
 .toggle:hover { background: var(--bg-3); }
-.toggle input { accent-color: var(--aa77); width: 15px; height: 15px; cursor: pointer; }
+.toggle input { accent-color: var(--ui); width: 15px; height: 15px; cursor: pointer; }
 .toggle .swatch { width: 10px; height: 10px; border-radius: 2px; flex: 0 0 auto; }
 .toggle .meta { margin-left: auto; font-family: var(--mono); font-size: 10px; color: var(--ink-faint); }
 
@@ -377,7 +388,7 @@ ul.plain li { font-size: 12.5px; color: var(--ink-dim); line-height: 1.55; margi
 
 /* --- follow toggle --------------------------------------------------------- */
 #btn-follow.on {
-  color: #05131c; background: var(--aa77); border-color: var(--aa77); font-weight: 650;
+  color: #04101f; background: var(--ui); border-color: var(--ui); font-weight: 650;
 }
 #btn-follow.on::before { content: '\25C9\00a0'; }
 #btn-follow:not(.on)::before { content: '\25CB\00a0'; opacity: .55; }
@@ -398,7 +409,7 @@ ul.plain li { font-size: 12.5px; color: var(--ink-dim); line-height: 1.55; margi
 .cflag.bad:hover { background: rgba(255,89,100,.2); }
 
 .card.conflict { border-left: 2px solid var(--line-2); }
-.card.conflict.cf-hit { border-left-color: var(--aa77); box-shadow: 0 0 0 1px rgba(111,211,255,.35); }
+.card.conflict.cf-hit { border-left-color: var(--ui); box-shadow: 0 0 0 1px rgba(74,143,231,.45); }
 
 .cf-head { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; }
 .cf-tags { margin-left: auto; font-family: var(--mono); font-size: 9.5px; color: var(--ink-faint); }
@@ -491,7 +502,7 @@ ul.plain li { font-size: 12.5px; color: var(--ink-dim); line-height: 1.55; margi
 }
 .alt-group button:last-child { border-right: 0; }
 .alt-group button:hover { color: var(--ink); }
-.alt-group button.on { background: var(--aa77); color: #05131c; font-weight: 700; }
+.alt-group button.on { background: var(--ui); color: #04101f; font-weight: 700; }
 #alt-note { line-height: 1.45; }
 #alt-note b { color: var(--claim); font-family: var(--mono); }
 
@@ -505,3 +516,79 @@ ul.plain li { font-size: 12.5px; color: var(--ink-dim); line-height: 1.55; margi
   letter-spacing: .2px;
 }
 #tol-group { margin-top: 2px; }
+
+
+/* --- flag rule -------------------------------------------------------------
+   A three-band rule under the header. It is the only decorative element in
+   the app and it is three pixels tall, which is about the right weight for
+   the subject. */
+#topbar { position: relative; }
+#topbar::after {
+  content: ''; position: absolute; left: 0; right: 0; bottom: -1px; height: 3px;
+  background: linear-gradient(90deg,
+    var(--flag-blue) 0 34%, #f7f9fc 34% 67%, var(--flag-red) 67% 100%);
+  opacity: .85;
+}
+
+/* --- CRITIC: red and unmistakable ------------------------------------------
+   DIRNSA CRITIC 1-2001 is what this app is named for and built around, so it
+   gets the strongest treatment on the page: red everywhere, a lit tab, and a
+   highlighted band on its timeline entries. */
+
+#tabs button[data-tab="critic"] { color: var(--critic); font-weight: 650; letter-spacing: .3px; }
+#tabs button[data-tab="critic"]:hover { color: #ff5c72; }
+#tabs button[data-tab="critic"].on {
+  color: var(--critic); border-bottom-color: var(--critic);
+  background: rgba(255,31,61,.10);
+}
+
+/* Timeline entries for the CRITIC chain. */
+.ev.critic-ev {
+  border-left-color: var(--critic);
+  background: linear-gradient(90deg, rgba(255,31,61,.14), rgba(255,31,61,.03));
+}
+.ev.critic-ev .ev-label { color: var(--critic) !important; letter-spacing: .7px; }
+.ev.critic-ev.now {
+  background: linear-gradient(90deg, rgba(255,31,61,.26), rgba(255,31,61,.06));
+  border-left-color: var(--critic);
+  box-shadow: inset 0 0 0 1px rgba(255,31,61,.35);
+}
+.ev.critic-ev .ev-text { color: var(--ink); }
+
+/* Timeline scrubber ticks for CRITIC messages. */
+.emark.critic-mark { width: 3px; height: 26px; top: 0; opacity: 1; box-shadow: 0 0 8px var(--critic); }
+
+.critic-msg { border-left-width: 3px; border-left-color: var(--critic); }
+.dtg { color: var(--critic); font-weight: 600; }
+.redact { border-color: rgba(255,31,61,.45); background: rgba(255,31,61,.07); }
+.glimpse { border-color: rgba(255,31,61,.45); background: rgba(255,31,61,.05); }
+.kernel-card { border-color: #2c5f47; }
+
+
+/* --- the steelman ----------------------------------------------------------
+   Deliberately styled as a construct: white, dashed borders, and a standing
+   warning. It must never read as a record. */
+
+.card.steel { border-color: var(--line-2); background: linear-gradient(180deg, rgba(255,255,255,.035), transparent); }
+.hypo-warn {
+  border: 1px dashed rgba(255,255,255,.45); border-radius: 6px;
+  padding: 8px 10px; font-size: 11.5px; color: var(--ink-dim);
+  background: rgba(255,255,255,.04);
+}
+.hypo-warn strong { color: #fff; letter-spacing: .3px; }
+.leg.hypo-leg { border-style: dashed; border-color: rgba(255,255,255,.4); background: rgba(255,255,255,.03); }
+.leg.hypo-leg .leg-name { color: #fff; }
+
+.concession {
+  padding: 8px 0 8px 10px; border-left: 2px solid var(--line-2);
+  border-bottom: 1px solid var(--line);
+}
+.concession.free { border-left-color: var(--doc); }
+.concession.blocking { border-left-color: var(--flag-red); background: rgba(200,16,46,.07); }
+.cn-grant { font-size: 12.5px; color: var(--ink); font-weight: 600; }
+.concession.blocking .cn-grant::after {
+  content: ' — cannot be granted'; color: var(--critic); font-weight: 400; font-size: 11px;
+}
+.cn-detail { font-size: 11.5px; color: var(--ink-dim); line-height: 1.45; margin-top: 3px; }
+.cn-cost { font-size: 11.5px; color: var(--ink-faint); line-height: 1.45; margin-top: 3px; font-style: italic; }
+.concession.blocking .cn-cost { color: #ffb3bd; font-style: normal; }

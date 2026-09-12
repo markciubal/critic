@@ -36,17 +36,67 @@ export const BANDS = [
     note: 'What a fighter actually transits at. Anything faster is bought with fuel.' },
   { key: 'sustained', label: 'Max, low altitude', mph: F16.maxSeaLevelMph, color: 0xffd447,
     note: 'About Mach 1.2 down low. Sustainable for minutes, not hours.' },
-  { key: 'dash', label: 'Max, high altitude', mph: F16.maxAltitudeMph, color: 0xff8a5c,
-    note: 'Mach 2.0 clean. A dash number, and unavailable with the external tanks a transcontinental sortie requires.' },
+  { key: 'dash', label: 'Max with tanks', mph: F16.maxWithTanksMph, color: 0xff8a5c,
+    note: 'About Mach 1.6 — the placarded limit with two wing tanks, a centreline tank and wingtip Sidewinders.' },
+  { key: 'clean', label: 'Max clean', mph: F16.maxAltitudeMph, color: 0xffffff,
+    note: 'Mach 2.0 at altitude, and nobody saw anything, so it cannot be excluded on observation. But it is a CLEAN number: clean means no external tanks, which means the 340-mile ring is the one that applies. The speed and the range are bought with the same stations. You can have either.' },
 ];
 
-/* The fuel ring does not grow with the clock. That is the point of it. */
+/* The trade the two fastest bands describe, stated once so it is not buried
+   in a tooltip. It is the most useful single fact about the airframe here. */
+export const CONFIG_TRADE = {
+  title: 'Speed and range are the same stations',
+  clean: {
+    label: 'Clean',
+    topMph: F16.maxAltitudeMph,
+    radiusMi: F16.combatRadiusMi,
+    note: 'Mach 2.0 available. No external fuel, so the 340-mile combat radius applies and Somerset County is 3.0x it.',
+  },
+  tanked: {
+    label: 'With tanks',
+    topMph: F16.maxWithTanksMph,
+    radiusMi: F16.combatRadiusTanksMi,
+    note: 'Ferry range near 2,450 miles, so the distance is easy. Placarded to Mach 1.6, so the top band is not available.',
+  },
+  reading: 'No single configuration gives both. The claim needs the range of a tanked jet and, if it is to outrun anything, the speed of a clean one. Nobody observed the aircraft, so neither can be excluded by eyewitness — but they cannot both be true of the same airframe on the same sortie.',
+  src: 'derived',
+};
+
+/* Two fuel limits, because one of them was the wrong yardstick.
+
+   An earlier version of this app drew only the combat radius and said Somerset
+   County "never enters it, however long you wait". True of a combat radius —
+   out, fight, and back — and misleading about a one-way transit by a fighter
+   carrying drop tanks, which is what the claim actually needs. Both are drawn
+   now so the reader picks the right one rather than being handed the
+   restrictive one by default.
+
+   Neither grows with the clock. That remains the point of them: time buys
+   distance, fuel does not. */
 export const FUEL_RING = {
   key: 'fuel',
-  label: 'Unrefuelled combat radius',
+  label: 'Combat radius, no tanks',
   miles: F16.combatRadiusMi,
   color: 0xff5964,
-  note: 'Fixed at roughly 340 miles regardless of how long you wait. Time buys distance; fuel does not.',
+  note: 'Out and back with no external fuel. About 578 miles with tanks fitted.',
+};
+
+export const FERRY_RING = {
+  key: 'ferry',
+  label: 'Ferry range with tanks, one way',
+  miles: F16.ferryRangeMi,
+  color: 0xff8a5c,
+  note: 'One way, maximum external fuel, no combat allowance and no reserve. Somerset County sits well inside this, which is why fuel does not rule out the Pennsylvania leg on its own.',
+};
+
+/* Half of ferry range is the more useful number of the two, because it is the
+   furthest point you can reach and still come back on the same tanks. */
+export const HALF_FERRY_RING = {
+  key: 'halfferry',
+  label: 'Ferry half-radius — furthest point he could still return from',
+  miles: Math.round(F16.ferryRangeMi / 2),
+  color: 0xffbe4d,
+  note: 'Out and back on one tankful, with nothing spent on combat and no reserve. Somerset County is inside this too, at about 83% of it — so even the round trip is not excluded by fuel alone.',
 };
 
 /* --- ring geometry --------------------------------------------------------
@@ -161,6 +211,9 @@ export function shanksvilleTest(departEDT) {
     fuel: {
       reachable: miles <= FUEL_RING.miles,
       radii: miles / FUEL_RING.miles,
+      radiiWithTanks: miles / F16.combatRadiusTanksMi,
+      ferryFraction: miles / FERRY_RING.miles,
+      insideFerry: miles <= FERRY_RING.miles,
     },
   };
 }
