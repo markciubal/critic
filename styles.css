@@ -41,7 +41,11 @@
   --panel-w: 430px;
 
   --mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
-  --sans: ui-sans-serif, system-ui, "Segoe UI", Inter, Roboto, sans-serif;
+  /* Inter for interface and body, Poppins for display only, borrowed from
+     Truth Social. Both carry a real fallback stack so the page holds its
+     shape if the webfonts never arrive. */
+  --sans: Inter, ui-sans-serif, system-ui, "Segoe UI", Roboto, sans-serif;
+  --display: Poppins, Inter, ui-sans-serif, system-ui, "Segoe UI", sans-serif;
 }
 
 * { box-sizing: border-box; }
@@ -147,7 +151,7 @@ body.panel-hidden #panel { opacity: 0; pointer-events: none; }
   .flag90 i { animation: none; }
 }
 .brand h1 {
-  margin: 0; font-size: 15px; font-weight: 650; letter-spacing: .2px;
+  margin: 0; font-size: 15px; font-weight: 800; letter-spacing: .2px;
   color: #fff;
 }
 /* Lifted off --ink-faint: that colour was chosen against the near-black page
@@ -156,7 +160,7 @@ body.panel-hidden #panel { opacity: 0; pointer-events: none; }
    first: when the masthead ellipsizes on a phone it is the half that survives. */
 .brand h1 { display: flex; align-items: baseline; gap: 8px; }
 .wordmark {
-  font-family: var(--mono); font-size: 14px; font-weight: 700; letter-spacing: -.2px;
+  font-size: 14px; letter-spacing: -.2px;
   color: #7fd0ff; text-decoration: none; flex: 0 0 auto;
 }
 .wordmark:hover { text-decoration: underline; }
@@ -168,7 +172,7 @@ body.panel-hidden #panel { opacity: 0; pointer-events: none; }
 
 .clock-wrap { margin-left: auto; text-align: right; }
 #clock {
-  font-family: var(--mono); font-size: 24px; font-weight: 600;
+  font-family: var(--mono); font-size: 24px; font-weight: 700;
   letter-spacing: 1px; line-height: 1; font-variant-numeric: tabular-nums;
   color: #fff; text-shadow: 0 1px 10px rgba(255,255,255,.14);
 }
@@ -303,7 +307,7 @@ body.panel-hidden #panel { opacity: 0; pointer-events: none; }
 }
 .mode-switch button {
   flex: 1; background: var(--bg-3); border: 0; border-right: 1px solid var(--line-2);
-  color: var(--ink-dim); cursor: pointer; padding: 8px 6px; font-size: 12px; font-weight: 600;
+  color: var(--ink-dim); cursor: pointer; padding: 8px 6px; font-size: 12px; font-weight: 700;
 }
 .mode-switch button:last-child { border-right: 0; }
 .mode-switch button.on { background: var(--flag-blue); color: #fff; box-shadow: inset 0 -2px 0 var(--flag-red); }
@@ -375,11 +379,11 @@ body.panel-hidden #aside-toggle .at-glyph { display: inline-block; transform: ro
 }
 .card h3 {
   margin: 0 0 8px; font-size: 11px; text-transform: uppercase;
-  letter-spacing: .8px; color: var(--ink-dim); font-weight: 650;
+  letter-spacing: .8px; color: var(--ink-dim); font-weight: 800;
 }
 .card p { margin: 0 0 9px; line-height: 1.55; color: var(--ink-dim); font-size: 12.5px; }
 .card p:last-child { margin-bottom: 0; }
-.card p strong { color: var(--ink); font-weight: 600; }
+.card p strong { color: var(--ink); font-weight: 700; }
 
 /* provenance badges — the whole point of the colour system */
 .src {
@@ -411,7 +415,7 @@ body.panel-hidden #aside-toggle .at-glyph { display: inline-block; transform: ro
 .ev.now { background: rgba(74,143,231,.12); border-left-color: var(--ui); }
 .ev-t { font-family: var(--mono); font-size: 11.5px; color: var(--ink-faint); padding-top: 1px; }
 .ev.now .ev-t, .ev.past .ev-t { color: var(--ink-dim); }
-.ev-label { font-size: 10px; letter-spacing: .4px; text-transform: uppercase; margin-bottom: 3px; font-weight: 650; }
+.ev-label { font-size: 10px; letter-spacing: .4px; text-transform: uppercase; margin-bottom: 3px; font-weight: 800; }
 .ev-text { font-size: 12.5px; line-height: 1.5; color: var(--ink-dim); }
 .ev.claim-ev { border-left-color: var(--claim); background: rgba(255,212,71,.06); }
 
@@ -429,9 +433,9 @@ body.panel-hidden #aside-toggle .at-glyph { display: inline-block; transform: ro
   margin-bottom: 9px; background: rgba(255,255,255,.012);
 }
 .leg-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 7px; }
-.leg-name { font-size: 12px; color: var(--ink); font-weight: 600; }
+.leg-name { font-size: 12px; color: var(--ink); font-weight: 700; }
 .leg-dist { font-family: var(--mono); font-size: 11px; color: var(--ink-faint); }
-.leg-speed { font-family: var(--mono); font-size: 22px; font-weight: 650; line-height: 1; }
+.leg-speed { font-family: var(--mono); font-size: 22px; font-weight: 800; line-height: 1; }
 .leg-speed small { font-size: 11px; font-weight: 400; color: var(--ink-faint); margin-left: 4px; }
 .leg-mach { font-family: var(--mono); font-size: 11px; color: var(--ink-dim); margin-top: 3px; }
 
@@ -453,7 +457,7 @@ input[type=range] { width: 100%; }
 
 .finding { border-top: 1px solid var(--line); padding: 10px 0; }
 .finding:first-child { border-top: 0; padding-top: 2px; }
-.finding h4 { margin: 0 0 5px; font-size: 12.5px; color: var(--ink); font-weight: 600; }
+.finding h4 { margin: 0 0 5px; font-size: 12.5px; color: var(--ink); font-weight: 700; }
 .finding.hard h4::before { content: '■ '; color: var(--aa11); }
 .finding.soft h4::before { content: '□ '; color: var(--ink-faint); }
 .finding p { margin: 0; font-size: 12.5px; line-height: 1.55; color: var(--ink-dim); }
@@ -488,7 +492,7 @@ ul.plain li { font-size: 12.5px; color: var(--ink-dim); line-height: 1.55; margi
   display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
   margin: 18px 0 6px; padding-top: 12px; border-top: 1px solid var(--line);
 }
-.chip-next { background: var(--flag-blue); border-color: #2d5f9e; color: #fff; font-weight: 600; padding: 8px 12px; }
+.chip-next { background: var(--flag-blue); border-color: #2d5f9e; color: #fff; font-weight: 700; padding: 8px 12px; }
 .chip-next:hover { border-color: var(--ui); color: #fff; }
 
 /* A section anchor inside a tab (The crash, What was airborne). */
@@ -624,7 +628,7 @@ details.cd[open] > summary { margin-bottom: 8px; }
 
 /* --- follow toggle --------------------------------------------------------- */
 #btn-follow.on {
-  color: #04101f; background: var(--ui); border-color: var(--ui); font-weight: 650;
+  color: #04101f; background: var(--ui); border-color: var(--ui); font-weight: 800;
 }
 #btn-follow.on::before { content: '\25C9\00a0'; }
 #btn-follow:not(.on)::before { content: '\25CB\00a0'; opacity: .55; }
@@ -658,7 +662,7 @@ details.cd[open] > summary { margin-bottom: 8px; }
 .cf-status.bad  { color: var(--aa11);  border-color: #6b2b2b; background: rgba(255,89,100,.08); }
 .cf-status.warn { color: var(--claim); border-color: #6b5713; background: rgba(255,212,71,.08); }
 
-.cf-subject { margin: 0 0 6px; font-size: 13px; color: var(--ink); font-weight: 600; line-height: 1.4; }
+.cf-subject { margin: 0 0 6px; font-size: 13px; color: var(--ink); font-weight: 700; line-height: 1.4; }
 .cf-why { margin: 0 0 10px; font-size: 12px; color: var(--ink-faint); line-height: 1.5; }
 
 .cf-readings { border-top: 1px solid var(--line); }
@@ -709,7 +713,7 @@ details.cd[open] > summary { margin-bottom: 8px; }
     var(--ink) 66% 100%);
   opacity: .55;
 }
-.redact b { color: var(--critic); font-weight: 600; }
+.redact b { color: var(--critic); font-weight: 700; }
 
 .critic-ctx {
   font-size: 12px; color: var(--ink-faint); line-height: 1.5;
@@ -799,7 +803,7 @@ details.cd[open] > summary { margin-bottom: 8px; }
 .emark.critic-mark { width: 3px; height: 26px; top: 0; opacity: 1; box-shadow: 0 0 8px var(--critic); }
 
 .critic-msg { border-left-width: 3px; border-left-color: var(--critic); }
-.dtg { color: var(--critic); font-weight: 600; }
+.dtg { color: var(--critic); font-weight: 700; }
 .redact { border-color: rgba(255,31,61,.45); background: rgba(255,31,61,.07); }
 .glimpse { border-color: rgba(255,31,61,.45); background: rgba(255,31,61,.05); }
 .kernel-card { border-color: #2c5f47; }
@@ -825,7 +829,7 @@ details.cd[open] > summary { margin-bottom: 8px; }
 }
 .concession.free { border-left-color: var(--doc); }
 .concession.blocking { border-left-color: var(--flag-red); background: rgba(200,16,46,.07); }
-.cn-grant { font-size: 12.5px; color: var(--ink); font-weight: 600; }
+.cn-grant { font-size: 12.5px; color: var(--ink); font-weight: 700; }
 .concession.blocking .cn-grant::after {
   content: ' — cannot be granted'; color: var(--critic); font-weight: 400; font-size: 11px;
 }
@@ -840,14 +844,14 @@ details.cd[open] > summary { margin-bottom: 8px; }
 
 /* Provenance lines: the status of a printed figure, next to the figure. */
 .prov { font-size: 11px; color: var(--ink-faint); line-height: 1.45; margin: 4px 0 0; }
-.prov b { color: var(--ink-dim); font-weight: 600; }
+.prov b { color: var(--ink-dim); font-weight: 700; }
 .prov-block { margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--line); }
 .prov-head {
   margin: 0; font-size: 9px; letter-spacing: .6px; text-transform: uppercase;
   font-family: var(--mono); color: var(--ink-faint);
 }
 .cn-note { font-size: 11px; color: var(--ink-faint); line-height: 1.45; margin-top: 3px; }
-.cn-note b { color: var(--ink-dim); font-weight: 600; }
+.cn-note b { color: var(--ink-dim); font-weight: 700; }
 .cn-cost { font-size: 11.5px; color: var(--ink-faint); line-height: 1.45; margin-top: 3px; font-style: italic; }
 .concession.blocking .cn-cost { color: #ffb3bd; font-style: normal; }
 
@@ -889,7 +893,7 @@ details.cd[open] > summary { margin-bottom: 8px; }
 }
 .call-row.cellular { border-left-color: var(--claim); background: rgba(255,212,71,.05); }
 .cr-t { font-family: var(--mono); font-size: 11.5px; color: var(--ink-faint); }
-.cr-who { font-size: 12.5px; color: var(--ink); font-weight: 600; }
+.cr-who { font-size: 12.5px; color: var(--ink); font-weight: 700; }
 .cr-to { color: var(--ink-dim); font-weight: 400; }
 .cr-type {
   font-family: var(--mono); font-size: 9px; letter-spacing: .5px;
@@ -1180,7 +1184,7 @@ body.touring #legend { opacity: 0; pointer-events: none; transition: opacity .25
    Colour by who is doing the knowing, because the split between the civil side
    and the military side is the entire argument. The NEADS counter is styled
    hardest: an absence nobody can see is not evidence of anything. */
-.map-label.aware-line { font-weight: 600; letter-spacing: .3px; padding: 3px 7px; }
+.map-label.aware-line { font-weight: 700; letter-spacing: .3px; padding: 3px 7px; }
 .map-label.aware-line.aw-civil    { background: #0e3a2c; border-color: #35d6a4; color: #8ff0cd; }
 .map-label.aware-line.aw-military { background: #3a0e17; border-color: #ff1f3d; color: #ffb3bf; }
 .map-label.aware-line.aw-exec     { background: #3a320e; border-color: #ffd447; color: #ffe9a8; }
@@ -1207,13 +1211,13 @@ body.touring #legend { opacity: 0; pointer-events: none; transition: opacity .25
   letter-spacing: -.2px;
 }
 .card.bluf p { font-size: 13.5px; line-height: 1.62; }
-.card.bluf .bluf-answer { font-size: 15px; color: var(--ink); font-weight: 600; }
+.card.bluf .bluf-answer { font-size: 15px; color: var(--ink); font-weight: 700; }
 .card.bluf details.more p { font-size: 13px; }
 .bluf-note {
   margin-top: 11px; padding-top: 10px; border-top: 1px solid var(--line-2);
   font-size: 12px; color: var(--ink-dim);
 }
-.chip-go { background: var(--critic); border-color: var(--critic); color: #fff; font-weight: 600; }
+.chip-go { background: var(--critic); border-color: var(--critic); color: #fff; font-weight: 700; }
 .chip-go:hover { background: #ff4560; }
 
 .sec-head {
@@ -1240,7 +1244,7 @@ body.touring #legend { opacity: 0; pointer-events: none; transition: opacity .25
   flex: none; font: 700 9.5px/1.6 var(--mono); letter-spacing: 1.1px;
   text-transform: uppercase; color: var(--ui);
 }
-.wt-head { flex: 1 1 auto; font-size: 14.5px; line-height: 1.35; color: var(--ink); font-weight: 600; }
+.wt-head { flex: 1 1 auto; font-size: 14.5px; line-height: 1.35; color: var(--ink); font-weight: 700; }
 .wt-more { flex: none; width: 11px; height: 11px; position: relative; align-self: center; }
 .wt-more::before, .wt-more::after {
   content: ''; position: absolute; background: var(--ink-faint); transition: transform .18s;
@@ -1258,7 +1262,7 @@ body.touring #legend { opacity: 0; pointer-events: none; transition: opacity .25
   background: rgba(255,190,77,.07); border-left: 3px solid var(--ua175);
 }
 .wt-counter-q {
-  font-size: 12.5px; font-weight: 650; color: var(--ua175); margin-bottom: 6px;
+  font-size: 12.5px; font-weight: 800; color: var(--ua175); margin-bottom: 6px;
 }
 .wt-counter p { margin: 0; font-size: 12.5px; color: var(--ink-dim); }
 .wt-counter .chip { margin-top: 9px; }
@@ -1276,7 +1280,7 @@ body.touring #legend { opacity: 0; pointer-events: none; transition: opacity .25
   grid-row: 1 / span 2; align-self: center;
   font: 700 11px/1.3 var(--mono); color: var(--ui); letter-spacing: .3px;
 }
-.path-label { font-size: 13px; font-weight: 600; color: var(--ink); }
+.path-label { font-size: 13px; font-weight: 700; color: var(--ink); }
 .path-note { font-size: 11.5px; color: var(--ink-faint); line-height: 1.5; }
 /* One line per path: the minutes and the label, the note as a tooltip. */
 .paths.compact { gap: 4px; }
@@ -1299,14 +1303,14 @@ body.touring #legend { opacity: 0; pointer-events: none; transition: opacity .25
   font: 700 9px/1.5 var(--mono); letter-spacing: 1.1px; text-transform: uppercase;
   color: var(--aw);
 }
-.aw-who { font-size: 12.5px; font-weight: 600; color: var(--ink); margin: 1px 0 4px; }
+.aw-who { font-size: 12.5px; font-weight: 700; color: var(--ink); margin: 1px 0 4px; }
 .aw-what { margin: 0 0 7px; font-size: 12.5px; line-height: 1.6; color: var(--ink-dim); }
 .aw-bearing {
   margin: 0; font-size: 11.5px; line-height: 1.6; color: var(--ink-faint);
   padding-left: 9px; border-left: 2px solid var(--line-2);
 }
 .aw-bearing strong { color: var(--ink-dim); }
-.aw-bluf { margin: 0 0 6px; font-size: 13px; font-weight: 600; color: var(--ink); line-height: 1.5; }
+.aw-bluf { margin: 0 0 6px; font-size: 13px; font-weight: 700; color: var(--ink); line-height: 1.5; }
 .aw .chip-row { margin-top: 6px; }
 .aw-pivot { background: rgba(255,31,61,.07); border-radius: 7px; padding-left: 8px; }
 .aw-pivot::before { opacity: .85; width: 3px; }
@@ -1499,7 +1503,7 @@ body.touring #legend { opacity: 0; pointer-events: none; transition: opacity .25
 .beat { display: grid; grid-template-columns: 68px 1fr; gap: 11px; padding: 11px 0; border-top: 1px solid var(--line); }
 .beat:first-child { border-top: 0; }
 .beat-t { font-family: var(--mono, ui-monospace, monospace); font-size: 12px; color: var(--dim); font-variant-numeric: tabular-nums; padding-top: 2px; }
-.beat-head { margin: 0; font-size: 15px; font-weight: 600; line-height: 1.35; }
+.beat-head { margin: 0; font-size: 15px; font-weight: 700; line-height: 1.35; }
 .beat-note { margin: 4px 0 0; font-size: 13px; color: var(--dim); }
 .beat-state { margin-top: 6px; font-family: var(--mono, ui-monospace, monospace); font-size: 11.5px; color: var(--dim); }
 .beat-state .sep { opacity: .45; margin: 0 6px; }
@@ -1526,7 +1530,7 @@ body.touring #legend { opacity: 0; pointer-events: none; transition: opacity .25
 .corr-item:first-child { border-top: 0; }
 .corr-head { display: flex; gap: 9px; align-items: center; }
 .corr-date { font-size: 11px; color: var(--dim); }
-.corr-what { margin: 5px 0 6px; font-size: 14px; font-weight: 600; }
+.corr-what { margin: 5px 0 6px; font-size: 14px; font-weight: 700; }
 .corr-wrong, .corr-right, .corr-why { margin: 3px 0; font-size: 12.8px; line-height: 1.5; }
 .corr-wrong { color: var(--dim); }
 .corr-k { display: inline-block; min-width: 42px; font-size: 10px; letter-spacing: .08em;
@@ -1542,3 +1546,34 @@ body.touring #legend { opacity: 0; pointer-events: none; transition: opacity .25
 }
 
 .recon-range { margin: 2px 0 0; font-family: var(--mono); font-size: 12px; color: var(--dim); }
+
+
+/* --- borrowed typography ------------------------------------------------- */
+/* Display type is Poppins and is used sparingly, on headings only. Everything
+   a reader spends time in stays Inter, which is the more legible of the two at
+   small sizes and in long paragraphs. Tracking tightens as size grows, which is
+   what makes heavy sans display type read as deliberate rather than shouted. */
+h1, h2, .card h2, .bluf h2, .beat-head, .cert-label, .corr-what {
+  font-family: var(--display);
+}
+h1, h2, .card h2 { font-weight: 800; letter-spacing: -.022em; }
+.card.bluf h2 { font-weight: 800; letter-spacing: -.03em; line-height: 1.12; }
+.beat-head { font-weight: 700; letter-spacing: -.012em; }
+.corr-what { font-weight: 700; letter-spacing: -.01em; }
+.cert-label { font-weight: 800; letter-spacing: .06em; }
+
+/* The wordmark carries the borrowed weight most visibly. Colour unchanged. */
+.wordmark { font-family: var(--display); font-weight: 800; letter-spacing: -.03em; font-size: 15px; }
+.hdate { font-weight: 600; }
+
+/* Inter ships tabular figures; data columns should use them. */
+.beat-state, .beat-t, .recon-table, .cert-rank, .corr-date, #clock, .clock-wrap {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Buttons and labels read heavier in the reference than they did here. */
+.chip, #tabs button, .tally button { font-weight: 600; }
+#tabs button.on { font-weight: 800; }
+.kicker, .sec-note strong, .pill { font-weight: 700; }
+
+@media (max-width: 560px) { .wordmark { font-size: 14px; } }
