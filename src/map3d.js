@@ -47,6 +47,32 @@ const STATE_DEPTH = 0.6;
 /* See _buildDebris for why this exists and why the UI has to declare it. */
 export const DEBRIS_MAGNIFY = 42;
 
+/* Speed against the placard, as a colour.
+
+   The ramp spends its resolution between cruise and the limit, because that is
+   the interval the argument lives in; below cruise nothing is at stake. At and
+   past the placard it saturates, since needing 1,100 mph and needing 1,300 are
+   the same fact about the claim.
+
+   Stops, as fractions of the placard:
+     <= 0.55  cruise and below      cold white-blue, the construct colour
+        0.80  working hard          warm white
+        0.95  at the edge           amber
+     >= 1.00  past the limit        red, saturated                          */
+function placardColor(mph, placard) {
+  const f = placard > 0 ? mph / placard : 0;
+  const lerp = (a, b, u) => [a[0] + (b[0] - a[0]) * u, a[1] + (b[1] - a[1]) * u, a[2] + (b[2] - a[2]) * u];
+  const COLD = [0.80, 0.88, 1.00];
+  const WARM = [1.00, 1.00, 0.94];
+  const AMBER = [1.00, 0.72, 0.25];
+  const HOT = [1.00, 0.24, 0.22];
+  if (f <= 0.55) return COLD;
+  if (f <= 0.80) return lerp(COLD, WARM, (f - 0.55) / 0.25);
+  if (f <= 0.95) return lerp(WARM, AMBER, (f - 0.80) / 0.15);
+  if (f < 1.00) return lerp(AMBER, HOT, (f - 0.95) / 0.05);
+  return HOT;
+}
+
 export class Map3D {
   constructor(canvas, topology) {
     this.canvas = canvas;
@@ -922,8 +948,12 @@ export class Map3D {
 
     const geom = new THREE.BufferGeometry();
     geom.setAttribute('position', new THREE.BufferAttribute(new Float32Array(150 * 3), 3));
+    /* A colour per vertex, so the trail can carry the speed it demands.
+       White is the construct colour and stays the base; the ramp only
+       departs from it as the required speed approaches the placard. */
+    geom.setAttribute('color', new THREE.BufferAttribute(new Float32Array(150 * 3).fill(1), 3));
     this.hypoLine = new THREE.Line(geom, new THREE.LineDashedMaterial({
-      color: HYPO.color, dashSize: 2.2, gapSize: 1.6, transparent: true, opacity: 0.85,
+      vertexColors: true, dashSize: 2.2, gapSize: 1.6, transparent: true, opacity: 0.9,
     }));
     this.hypoLine.frustumCulled = false;
     this.hypoGroup.add(this.hypoLine);
@@ -994,11 +1024,20 @@ export class Map3D {
       return new THREE.Vector3(x, altToY(alt) + STATE_DEPTH + 0.05, z);
     });
     const attr = this.hypoLine.geometry.attributes.position;
+    const col = this.hypoLine.geometry.attributes.color;
+    const speeds = track.speeds || [];
+    const placard = track.placardMph || 0;
     for (let i = 0; i < attr.count; i++) {
-      const p = pts[Math.min(i, pts.length - 1)];
+      const j = Math.min(i, pts.length - 1);
+      const p = pts[j];
       attr.setXYZ(i, p.x, p.y, p.z);
+      if (col && placard) {
+        const c = placardColor(speeds[Math.min(j, speeds.length - 1)] || 0, placard);
+        col.setXYZ(i, c[0], c[1], c[2]);
+      }
     }
     attr.needsUpdate = true;
+    if (col) col.needsUpdate = true;
     this.hypoLine.computeLineDistances();
 
     const s = samplePath(track.path, t);

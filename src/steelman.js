@@ -131,8 +131,7 @@ export function fuelProof() {
     twoSeatTankedMi,
     shortfall: legBA / twoSeatCleanMi,       // how far over a clean two-seater
     tankedUse: legBA / twoSeatTankedMi,      // how much of a tanked one it eats
-    needsTanks: legBA > twoSeatCleanMi,
-  };
+    needsTanks: legBA > twoSeatCleanMi };
 }
 
 /* What keeping Bozeman does to the intercept. `targetLatLon` is where United
@@ -302,6 +301,7 @@ export function buildHypoTrack(targetLatLon, departEDT, interceptEDT) {
   const mph = miles / (seconds / 3600);
 
   const path = [];
+  const speeds = [];
   const STEPS = 24;
   for (let i = 0; i <= STEPS; i++) {
     const f = i / STEPS;
@@ -311,6 +311,7 @@ export function buildHypoTrack(targetLatLon, departEDT, interceptEDT) {
       : f > 0.9 ? 31000 - ((f - 0.9) / 0.1) * 24000
         : 31000;
     path.push([departEDT + seconds * f, p.lat, p.lon, alt]);
+    speeds.push(mph);
   }
 
   /* The turn. At the closest point to United 93 he breaks straight for Albany,
@@ -326,6 +327,7 @@ export function buildHypoTrack(targetLatLon, departEDT, interceptEDT) {
       : f > 0.82 ? 28000 - ((f - 0.82) / 0.18) * 28000
         : 28000;
     path.push([interceptEDT + egressS * f, p.lat, p.lon, alt]);
+    speeds.push(F16.cruiseMph);
   }
 
   const totalMi = miles + egressMi;
@@ -344,6 +346,10 @@ export function buildHypoTrack(targetLatLon, departEDT, interceptEDT) {
     totalMi,
     totalFerryFraction: totalMi / F16.ferryRangeMi,
     skipsBozeman: true,
+    /* Per-vertex speed, so the trail can be coloured by what it demands,
+       and the ceiling it is measured against. */
+    speeds,
+    placardMph: F16.maxWithTanksMph,
   };
 }
 

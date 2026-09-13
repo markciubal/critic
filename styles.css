@@ -1577,3 +1577,23 @@ h1, h2, .card h2 { font-weight: 800; letter-spacing: -.022em; }
 .kicker, .sec-note strong, .pill { font-weight: 700; }
 
 @media (max-width: 560px) { .wordmark { font-size: 14px; } }
+
+
+/* --- the steelman speed ramp -------------------------------------------- */
+/* The scale has to be visible even when the track is not coloured, because the
+   most favourable departure sits inside the placard and therefore looks almost
+   white. Without the key, a reader who never drags the departure control sees
+   an uncoloured line and learns nothing from it. */
+.ramp {
+  display: block; height: 6px; margin: 5px 0 2px; border-radius: 3px;
+  background: linear-gradient(90deg,
+    rgb(204,224,255) 0%, rgb(204,224,255) 28%,
+    rgb(255,255,240) 55%,
+    rgb(255,184,64) 82%,
+    rgb(255,61,56) 92%, rgb(255,61,56) 100%);
+}
+.ramp-key {
+  display: flex; justify-content: space-between; font-family: var(--mono);
+  font-size: 9px; color: var(--ink-faint, #7b8ca6); letter-spacing: .02em;
+}
+.ramp-key i { flex: 1 1 auto; }

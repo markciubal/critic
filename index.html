@@ -1595,6 +1595,26 @@ h1, h2, .card h2 { font-weight: 800; letter-spacing: -.022em; }
 
 @media (max-width: 560px) { .wordmark { font-size: 14px; } }
 
+
+/* --- the steelman speed ramp -------------------------------------------- */
+/* The scale has to be visible even when the track is not coloured, because the
+   most favourable departure sits inside the placard and therefore looks almost
+   white. Without the key, a reader who never drags the departure control sees
+   an uncoloured line and learns nothing from it. */
+.ramp {
+  display: block; height: 6px; margin: 5px 0 2px; border-radius: 3px;
+  background: linear-gradient(90deg,
+    rgb(204,224,255) 0%, rgb(204,224,255) 28%,
+    rgb(255,255,240) 55%,
+    rgb(255,184,64) 82%,
+    rgb(255,61,56) 92%, rgb(255,61,56) 100%);
+}
+.ramp-key {
+  display: flex; justify-content: space-between; font-family: var(--mono);
+  font-size: 9px; color: var(--ink-faint, #7b8ca6); letter-spacing: .02em;
+}
+.ramp-key i { flex: 1 1 auto; }
+
 </style>
 </head>
 <body>
@@ -1656,7 +1676,9 @@ h1, h2, .card h2 { font-weight: 800; letter-spacing: -.022em; }
       <div><i style="background:#35d6a4"></i>How far he could have flown, at cruise</div>
       <div><i style="background:#ffd447"></i>Fastest possible</div>
       <div><i class="dash" style="border-color:#ff8a5c"></i>Fuel limit</div>
-      <div><i class="dash" style="border-color:#fff"></i>STEELMAN, the constructed track</div>
+      <div><i class="dash" style="border-color:#fff"></i>STEELMAN, the constructed track
+        <span class="ramp" aria-hidden="true"></span>
+        <span class="ramp-key">cruise<i></i>placard<i></i>past it</span></div>
       <div><i style="background:#ff1f3d"></i>The four withheld messages</div>
     </div>
   </div>
@@ -57359,6 +57381,25 @@ const CONFLICTS = [
 
 CONFLICTS.push(
   {
+    id: 'backchannel-tasking',
+    subject: 'Could a channel outside NORAD have tasked a fighter at United 93?',
+    tags: ['AWARENESS', 'STEELMAN'],
+    status: 'resolved',
+    why: 'This app argued that nobody could have guided the fighter, and rested it on the air defence sector not hearing the words United 93 until 10:07. A reader pointed out that the argument never addressed the channel that demonstrably did task fighters that morning without NORAD, and they were right that its absence weakened the case.',
+    readings: [
+      { v: 'The backchannel is real and it worked', who: '9/11 Commission, ch. 1', src: 'commission',
+        weight: 'The Secret Service reached the DC Air National Guard directly. Fighters launched from Andrews on authority relayed from the White House rather than through NORAD. Whatever else is true, a parallel channel existed and produced aircraft.' },
+      { v: 'And it was slower than the chain it bypassed', who: 'The same source', src: 'commission',
+        weight: 'Its first fighter left Andrews at 10:38 and its second at 10:42, thirty-five and thirty-nine minutes after United 93 was already in the ground. Neither of the first two carried live ammunition.' },
+      { v: 'It also does not reach North Dakota', who: 'Computed here', src: 'derived',
+        weight: 'The arrangement ran between the executive and a unit charged with guarding the capital, about an aircraft inbound to the capital. Nothing resembling it connects the Secret Service to a transport tasking at Fargo.' },
+      { v: 'And no civil or executive body can vector an intercept', who: 'Computed here', src: 'derived',
+        weight: 'Knowing where an aircraft is and being able to steer a fighter onto it are different capabilities. The second needs a weapons controller holding a track, which is precisely what nobody had before 10:07.' },
+    ],
+    reading: 'The objection survives the form the app first gave it and fails on the clock. The channel existed, it bypassed NORAD, and it worked - and it delivered unarmed fighters more than half an hour after the aircraft was down. But it does not end there, because the CRITIC is itself a backchannel, and the fastest one the system has. A CRITIC exists to put something in front of the President inside ten minutes, going around normal reporting entirely. So the executive channel this objection depends on was demonstrably carrying flash traffic at 09:49, forty-nine minutes before the same channel produced an aircraft at Andrews, and its first two aircraft were unarmed. That is the honest shape of it: the executive channel was awake early and slow to deliver. And the CRITIC is where this objection is strongest rather than weakest, because unlike the Andrews launch its content is withheld. Nobody can say what the 09:49 message contained. What can be said is that a CRITIC goes to intelligence watch floors, not to fighter units, and that the one time the executive chain did reach a fighter unit that morning it took until 10:38.',
+    appSays: 'Problem 2 now answers the backchannel directly rather than answering only the FAA. The timing, the geography and the capability gap are all stated, and the concession that the channel was real comes first. The app also says plainly where this leaves the claim: of every channel examined, the CRITIC is the only one whose content is withheld and whose timing sits inside the window. That is why this project is named after it, and it is the reason the four messages are the single most valuable thing anyone could still ask for.',
+  },
+  {
     id: 'fdr-parameter-audit',
     subject: 'Which recorder channels is this app entitled to cite?',
     tags: ['DATA', 'FDR'],
@@ -58453,8 +58494,7 @@ function fuelProof() {
     twoSeatTankedMi,
     shortfall: legBA / twoSeatCleanMi,       // how far over a clean two-seater
     tankedUse: legBA / twoSeatTankedMi,      // how much of a tanked one it eats
-    needsTanks: legBA > twoSeatCleanMi,
-  };
+    needsTanks: legBA > twoSeatCleanMi };
 }
 
 /* What keeping Bozeman does to the intercept. `targetLatLon` is where United
@@ -58624,6 +58664,7 @@ function buildHypoTrack(targetLatLon, departEDT, interceptEDT) {
   const mph = miles / (seconds / 3600);
 
   const path = [];
+  const speeds = [];
   const STEPS = 24;
   for (let i = 0; i <= STEPS; i++) {
     const f = i / STEPS;
@@ -58633,6 +58674,7 @@ function buildHypoTrack(targetLatLon, departEDT, interceptEDT) {
       : f > 0.9 ? 31000 - ((f - 0.9) / 0.1) * 24000
         : 31000;
     path.push([departEDT + seconds * f, p.lat, p.lon, alt]);
+    speeds.push(mph);
   }
 
   /* The turn. At the closest point to United 93 he breaks straight for Albany,
@@ -58648,6 +58690,7 @@ function buildHypoTrack(targetLatLon, departEDT, interceptEDT) {
       : f > 0.82 ? 28000 - ((f - 0.82) / 0.18) * 28000
         : 28000;
     path.push([interceptEDT + egressS * f, p.lat, p.lon, alt]);
+    speeds.push(F16.cruiseMph);
   }
 
   const totalMi = miles + egressMi;
@@ -58666,6 +58709,10 @@ function buildHypoTrack(targetLatLon, departEDT, interceptEDT) {
     totalMi,
     totalFerryFraction: totalMi / F16.ferryRangeMi,
     skipsBozeman: true,
+    /* Per-vertex speed, so the trail can be coloured by what it demands,
+       and the ceiling it is measured against. */
+    speeds,
+    placardMph: F16.maxWithTanksMph,
   };
 }
 
@@ -59878,8 +59925,8 @@ const WALKTHROUGH = [
       'That sector heard the words "United 93" for the first time at 10:07, four minutes after the aircraft crashed.',
     ],
     counter: {
-      point: 'But the FAA knew for thirty-five minutes. Somebody in the government could have told him.',
-      text: 'The objection is correct on the facts. Cleveland Center [[faa]] heard the hijacking live at 09:28 and never lost the aircraft. But air traffic control [[atc]] does not task fighters. The request to the military was discussed at 09:36, again at 09:49, and still being discussed at 09:53; it was never made. The Who knew tab documents the chain minute by minute.',
+      point: 'But there were backchannels. The Secret Service put fighters up without NORAD.',
+      text: 'This is the strongest form of the objection and it is correct that the channel existed. The Secret Service reached the DC Air National Guard directly and fighters launched on authority relayed from the White House, outside the air defence chain entirely. So the sector not knowing is not on its own enough. What settles it is the clock: that backchannel produced its first fighter at 10:38 and its second at 10:42, thirty-five and thirty-nine minutes after United 93 was already in the ground, and neither of the first two carried live ammunition. The channel worked, and it was slower than the chain it went around. Two further things it cannot supply. It was an arrangement between the executive and a unit guarding the capital, about an aircraft inbound to the capital; nothing like it connects to a transport tasking in North Dakota. And no civil or executive body can vector an intercept: that needs a weapons controller holding a track, which is the thing nobody had until 10:07. Cleveland Center [[faa]] meanwhile heard the hijacking live at 09:28 and never lost the aircraft, and the request to the military was discussed at 09:36, again at 09:49, and still being discussed at 09:53. It was never made. One channel is left, and it is the one this app is named after: a CRITIC [[critic]] is itself a backchannel, the fastest the system has, and one went out at 09:49. Its content is withheld. That is the strongest ground the claim has, and it is why the four messages matter.',
       more: 'awareness',
     },
     src: 'commission',
@@ -65783,6 +65830,32 @@ const STATE_DEPTH = 0.6;
 /* See _buildDebris for why this exists and why the UI has to declare it. */
 const DEBRIS_MAGNIFY = 42;
 
+/* Speed against the placard, as a colour.
+
+   The ramp spends its resolution between cruise and the limit, because that is
+   the interval the argument lives in; below cruise nothing is at stake. At and
+   past the placard it saturates, since needing 1,100 mph and needing 1,300 are
+   the same fact about the claim.
+
+   Stops, as fractions of the placard:
+     <= 0.55  cruise and below      cold white-blue, the construct colour
+        0.80  working hard          warm white
+        0.95  at the edge           amber
+     >= 1.00  past the limit        red, saturated                          */
+function placardColor(mph, placard) {
+  const f = placard > 0 ? mph / placard : 0;
+  const lerp = (a, b, u) => [a[0] + (b[0] - a[0]) * u, a[1] + (b[1] - a[1]) * u, a[2] + (b[2] - a[2]) * u];
+  const COLD = [0.80, 0.88, 1.00];
+  const WARM = [1.00, 1.00, 0.94];
+  const AMBER = [1.00, 0.72, 0.25];
+  const HOT = [1.00, 0.24, 0.22];
+  if (f <= 0.55) return COLD;
+  if (f <= 0.80) return lerp(COLD, WARM, (f - 0.55) / 0.25);
+  if (f <= 0.95) return lerp(WARM, AMBER, (f - 0.80) / 0.15);
+  if (f < 1.00) return lerp(AMBER, HOT, (f - 0.95) / 0.05);
+  return HOT;
+}
+
 class Map3D {
   constructor(canvas, topology) {
     this.canvas = canvas;
@@ -66658,8 +66731,12 @@ class Map3D {
 
     const geom = new THREE.BufferGeometry();
     geom.setAttribute('position', new THREE.BufferAttribute(new Float32Array(150 * 3), 3));
+    /* A colour per vertex, so the trail can carry the speed it demands.
+       White is the construct colour and stays the base; the ramp only
+       departs from it as the required speed approaches the placard. */
+    geom.setAttribute('color', new THREE.BufferAttribute(new Float32Array(150 * 3).fill(1), 3));
     this.hypoLine = new THREE.Line(geom, new THREE.LineDashedMaterial({
-      color: HYPO.color, dashSize: 2.2, gapSize: 1.6, transparent: true, opacity: 0.85,
+      vertexColors: true, dashSize: 2.2, gapSize: 1.6, transparent: true, opacity: 0.9,
     }));
     this.hypoLine.frustumCulled = false;
     this.hypoGroup.add(this.hypoLine);
@@ -66730,11 +66807,20 @@ class Map3D {
       return new THREE.Vector3(x, altToY(alt) + STATE_DEPTH + 0.05, z);
     });
     const attr = this.hypoLine.geometry.attributes.position;
+    const col = this.hypoLine.geometry.attributes.color;
+    const speeds = track.speeds || [];
+    const placard = track.placardMph || 0;
     for (let i = 0; i < attr.count; i++) {
-      const p = pts[Math.min(i, pts.length - 1)];
+      const j = Math.min(i, pts.length - 1);
+      const p = pts[j];
       attr.setXYZ(i, p.x, p.y, p.z);
+      if (col && placard) {
+        const c = placardColor(speeds[Math.min(j, speeds.length - 1)] || 0, placard);
+        col.setXYZ(i, c[0], c[1], c[2]);
+      }
     }
     attr.needsUpdate = true;
+    if (col) col.needsUpdate = true;
     this.hypoLine.computeLineDistances();
 
     const s = samplePath(track.path, t);

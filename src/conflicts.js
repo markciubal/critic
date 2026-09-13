@@ -225,6 +225,25 @@ export const CONFLICTS = [
 
 CONFLICTS.push(
   {
+    id: 'backchannel-tasking',
+    subject: 'Could a channel outside NORAD have tasked a fighter at United 93?',
+    tags: ['AWARENESS', 'STEELMAN'],
+    status: 'resolved',
+    why: 'This app argued that nobody could have guided the fighter, and rested it on the air defence sector not hearing the words United 93 until 10:07. A reader pointed out that the argument never addressed the channel that demonstrably did task fighters that morning without NORAD, and they were right that its absence weakened the case.',
+    readings: [
+      { v: 'The backchannel is real and it worked', who: '9/11 Commission, ch. 1', src: 'commission',
+        weight: 'The Secret Service reached the DC Air National Guard directly. Fighters launched from Andrews on authority relayed from the White House rather than through NORAD. Whatever else is true, a parallel channel existed and produced aircraft.' },
+      { v: 'And it was slower than the chain it bypassed', who: 'The same source', src: 'commission',
+        weight: 'Its first fighter left Andrews at 10:38 and its second at 10:42, thirty-five and thirty-nine minutes after United 93 was already in the ground. Neither of the first two carried live ammunition.' },
+      { v: 'It also does not reach North Dakota', who: 'Computed here', src: 'derived',
+        weight: 'The arrangement ran between the executive and a unit charged with guarding the capital, about an aircraft inbound to the capital. Nothing resembling it connects the Secret Service to a transport tasking at Fargo.' },
+      { v: 'And no civil or executive body can vector an intercept', who: 'Computed here', src: 'derived',
+        weight: 'Knowing where an aircraft is and being able to steer a fighter onto it are different capabilities. The second needs a weapons controller holding a track, which is precisely what nobody had before 10:07.' },
+    ],
+    reading: 'The objection survives the form the app first gave it and fails on the clock. The channel existed, it bypassed NORAD, and it worked - and it delivered unarmed fighters more than half an hour after the aircraft was down. But it does not end there, because the CRITIC is itself a backchannel, and the fastest one the system has. A CRITIC exists to put something in front of the President inside ten minutes, going around normal reporting entirely. So the executive channel this objection depends on was demonstrably carrying flash traffic at 09:49, forty-nine minutes before the same channel produced an aircraft at Andrews, and its first two aircraft were unarmed. That is the honest shape of it: the executive channel was awake early and slow to deliver. And the CRITIC is where this objection is strongest rather than weakest, because unlike the Andrews launch its content is withheld. Nobody can say what the 09:49 message contained. What can be said is that a CRITIC goes to intelligence watch floors, not to fighter units, and that the one time the executive chain did reach a fighter unit that morning it took until 10:38.',
+    appSays: 'Problem 2 now answers the backchannel directly rather than answering only the FAA. The timing, the geography and the capability gap are all stated, and the concession that the channel was real comes first. The app also says plainly where this leaves the claim: of every channel examined, the CRITIC is the only one whose content is withheld and whose timing sits inside the window. That is why this project is named after it, and it is the reason the four messages are the single most valuable thing anyone could still ask for.',
+  },
+  {
     id: 'fdr-parameter-audit',
     subject: 'Which recorder channels is this app entitled to cite?',
     tags: ['DATA', 'FDR'],
