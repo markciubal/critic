@@ -82,6 +82,79 @@ export const REFS = {
       url: 'https://www.9-11commission.gov/report/' },
     wiki('9/11_Commission'),
   ],
+
+  /* --- the claim, the pilot, and the secondary record --------------------
+     URLs here are taken from the README's source list, plus the ones fetched
+     and confirmed on 12 Sep 2026 for the keys the README left without a URL
+     (the NSA release, Maneki, the MuckRock request, the F-16 and AIM-9 fact
+     sheets, the debris reporting). */
+  CLAIMANT: [
+    { label: '911facts.dk — origin and wording of the de Grand-Pre claim', kind: 'press',
+      url: 'https://www.911facts.dk/?p=7706&lang=en' },
+  ],
+  GIBNEY: [
+    { label: "InForum — Gibney's own account of the flight", kind: 'press',
+      url: 'https://www.inforum.com/newsmd/former-happy-hooligans-pilot-recalls-emergency-flight-to-new-york-on-9-11' },
+  ],
+  KARA_CRITIC: [
+    { label: 'Miles Kara — CRITICs, a snapshot of the national awareness (the four DTGs)', kind: 'press',
+      url: 'https://www.oredigger61.org/?p=895' },
+  ],
+  KARA_NEADS: [
+    { label: 'Miles Kara — Gofer 06 posts (84th RADES radar reconstruction)', kind: 'press',
+      url: 'https://www.oredigger61.org/?cat=49' },
+    { label: 'Miles Kara — Gofer 06 pilot interview, transcribed', kind: 'press',
+      url: 'https://www.oredigger61.org/?p=6314' },
+  ],
+  /* The release itself: NSA's redacted FOIA response, twelve scanned pages,
+     as linked from Kara's post. The original 911myths host has gone; the
+     Wayback Machine copy (2 Dec 2018) was fetched and confirmed as a PDF. */
+  NSA_RELEASE: [
+    { label: 'NSA FOIA release — the four CRITIC messages, redacted (12-page scan, archived copy)', kind: 'doc',
+      url: 'https://web.archive.org/web/20181202044029/http://www.911myths.com/images/d/d4/NSA_FOIA.pdf' },
+  ],
+  AVIATIONIST: [
+    { label: 'The Aviationist — the air defence response (callsign roster)', kind: 'press',
+      url: 'https://theaviationist.com/2011/09/07/9-11/' },
+  ],
+  NEADS_FILES: [
+    { label: '9-11 Revisited — NEADS files', kind: 'press',
+      url: 'https://www.oredigger61.org/?cat=19' },
+  ],
+  MANEKI: [
+    { label: 'Maneki, "Did Anyone Tell the President?" — NSA Center for Cryptologic History', kind: 'doc',
+      url: 'https://www.nsa.gov/Press-Room/Digital-Media-Center/Document-Gallery/igphoto/2002751847/' },
+    { label: 'Same paper, PDF (media.defense.gov)', kind: 'doc',
+      url: 'https://media.defense.gov/2021/Jun/29/2002751847/-1/-1/0/DID_ANYONE_TELL_THE_PRESIDENT.PDF' },
+  ],
+  MUCKROCK: [
+    { label: 'MuckRock — "Release of 9/11 CRITIC", the request to NSA (filed 11 Sep 2026)', kind: 'doc',
+      url: 'https://www.muckrock.com/foi/united-states-of-america-10/release-of-911-critic-national-security-agency-220673/' },
+    { label: 'critic.markciubal.com — where any release is published', kind: 'press',
+      url: 'https://critic.markciubal.com/' },
+  ],
+  /* The flight manual scan on the NRC docket is the cover, scope and a few
+     procedure pages only; it identifies the manual but does not reproduce
+     the external-stores limits table, and the prose says so. */
+  F16: [
+    { label: 'USAF fact sheet — F-16 Fighting Falcon', kind: 'doc',
+      url: 'https://www.af.mil/About-Us/Fact-Sheets/Display/Article/104505/f-16-fighting-falcon/' },
+    { label: 'T.O. 1F-16C-1 flight manual, F-16C/D Blocks 25/30/32 — cover and scope pages (NRC docket scan)', kind: 'doc',
+      url: 'https://www.nrc.gov/docs/ML0303/ML030310495.pdf' },
+    wiki('General_Dynamics_F-16_Fighting_Falcon', 'Wikipedia — F-16'),
+  ],
+  AIM9: [
+    { label: 'USAF fact sheet — AIM-9 Sidewinder', kind: 'doc',
+      url: 'https://www.af.mil/About-Us/Fact-Sheets/Display/Article/104557/aim-9-sidewinder/' },
+    wiki('AIM-9_Sidewinder', 'Wikipedia — AIM-9 Sidewinder'),
+  ],
+  DEBRIS: [
+    { label: 'Popular Mechanics — 9/11 myths debunked (the debris field)', kind: 'press',
+      url: 'https://www.popularmechanics.com/military/a66051920/911-myths-debunked/' },
+    { label: 'Sky HISTORY — Flight 93 myths debunked (Indian Lake, the wind)', kind: 'press',
+      url: 'https://www.history.co.uk/articles/911-flight-93-myths-debunked' },
+    wiki('Debunking_9/11_Myths', 'Wikipedia — Debunking 9/11 Myths'),
+  ],
 };
 
 export function refsFor(key) {

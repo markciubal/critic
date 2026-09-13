@@ -37,6 +37,7 @@
 
   --topbar-h: 62px;
   --timeline-h: 118px;
+  --footer-h: 118px;
   --panel-w: 430px;
 
   --mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
@@ -151,6 +152,18 @@ body.panel-hidden #panel { opacity: 0; pointer-events: none; }
 }
 /* Lifted off --ink-faint: that colour was chosen against the near-black page
    background and is close to unreadable on the canton blue now behind it. */
+/* The domain is the promise the page has to keep, so it goes first and stays
+   first: when the masthead ellipsizes on a phone it is the half that survives. */
+.brand h1 { display: flex; align-items: baseline; gap: 8px; }
+.wordmark {
+  font-family: var(--mono); font-size: 14px; font-weight: 700; letter-spacing: -.2px;
+  color: #7fd0ff; text-decoration: none; flex: 0 0 auto;
+}
+.wordmark:hover { text-decoration: underline; }
+.hdate {
+  font-size: 13px; font-weight: 500; color: #b4c8e2;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0;
+}
 .brand .sub { font-size: 11px; color: #b4c8e2; }
 
 .clock-wrap { margin-left: auto; text-align: right; }
@@ -199,58 +212,149 @@ body.panel-hidden #panel { opacity: 0; pointer-events: none; }
 
 /* --- stage --------------------------------------------------------------- */
 #stage { grid-area: stage; position: relative; overflow: hidden; }
-#map { width: 100%; height: 100%; display: block; cursor: grab; }
+/* touch-action: none is load-bearing. Without it the browser treats a
+   drag as a candidate page scroll, and the moment it decides that is what
+   the gesture is, it fires pointercancel and the drag dies mid-motion. */
+#map {
+  width: 100%; height: 100%; display: block; cursor: grab;
+  touch-action: none;
+  overscroll-behavior: none;
+  -webkit-user-select: none; user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
 #map:active { cursor: grabbing; }
 
-#labels { position: absolute; inset: 0; pointer-events: none; }
+/* The label layer sits in its own stacking context so a label's leader line
+   (a negative-z-index child) can pass behind other labels without dropping
+   behind the canvas. */
+#labels { position: absolute; inset: 0; pointer-events: none; z-index: 1; }
 .map-label {
-  position: absolute; transform: translate(-50%, -140%);
-  font-size: 10px; font-family: var(--mono); letter-spacing: .3px;
+  position: absolute;
+  font-size: 11px; font-family: var(--mono); letter-spacing: .3px;
   color: var(--ink); background: rgba(7,10,15,.82);
   border: 1px solid var(--line-2); border-radius: 4px;
   padding: 2px 6px; white-space: nowrap; pointer-events: none;
+  box-sizing: border-box;
+}
+.map-label .lt { position: relative; }
+/* The leader from the box to the point it names. */
+.map-label .lead {
+  position: absolute; display: block; height: 1px; width: 0;
+  background: currentColor; opacity: .55; transform-origin: 0 0;
+  z-index: -1; pointer-events: none;
 }
 .map-label.flight { font-weight: 700; }
 .map-label.dim { color: var(--ink-faint); background: rgba(7,10,15,.6); }
 
 #hud {
-  position: absolute; left: 14px; top: 12px; pointer-events: none;
+  position: absolute; left: 14px; top: 12px; pointer-events: none; z-index: 3;
   font-family: var(--mono); font-size: 11px;
+  background: rgba(6,11,22,.86); border: 1px solid var(--line);
+  border-radius: 7px; padding: 6px 10px;
 }
 #hud-state { font-size: 15px; color: var(--ink); min-height: 19px; letter-spacing: .3px; }
+/* Nothing hovered is the normal state, so an empty readout collapses rather
+   than holding an empty band open above the hint. The mobile block drops the
+   whole HUD when it is empty, because there the hint line is hidden too. */
+#hud-state:empty { display: none; }
 #hud-hint { color: var(--ink-faint); margin-top: 3px; font-size: 10px; }
 
+/* The legend: one row for the vertical scale, the colour key beneath it. */
 #legend {
-  position: absolute; left: 14px; bottom: 14px; max-width: 268px;
+  position: absolute; left: 14px; bottom: 14px; width: 268px; z-index: 3;
   background: rgba(12,17,25,.9); border: 1px solid var(--line);
-  border-radius: 7px; padding: 9px 11px; font-size: 10.5px; color: var(--ink-dim);
+  border-radius: 7px; padding: 8px 11px; font-size: 10.5px; color: var(--ink-dim);
 }
-.legend-title { color: var(--ink); font-size: 10px; text-transform: uppercase; letter-spacing: .7px; margin-bottom: 4px; }
+.legend-scale { display: flex; align-items: center; gap: 10px; }
+.legend-scale .alt-group { flex: 1; margin: 0; }
+.legend-title { color: var(--ink); font-size: 10px; text-transform: uppercase; letter-spacing: .7px; white-space: nowrap; }
 .legend-row b { color: var(--claim); font-family: var(--mono); }
+#alt-note[hidden] { display: none; }
+.legend-key { margin-top: 8px; padding-top: 7px; border-top: 1px solid var(--line); }
+.legend-key > div { display: flex; align-items: center; gap: 8px; line-height: 1.7; color: var(--ink-dim); }
+.legend-key i { flex: none; width: 16px; height: 3px; border-radius: 2px; }
+.legend-key i.dash { height: 0; border-top: 2px dashed; background: none; }
+.legend-key.in-drawer { font-size: 11.5px; }
+
+/* The layers drawer and its button, beside the legend. */
+#btn-layers {
+  position: absolute; left: 292px; bottom: 14px; z-index: 3;
+  width: 36px; height: 34px; font-size: 16px; line-height: 1;
+}
+#btn-layers.on { background: var(--flag-blue); border-color: #2d5f9e; }
+#layers-drawer {
+  position: absolute; left: 14px; bottom: 58px; width: 340px; z-index: 30;
+  max-height: calc(100% - 80px); overflow-y: auto;
+  background: rgba(6,11,22,.96); backdrop-filter: blur(9px);
+  border: 1px solid var(--line-2); border-radius: 9px; padding: 10px 12px 4px;
+  box-shadow: 0 18px 48px rgba(0,0,0,.62);
+  animation: tour-in .22s ease-out;
+}
+#layers-drawer.hidden { display: none; }
+.drawer-head {
+  display: flex; align-items: center; justify-content: space-between;
+  font: 700 10px/1 var(--mono); letter-spacing: 1.2px; text-transform: uppercase;
+  color: var(--ink-dim); margin-bottom: 8px;
+}
+#layers-drawer .card { padding: 10px; margin-bottom: 8px; }
+#layers-drawer .toggle { padding: 6px 4px; }
+.mode-switch {
+  display: flex; border: 1px solid var(--line-2); border-radius: 7px; overflow: hidden;
+}
+.mode-switch button {
+  flex: 1; background: var(--bg-3); border: 0; border-right: 1px solid var(--line-2);
+  color: var(--ink-dim); cursor: pointer; padding: 8px 6px; font-size: 12px; font-weight: 600;
+}
+.mode-switch button:last-child { border-right: 0; }
+.mode-switch button.on { background: var(--flag-blue); color: #fff; box-shadow: inset 0 -2px 0 var(--flag-red); }
 
 #aside-toggle {
   position: absolute; right: 0; top: 50%; transform: translateY(-50%);
-  width: 18px; height: 54px; z-index: 10; cursor: pointer;
+  z-index: 10; cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  width: 22px; padding: 8px 3px;
   background: var(--bg-3); color: var(--ink-dim);
   border: 1px solid var(--line-2); border-right: 0;
   border-radius: 7px 0 0 7px; font-size: 13px;
 }
+#aside-toggle .at-word { writing-mode: vertical-rl; font-size: 10px; letter-spacing: .5px; }
 #aside-toggle:hover { color: var(--ink); }
-body.panel-hidden #aside-toggle { transform: translateY(-50%) rotate(180deg); border-radius: 7px 0 0 7px; }
+body.panel-hidden #aside-toggle .at-glyph { display: inline-block; transform: rotate(180deg); }
 
 /* --- panel --------------------------------------------------------------- */
 #panel {
   grid-area: panel; background: var(--bg-2); border-left: 1px solid var(--line);
   display: flex; flex-direction: column; overflow: hidden; transition: opacity .2s;
+  position: relative;
 }
+/* Six tabs at ~70px each across the 430px panel. */
 #tabs {
-  display: flex; flex-wrap: wrap; border-bottom: 1px solid var(--line); flex: 0 0 auto;
+  display: flex; flex-wrap: nowrap; border-bottom: 1px solid var(--line); flex: 0 0 auto;
+  position: relative;
+  /* Labels that read as questions are longer than one-word labels. Rather than
+     crushing them into each other, let the strip scroll and keep each label
+     whole; the fade on #panel::before already signals there is more. */
+  overflow-x: auto; scrollbar-width: none; scroll-snap-type: x proximity;
 }
-#tabs button { flex: 1 1 25%; }
+#tabs::-webkit-scrollbar { display: none; }
 #tabs button {
-  flex: 1; background: transparent; border: 0; border-bottom: 2px solid transparent;
-  color: var(--ink-faint); padding: 11px 1px; cursor: pointer; font-size: 10.5px;
+  flex: 0 0 auto; white-space: nowrap; scroll-snap-align: start; background: transparent; border: 0; border-bottom: 2px solid transparent;
+  color: var(--ink-faint); padding: 11px 2px; cursor: pointer; font-size: 12px;
   letter-spacing: 0; white-space: nowrap; min-width: 0;
+}
+/* Right-edge fade on a strip that scrolls sideways, drawn by the strip's
+   parent so it stays at the visible edge, and switched off at the end. */
+#panel::before, #timeline::after {
+  content: ''; position: absolute; right: 0; width: 28px; z-index: 6;
+  pointer-events: none; opacity: 0; transition: opacity .2s;
+  background: linear-gradient(90deg, transparent, var(--bg-2));
+}
+#panel::before { top: 0; height: 44px; }
+#timeline::after { bottom: 6px; height: 30px; }
+@media (max-width: 860px) {
+  #panel:has(#tabs:not(.at-end))::before { opacity: 1; }
+  #timeline:has(#flight-strip:not(.at-end))::after { opacity: 1; }
+  body.footer-min #timeline::after { display: none; }
 }
 #conflict-count {
   display: inline-block; font-family: var(--mono); font-size: 9px;
@@ -283,9 +387,14 @@ body.panel-hidden #aside-toggle { transform: translateY(-50%) rotate(180deg); bo
   padding: 1.5px 5px; border-radius: 3px; font-family: var(--mono);
   border: 1px solid; vertical-align: middle; white-space: nowrap;
 }
+.src[data-info] { cursor: help; }
+.src[data-info]:hover { filter: brightness(1.25); }
 .src.solid { color: #7fd1a8; border-color: #2c5f47; background: rgba(53,214,164,.08); }
 .src.soft  { color: #8fa2b8; border-color: var(--line-2); background: rgba(143,162,184,.06); }
 .src.warn  { color: var(--claim); border-color: #6b5713; background: rgba(255,212,71,.09); }
+/* A source that refutes the premise it is attached to. Same weight as .solid,
+   opposite direction, so a refuting record cannot read as a supporting one. */
+.src.against { color: #ffb3bd; border-color: #7a2230; background: rgba(200,16,46,.10); }
 
 /* --- timeline event list -------------------------------------------------- */
 #now-card { border-color: var(--line-2); }
@@ -365,11 +474,56 @@ ul.plain { margin: 0; padding-left: 17px; }
 ul.plain li { font-size: 12.5px; color: var(--ink-dim); line-height: 1.55; margin-bottom: 5px; }
 
 .chip-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 9px; }
+.chip-row:empty { display: none; }
 .chip {
   font-size: 11px; padding: 5px 9px; border-radius: 6px; cursor: pointer;
   background: var(--bg); border: 1px solid var(--line-2); color: var(--ink-dim);
 }
 .chip:hover { color: var(--ink); border-color: var(--ui); }
+.chip-inline { margin-left: 6px; padding: 2px 7px; font-size: 10.5px; vertical-align: middle; }
+
+/* Jump chips at the top of a tab, and the Next footer at the bottom. */
+.jump-row { display: flex; gap: 6px; flex-wrap: wrap; margin: 0 0 10px; }
+.next-row {
+  display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
+  margin: 18px 0 6px; padding-top: 12px; border-top: 1px solid var(--line);
+}
+.chip-next { background: var(--flag-blue); border-color: #2d5f9e; color: #fff; font-weight: 600; padding: 8px 12px; }
+.chip-next:hover { border-color: var(--ui); color: #fff; }
+
+/* A section anchor inside a tab (The crash, What was airborne). */
+.sec-anchor { margin-top: 26px; padding-top: 12px; border-top: 1px solid var(--line-2); scroll-margin-top: 8px; }
+
+/* A closed 'More' inside a card, and a card whose heading is its summary. */
+details.more { margin-top: 8px; }
+details.more > summary {
+  cursor: pointer; list-style: none; font-size: 11.5px; color: var(--ui);
+  padding: 6px 0; user-select: none;
+}
+details.more > summary::-webkit-details-marker { display: none; }
+details.more > summary::before { content: '+ '; font-family: var(--mono); }
+details.more[open] > summary::before { content: '\2013 '; }
+details.more > p:first-of-type { margin-top: 6px; }
+details.cd > summary { cursor: pointer; list-style: none; display: flex; align-items: center; gap: 8px; }
+details.cd > summary::-webkit-details-marker { display: none; }
+details.cd > summary h3 { margin: 0; flex: 1; }
+details.cd > summary::after {
+  content: '+'; font-family: var(--mono); color: var(--ink-faint); font-size: 13px;
+}
+details.cd[open] > summary::after { content: '\2013'; }
+details.cd[open] > summary { margin-bottom: 8px; }
+
+/* The verdict card at the head of the Claim tab. */
+.verdict-top .bluf-kicker { color: var(--aa11); }
+.verdict-top h3 { font-size: 16px; text-transform: none; letter-spacing: 0; color: #fff; }
+
+/* 'Showing disputes about' on the Sources tab. */
+.cf-showing {
+  margin: 0 0 10px; padding: 7px 10px; border-radius: 6px;
+  background: rgba(74,143,231,.12); border: 1px solid rgba(74,143,231,.45);
+  font-size: 12px; color: var(--ink);
+}
+.cf-showing.hidden { display: none; }
 
 /* --- layers --------------------------------------------------------------- */
 .toggle {
@@ -385,6 +539,7 @@ ul.plain li { font-size: 12.5px; color: var(--ink-dim); line-height: 1.55; margi
 #timeline {
   grid-area: time; background: var(--bg-2); border-top: 1px solid var(--line);
   padding: 10px 18px 8px; display: flex; flex-direction: column; gap: 8px;
+  position: relative;
 }
 #track-wrap { position: relative; padding-top: 15px; }
 #ticks { position: relative; height: 13px; }
@@ -588,14 +743,13 @@ ul.plain li { font-size: 12.5px; color: var(--ink-dim); line-height: 1.55; margi
 #alt-note b { color: var(--claim); font-family: var(--mono); }
 
 
-/* Ring labels sit ON the ring rather than above a point, so they lose the
-   upward offset the pin-style labels use. */
+/* Ring labels sit just above their ring with a short tick down to it. */
 .map-label.ring {
-  transform: translate(-50%, -50%);
   background: rgba(7,10,15,.88);
-  font-size: 9.5px;
+  font-size: 10.5px;
   letter-spacing: .2px;
 }
+.map-label.ring .lead { opacity: .9; }
 #tol-group { margin-top: 2px; }
 
 
@@ -624,12 +778,9 @@ ul.plain li { font-size: 12.5px; color: var(--ink-dim); line-height: 1.55; margi
    gets the strongest treatment on the page: red everywhere, a lit tab, and a
    highlighted band on its timeline entries. */
 
-#tabs button[data-tab="critic"] { color: var(--critic); font-weight: 650; letter-spacing: .3px; }
-#tabs button[data-tab="critic"]:hover { color: #ff5c72; }
-#tabs button[data-tab="critic"].on {
-  color: var(--critic); border-bottom-color: var(--critic);
-  background: rgba(255,31,61,.10);
-}
+/* The CRITIC tab button reads like the others; the red is spent inside the
+   tab, where the messages are. The active state keeps the red underline. */
+#tabs button[data-tab="critic"].on { border-bottom-color: var(--critic); }
 
 /* Timeline entries for the CRITIC chain. */
 .ev.critic-ev {
@@ -679,6 +830,24 @@ ul.plain li { font-size: 12.5px; color: var(--ink-dim); line-height: 1.55; margi
   content: ' — cannot be granted'; color: var(--critic); font-weight: 400; font-size: 11px;
 }
 .cn-detail { font-size: 11.5px; color: var(--ink-dim); line-height: 1.45; margin-top: 3px; }
+/* Eyewitness framing: quoted source block and the unverified-accounts list. */
+.ew-quote {
+  margin: 8px 0 0; padding: 7px 10px; border-left: 2px solid var(--line-2);
+  color: var(--ink-dim); font-size: 11.5px; line-height: 1.5;
+}
+.ew-unver { margin: 6px 0 0; padding-left: 17px; color: var(--ink-dim); font-size: 11.5px; line-height: 1.5; }
+.ew-unver li { margin-bottom: 5px; }
+
+/* Provenance lines: the status of a printed figure, next to the figure. */
+.prov { font-size: 11px; color: var(--ink-faint); line-height: 1.45; margin: 4px 0 0; }
+.prov b { color: var(--ink-dim); font-weight: 600; }
+.prov-block { margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--line); }
+.prov-head {
+  margin: 0; font-size: 9px; letter-spacing: .6px; text-transform: uppercase;
+  font-family: var(--mono); color: var(--ink-faint);
+}
+.cn-note { font-size: 11px; color: var(--ink-faint); line-height: 1.45; margin-top: 3px; }
+.cn-note b { color: var(--ink-dim); font-weight: 600; }
 .cn-cost { font-size: 11.5px; color: var(--ink-faint); line-height: 1.45; margin-top: 3px; font-style: italic; }
 .concession.blocking .cn-cost { color: #ffb3bd; font-style: normal; }
 
@@ -741,8 +910,7 @@ ul.plain li { font-size: 12.5px; color: var(--ink-dim); line-height: 1.55; margi
 
 /* Line of sight: dim at range, hot once a shot would be possible. */
 .map-label.los {
-  transform: translate(-50%, -50%);
-  background: rgba(7,10,15,.88); font-size: 10px; letter-spacing: .3px;
+  background: rgba(7,10,15,.88); font-size: 10.5px; letter-spacing: .3px;
 }
 .map-label.los.hot {
   background: #ff4d4d; color: #fff !important; font-weight: 700;
@@ -767,6 +935,7 @@ ul.plain li { font-size: 12.5px; color: var(--ink-dim); line-height: 1.55; margi
 .tour-btn:hover { background: rgba(255,31,61,.26); border-color: var(--critic); }
 .tour-btn.on { background: var(--critic); border-color: var(--critic); color: #fff; }
 .tour-btn-glyph { font-size: 9px; color: var(--critic); }
+.tour-btn-short { display: none; }
 .tour-btn.on .tour-btn-glyph { color: #fff; }
 
 #tour {
@@ -812,14 +981,20 @@ ul.plain li { font-size: 12.5px; color: var(--ink-dim); line-height: 1.55; margi
 #tour-body strong { color: var(--ink); }
 #tour-body em { color: var(--ink); font-style: italic; }
 #tour-body .tour-warn {
-  font-size: 11.5px; color: var(--ink-faint); font-style: italic;
+  font-size: 12.5px; font-weight: normal; font-style: normal; color: var(--ink-dim);
   border-left: 2px solid var(--line-2); padding-left: 9px; margin-top: 10px;
 }
+/* Where a step comes from, at its foot. */
+.tour-src { margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--line); }
+.tour-src .ref-row { margin-top: 5px; }
+.wt-src { margin-top: 4px; }
+.wt-src:empty { display: none; }
 
 .tour-foot {
   display: flex; align-items: center; gap: 10px; margin: 11px 12px 0;
   padding-top: 9px; border-top: 1px solid var(--line);
 }
+#tour-end { display: none; }
 .tour-dots { display: flex; gap: 3px; flex: 1; }
 .tour-dots > i {
   height: 3px; flex: 1; border-radius: 2px; background: var(--line-2);
@@ -1032,6 +1207,8 @@ body.touring #legend { opacity: 0; pointer-events: none; transition: opacity .25
   letter-spacing: -.2px;
 }
 .card.bluf p { font-size: 13.5px; line-height: 1.62; }
+.card.bluf .bluf-answer { font-size: 15px; color: var(--ink); font-weight: 600; }
+.card.bluf details.more p { font-size: 13px; }
 .bluf-note {
   margin-top: 11px; padding-top: 10px; border-top: 1px solid var(--line-2);
   font-size: 12px; color: var(--ink-dim);
@@ -1101,6 +1278,10 @@ body.touring #legend { opacity: 0; pointer-events: none; transition: opacity .25
 }
 .path-label { font-size: 13px; font-weight: 600; color: var(--ink); }
 .path-note { font-size: 11.5px; color: var(--ink-faint); line-height: 1.5; }
+/* One line per path: the minutes and the label, the note as a tooltip. */
+.paths.compact { gap: 4px; }
+.paths.compact .path { grid-template-columns: 62px 1fr; padding: 8px 12px; min-height: 40px; align-items: center; }
+.paths.compact .path-min { grid-row: auto; }
 
 /* --- the awareness chain --------------------------------------------------- */
 .aw-list { display: flex; flex-direction: column; }
@@ -1125,6 +1306,8 @@ body.touring #legend { opacity: 0; pointer-events: none; transition: opacity .25
   padding-left: 9px; border-left: 2px solid var(--line-2);
 }
 .aw-bearing strong { color: var(--ink-dim); }
+.aw-bluf { margin: 0 0 6px; font-size: 13px; font-weight: 600; color: var(--ink); line-height: 1.5; }
+.aw .chip-row { margin-top: 6px; }
 .aw-pivot { background: rgba(255,31,61,.07); border-radius: 7px; padding-left: 8px; }
 .aw-pivot::before { opacity: .85; width: 3px; }
 .aw-key {
@@ -1147,6 +1330,7 @@ body.touring #legend { opacity: 0; pointer-events: none; transition: opacity .25
 .only-mobile { display: none; }
 
 @media (max-width: 860px) {
+  :root { --footer-h: 100px; }
   body {
     grid-template-columns: 1fr;
     grid-template-rows: auto 34vh 1fr auto;
@@ -1154,8 +1338,8 @@ body.touring #legend { opacity: 0; pointer-events: none; transition: opacity .25
   }
   .only-mobile { display: inline-block; }
 
-  /* Grid items default to min-width:auto, which lets a wide child — the
-     transport row, the tab strip — push the whole body wider than the screen
+  /* Grid items default to min-width:auto, which lets a wide child (the
+     transport row, the tab strip) push the whole body wider than the screen
      and clip every paragraph mid-word. This is the fix for that, and it has to
      be on the items, not the body. */
   body { overflow-x: hidden; }
@@ -1166,11 +1350,17 @@ body.touring #legend { opacity: 0; pointer-events: none; transition: opacity .25
   .clock-wrap { flex: none; }
   .transport { flex: none; }
   /* Four playback rates will not fit beside a clock on a phone. The two that
-     matter are real time and the default. */
+     matter are real time and the default, and they appear only while the
+     clock is running. */
+  .rate-group { display: none; }
+  body.playing .rate-group { display: flex; }
   .rate-group button[data-rate="60"],
   .rate-group button[data-rate="240"] { display: none; }
   #topbar::before { width: 240px; }
-  .brand .sub { display: none; }
+  .brand .sub {
+    display: block; font-size: 11px; line-height: 1.25;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
   .brand h1 { font-size: 13px; }
   .flag90 { width: 40px; height: 21px; }
   #clock { font-size: 17px; }
@@ -1178,13 +1368,31 @@ body.touring #legend { opacity: 0; pointer-events: none; transition: opacity .25
   .transport { gap: 6px; }
   .rate-group button { padding: 9px 8px; }
   .icon-btn { width: 42px; height: 38px; }
-  #btn-follow, #btn-reset-view, #btn-tour { display: none; }
-  .ghost-btn { padding: 10px 12px; }
+  /* Follow goes; Reset view stays; the tour button shrinks to its glyph and
+     the word "tour". */
+  #btn-follow { display: none; }
+  #btn-reset-view { padding: 10px 9px; }
+  .tour-btn-word { display: none; }
+  .tour-btn-short { display: inline; }
+  #btn-tour { margin-left: 0; padding: 10px 10px; min-height: 38px; }
+  .ghost-btn { padding: 10px 10px; }
 
   #stage { min-height: 0; }
   #aside-toggle, #legend { display: none; }
-  #hud { font-size: 10px; }
+  #hud { font-size: 10px; padding: 4px 8px; }
+  #hud-state { font-size: 12px; min-height: 0; }
+  #hud-state:empty { display: none; }
+  #hud:has(#hud-state:empty) { display: none; }
   #hud-hint { display: none; }
+  .map-label { font-size: 12px; }
+  .map-label.ring { font-size: 11.5px; }
+
+  /* The layers button at the top right of the map strip; the drawer fills
+     the strip. */
+  #btn-layers { left: auto; right: 10px; top: 10px; bottom: auto; }
+  #layers-drawer {
+    left: 8px; right: 8px; top: 8px; bottom: 8px; width: auto; max-height: none;
+  }
 
   /* The map full-screen, when you ask for it. */
   body.map-open { grid-template-rows: auto 1fr 0 auto; }
@@ -1196,14 +1404,13 @@ body.touring #legend { opacity: 0; pointer-events: none; transition: opacity .25
   }
   body.panel-hidden #panel { display: flex; }
 
-  /* Sticky, sideways-scrolling tabs. Seven will not fit across a phone, and
-     wrapping them eats a third of the screen. */
+  /* Sticky, sideways-scrolling tabs. Six fit across a phone at this size. */
   #tabs {
     position: sticky; top: 0; z-index: 5; flex-wrap: nowrap;
     overflow-x: auto; scrollbar-width: none; background: var(--bg-2);
   }
   #tabs::-webkit-scrollbar { display: none; }
-  #tabs button { flex: 0 0 auto; padding: 13px 14px; font-size: 12px; min-height: 44px; }
+  #tabs button { flex: 1 0 auto; padding: 13px 9px; font-size: 12px; min-height: 44px; }
 
   .tab-body { padding: 12px 12px 28px; }
   .card { padding: 13px; }
@@ -1211,17 +1418,37 @@ body.touring #legend { opacity: 0; pointer-events: none; transition: opacity .25
   .card.bluf p { font-size: 14px; }
   .wt-body p, .wt-counter p { font-size: 13.5px; }
 
+  /* The footer. On every tab but Timeline it is a single scrubber row; the
+     ticks and the flight strip come back on Timeline and in the full map. */
   #timeline { padding: 7px 11px 6px; gap: 6px; }
-  #flight-strip { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+  #flight-strip { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; position: relative; }
   #flight-strip::-webkit-scrollbar { display: none; }
   .fs { flex: 0 0 auto; }
+  body.footer-min { --footer-h: 40px; }
+  body.footer-min #ticks, body.footer-min #flight-strip { display: none; }
+  body.footer-min #timeline { padding: 6px 11px; gap: 0; }
+  body.footer-min #track-wrap { padding-top: 0; }
+  body.footer-min #scrub { top: 0; }
+  body.map-open #ticks, body.map-open #flight-strip { display: flex; }
+  body.map-open #ticks { display: block; }
 
-  #tour { left: 8px; right: 8px; bottom: 8px; width: auto; }
-  #tour-body { max-height: 30vh; }
+  /* The tour as a bottom sheet, fixed above the footer, so the top of the map
+     stays uncovered and the sheet never scrolls with the reading. */
+  #tour {
+    position: fixed; left: 8px; right: 8px; top: auto;
+    bottom: calc(var(--footer-h) + 8px + env(safe-area-inset-bottom));
+    width: auto; max-height: 48vh; max-height: 48dvh;
+    display: flex; flex-direction: column; z-index: 45;
+  }
+  #tour.hidden { display: none; }
+  #tour-body { flex: 1; max-height: none; overflow: auto; }
+  body.touring { grid-template-rows: auto 52vh 1fr auto; }
+  #tour-end { display: inline-block; }
   .tour-ctl button { min-width: 42px; height: 34px; }
 
   #info-pop { width: calc(100vw - 22px); }
   .chip { padding: 9px 12px; min-height: 38px; }
+  .chip-inline { min-height: 0; padding: 4px 8px; }
   .toggle { min-height: 44px; }
 }
 
@@ -1233,3 +1460,85 @@ body.touring #legend { opacity: 0; pointer-events: none; transition: opacity .25
   .card.bluf h2 { font-size: 17.5px; }
   .path { grid-template-columns: 54px 1fr; }
 }
+
+
+/* --- the certainty ladder ------------------------------------------------ */
+/* Seven rungs, strongest first. The rank number is the whole visual argument:
+   a reader should be able to see at a glance that the bottom of the list is
+   where the honest trouble is. */
+.certainty { list-style: none; margin: 12px 0 0; padding: 0; counter-reset: none; }
+.cert {
+  border-left: 3px solid var(--line); padding: 10px 0 10px 13px; margin: 0 0 2px;
+}
+.cert-measured  { border-left-color: #4ec9a0; }
+.cert-published { border-left-color: #5fb3d4; }
+.cert-derived   { border-left-color: #7a9bd4; }
+.cert-inferred  { border-left-color: #c8a84e; }
+.cert-contested { border-left-color: #d08a4e; }
+.cert-withheld  { border-left-color: #c95f5f; }
+.cert-absent    { border-left-color: #8a8f98; }
+.cert-head { display: flex; align-items: baseline; gap: 9px; flex-wrap: wrap; }
+.cert-rank {
+  font-family: var(--mono, ui-monospace, monospace); font-size: 11px;
+  color: var(--dim); font-variant-numeric: tabular-nums;
+}
+.cert-label {
+  font-weight: 700; font-size: 13px; letter-spacing: .04em; text-transform: uppercase;
+}
+.cert-gloss { margin: 4px 0 0; font-size: 13.5px; }
+.cert-detail { margin: 4px 0 0; font-size: 12.8px; color: var(--dim); }
+.cert-ex { margin: 7px 0 0; padding-left: 16px; font-size: 12.6px; color: var(--dim); }
+.cert-ex li { margin-bottom: 4px; }
+
+
+/* --- the last six minutes ------------------------------------------------ */
+.recon .kicker { color: var(--dim); letter-spacing: .12em; text-transform: uppercase; font-size: 11px; margin: 0 0 3px; }
+.recon-filter { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 10px 0 4px; }
+.rf-label { font-size: 11px; letter-spacing: .09em; text-transform: uppercase; color: var(--dim); }
+.beats { list-style: none; margin: 12px 0 14px; padding: 0; }
+.beat { display: grid; grid-template-columns: 68px 1fr; gap: 11px; padding: 11px 0; border-top: 1px solid var(--line); }
+.beat:first-child { border-top: 0; }
+.beat-t { font-family: var(--mono, ui-monospace, monospace); font-size: 12px; color: var(--dim); font-variant-numeric: tabular-nums; padding-top: 2px; }
+.beat-head { margin: 0; font-size: 15px; font-weight: 600; line-height: 1.35; }
+.beat-note { margin: 4px 0 0; font-size: 13px; color: var(--dim); }
+.beat-state { margin-top: 6px; font-family: var(--mono, ui-monospace, monospace); font-size: 11.5px; color: var(--dim); }
+.beat-state .sep { opacity: .45; margin: 0 6px; }
+.beat-voices { margin-top: 8px; display: flex; flex-direction: column; gap: 4px; }
+.rv { font-size: 12.8px; line-height: 1.4; padding-left: 9px; border-left: 2px solid var(--line); }
+.rv-who { font-family: var(--mono, ui-monospace, monospace); font-size: 10.5px; color: var(--dim); margin-right: 6px; }
+.rv-english { border-left-color: #5fb3d4; }
+.rv-arabic { border-left-color: #c8a84e; }
+.rv-mixed { border-left-color: #9b8fd4; }
+.rv-shout .rv-text { font-weight: 700; }
+.rv-note { color: var(--dim); font-style: italic; }
+.rv-tag { display: block; font-size: 10px; letter-spacing: .05em; text-transform: uppercase; color: var(--dim); opacity: .75; }
+.rv-mini { display: inline-block; font-size: 11.5px; padding-left: 6px; border-left: 2px solid var(--line); margin-right: 6px; }
+.cert-pill { display: inline-block; margin-top: 7px; font-size: 10px; letter-spacing: .07em; text-transform: uppercase; padding: 1px 6px; border-radius: 3px; background: var(--bg-2); border: 1px solid var(--line); }
+.recon-table-wrap { overflow-x: auto; margin-top: 10px; }
+.recon-table { border-collapse: collapse; font-size: 11.5px; width: 100%; }
+.recon-table th, .recon-table td { text-align: left; padding: 2px 8px 2px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+.recon-table .num { text-align: right; font-variant-numeric: tabular-nums; }
+.recon-table .mono { font-family: var(--mono, ui-monospace, monospace); }
+
+/* --- corrections --------------------------------------------------------- */
+.corr { list-style: none; margin: 12px 0 0; padding: 0; }
+.corr-item { padding: 11px 0; border-top: 1px solid var(--line); }
+.corr-item:first-child { border-top: 0; }
+.corr-head { display: flex; gap: 9px; align-items: center; }
+.corr-date { font-size: 11px; color: var(--dim); }
+.corr-what { margin: 5px 0 6px; font-size: 14px; font-weight: 600; }
+.corr-wrong, .corr-right, .corr-why { margin: 3px 0; font-size: 12.8px; line-height: 1.5; }
+.corr-wrong { color: var(--dim); }
+.corr-k { display: inline-block; min-width: 42px; font-size: 10px; letter-spacing: .08em;
+  text-transform: uppercase; color: var(--dim); opacity: .8; }
+@media (max-width: 860px) { .beat { grid-template-columns: 58px 1fr; gap: 9px; } }
+
+
+/* On a phone the masthead has room for the domain and the request, and
+   nothing else. The date is already on the clock and the timeline. */
+@media (max-width: 560px) {
+  .hdate { display: none; }
+  .wordmark { font-size: 13px; }
+}
+
+.recon-range { margin: 2px 0 0; font-family: var(--mono); font-size: 12px; color: var(--dim); }

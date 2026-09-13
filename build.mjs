@@ -43,6 +43,7 @@ const MODULES = [
   'geo', 'topo', 'projection', 'military', 'critic', 'calls',
   'data', 'conflicts', 'analysis', 'reachability', 'steelman', 'glossary', 'links',
   'awareness', 'brief', 'tour',
+  'certainty', 'corrections', 'reconstruction',
   'map3d', 'main',
 ];
 

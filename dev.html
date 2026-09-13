@@ -3,19 +3,19 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>September 11, 2001 — Tracker</title>
+<title>truth.help — the last six minutes of United 93</title>
 <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
 
-<div id="boot"><div class="boot-inner"><div class="spinner"></div><p>Loading state geometry…</p></div></div>
+<div id="boot"><div class="boot-inner"><div class="spinner"></div><p>Loading map…</p></div></div>
 
 <header id="topbar">
   <div class="brand">
     <span id="flag90" class="flag90" role="img" aria-label="Animated United States flag"></span>
     <div class="brand-text">
-      <h1>September 11, 2001</h1>
-      <span class="sub">Flight tracker &amp; claim tester</span>
+      <h1><a class="wordmark" href="https://truth.help" rel="home">truth.help</a><span class="hdate">September 11, 2001</span></h1>
+      <span class="sub">Help me understand the last six minutes of United 93</span>
     </div>
   </div>
 
@@ -35,9 +35,9 @@
     <button id="btn-follow" class="ghost-btn on" aria-pressed="true"
             title="Keep the camera on whatever is airborne (F)">Follow</button>
     <button id="btn-reset-view" class="ghost-btn" title="Stop following and show the whole country">Reset view</button>
-    <button id="btn-map" class="ghost-btn only-mobile" title="Swap between the map and the reading">Map</button>
-    <button id="btn-tour" class="tour-btn" title="Play a guided walk through the steelman argument">
-      <span class="tour-btn-glyph">&#9654;</span> Steelman tour
+    <button id="btn-map" class="ghost-btn only-mobile" title="Swap between the map and the text">Full map</button>
+    <button id="btn-tour" class="tour-btn" title="Play a guided walk through the argument">
+      <span class="tour-btn-glyph">&#9654;</span> <span class="tour-btn-word">Guided tour</span><span class="tour-btn-short">Tour</span>
     </button>
   </div>
 </header>
@@ -47,21 +47,39 @@
   <div id="labels"></div>
 
   <div id="hud">
-    <div id="hud-state">—</div>
-    <div id="hud-hint">drag to pan · right-drag, shift-drag or ctrl-drag to rotate · scroll to zoom · click to inspect</div>
+    <div id="hud-state"></div>
+    <div id="hud-hint">drag to pan &middot; two fingers or right-drag to rotate &middot; pinch or scroll to zoom &middot; tap to inspect</div>
   </div>
 
   <div id="legend">
-    <div class="legend-title">Vertical scale</div>
-    <div class="alt-group" id="alt-group">
-      <button data-alt="1" class="on">1× true</button>
-      <button data-alt="2">2×</button>
-      <button data-alt="5">5×</button>
+    <div class="legend-scale">
+      <span class="legend-title">Vertical scale</span>
+      <div class="alt-group" id="alt-group" title="">
+        <button data-alt="1" class="on">1× true</button>
+        <button data-alt="2">2×</button>
+        <button data-alt="5">5×</button>
+      </div>
     </div>
-    <div class="legend-row" id="alt-note"></div>
+    <div class="legend-row" id="alt-note" hidden></div>
+    <div id="legend-key" class="legend-key">
+      <div><i style="background:#35d6a4"></i>How far he could have flown, at cruise</div>
+      <div><i style="background:#ffd447"></i>Fastest possible</div>
+      <div><i class="dash" style="border-color:#ff8a5c"></i>Fuel limit</div>
+      <div><i class="dash" style="border-color:#fff"></i>STEELMAN, the constructed track</div>
+      <div><i style="background:#ff1f3d"></i>The four withheld messages</div>
+    </div>
   </div>
 
-  <button id="aside-toggle" title="Show / hide panel">›</button>
+  <button id="btn-layers" class="icon-btn" aria-label="Map layers" title="Map layers" aria-expanded="false">&#9881;</button>
+  <div id="layers-drawer" class="hidden" aria-label="Map layers">
+    <div class="drawer-head">
+      <span>Map layers</span>
+      <button id="drawer-close" class="tour-x" title="Close">&#10005;</button>
+    </div>
+    <div id="layers-body"></div>
+  </div>
+
+  <button id="aside-toggle" title="Hide text" aria-label="Hide text"><span class="at-glyph">›</span><span class="at-word">Hide text</span></button>
 
   <!-- One popover, shared by every (i) on the page. -->
   <div id="info-pop" class="hidden" role="dialog" aria-label="Definition">
@@ -73,7 +91,7 @@
 
   <!-- The guided tour's callout. Lives over the map, because the map is what
        it is talking about. -->
-  <section id="tour" class="hidden" aria-live="polite" aria-label="Steelman tour">
+  <section id="tour" class="hidden" aria-live="polite" aria-label="Guided tour">
     <div class="tour-bar"><i id="tour-bar-fill"></i></div>
     <div class="tour-head">
       <span id="tour-chapter" class="tour-chapter">&mdash;</span>
@@ -85,6 +103,7 @@
     <div class="tour-foot">
       <div id="tour-dots" class="tour-dots"></div>
       <div class="tour-ctl">
+        <button id="tour-end" title="End the tour">End</button>
         <button id="tour-prev" title="Previous step (&larr;)">&lsaquo;</button>
         <button id="tour-replay" title="Show me where to look again">&#9673;</button>
         <button id="tour-next" title="Next step (space or &rarr;)">&rsaquo;</button>
@@ -95,32 +114,44 @@
 
 <aside id="panel">
   <nav id="tabs">
-    <button data-tab="brief" class="on">Start&nbsp;here</button>
-    <button data-tab="timeline">Timeline</button>
-    <button data-tab="critic">CRITIC</button>
+    <button data-tab="brief" class="on">What&nbsp;happened</button>
+    <button data-tab="claim">The&nbsp;claim</button>
     <button data-tab="aware">Who&nbsp;knew</button>
-    <button data-tab="claim">Claim</button>
-    <button data-tab="debris">Flight&nbsp;93</button>
-    <button data-tab="military">Military</button>
-    <button data-tab="conflicts">Conflicts<span id="conflict-count"></span></button>
-    <button data-tab="layers">Layers</button>
+    <button data-tab="critic">Withheld</button>
+    <button data-tab="timeline">Timeline</button>
+    <button data-tab="conflicts">How&nbsp;we&nbsp;know<span id="conflict-count"></span></button>
   </nav>
 
-  <section class="tab-body" data-body="brief" id="brief-body"></section>
+  <section class="tab-body" data-body="brief"><div id="recon-host"></div><div id="brief-body"></div></section>
 
-  <section class="tab-body hidden" data-body="aware" id="aware-body"></section>
+  <section class="tab-body hidden" data-body="claim"><div id="claim-body"></div><div id="claim-next"></div></section>
 
-  <section class="tab-body hidden" data-body="timeline">
-    <div id="now-card" class="card"></div>
-    <div id="event-list"></div>
+  <section class="tab-body hidden" data-body="aware">
+    <div id="aware-body"></div>
+    <h3 id="airborne" class="sec-head sec-anchor">What was airborne</h3>
+    <div id="military-body"></div>
+    <div id="aware-next"></div>
   </section>
 
-  <section class="tab-body hidden" data-body="critic"><div id="critic-body"></div></section>
-  <section class="tab-body hidden" data-body="claim"><div id="claim-body"></div></section>
-  <section class="tab-body hidden" data-body="debris"><div id="debris-body"></div></section>
-  <section class="tab-body hidden" data-body="military"><div id="military-body"></div></section>
-  <section class="tab-body hidden" data-body="conflicts"><div id="conflicts-body"></div></section>
-  <section class="tab-body hidden" data-body="layers"><div id="layers-body"></div></section>
+  <section class="tab-body hidden" data-body="critic"><div id="critic-body"></div><div id="critic-next"></div></section>
+
+  <section class="tab-body hidden" data-body="timeline">
+    <div id="timeline-top"></div>
+    <div id="now-card" class="card"></div>
+    <div id="event-list"></div>
+    <h3 id="crash" class="sec-head sec-anchor">The crash, 09:57–10:03</h3>
+    <div id="debris-body"></div>
+    <div id="timeline-next"></div>
+  </section>
+
+  <section class="tab-body hidden" data-body="conflicts">
+    <div id="certainty-host"></div>
+    <div id="corrections-host"></div>
+    <div id="conflicts-body"></div>
+    <div id="glossary-host"></div>
+    <div id="mapkey-host"></div>
+    <div id="conflicts-next"></div>
+  </section>
 </aside>
 
 <footer id="timeline">

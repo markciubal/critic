@@ -1,0 +1,10 @@
+letter,time_edt,event,latitude,longitude
+A,08:42,"Takeoff from Newark, NJ",40.68950,-74.17450
+B,09:02,"Levels at assigned altitude of 35,000 ft",40.70835,-76.57723
+C,09:28,600-ft deviation; assumed takeover point,41.20263,-80.69796
+D,09:34,"Starts climb to 41,000 ft; turns southeast",41.27257,-81.65183
+E,09:39,"Maximum altitude of 41,000 ft",41.04409,-82.05245
+F,09:46,Brief interruption in descent,40.67571,-80.93324
+G,09:59,Rapid control-wheel inputs; starts climbing,40.16745,-79.37525
+H,10:02,Noses down; starts rapid descent,40.14413,-78.98735
+I,10:03:11,Impact,40.05520,-78.90580

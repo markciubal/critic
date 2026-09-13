@@ -9,6 +9,10 @@ import {
   CRITIC_NODES, CRITIC_CHAIN, CRITIC_SUMMARY, CRITIC_GLIMPSE,
   DISTRIBUTION, CRITIC_BACKGROUND, FOIA,
 } from './data.js';
+/* A namespace view of the same module, used only for content that is being
+   added to data.js alongside this file. Reading it through the namespace means
+   the app still loads if the export is not there yet. */
+import * as DATA from './data.js';
 import { samplePath, haversineMi, machAt } from './geo.js';
 import { ALT_CHOICES, trueScaleRatio } from './projection.js';
 import {
@@ -30,6 +34,9 @@ import { GLOSSARY, glossaryList } from './glossary.js';
 import { REFS, refsFor } from './links.js';
 import { AWARENESS, ACTORS, AWARENESS_COUNTER, FIGHTERS_QUESTION, awarenessGap } from './awareness.js';
 import { BOTTOM_LINE, WHY_CRITIC, WALKTHROUGH, PATHS } from './brief.js';
+import { CERTAINTY, CERTAINTY_NOTE } from './certainty.js';
+import { RECONSTRUCTION, RECON_NOTE } from './reconstruction.js';
+import { CORRECTIONS, CORRECTIONS_NOTE } from './corrections.js';
 import { wezWindow, LOS_HORIZON, losVsWez, mutualHorizonSmi } from './steelman.js';
 import { TOUR_STEPS, TONES } from './tour.js';
 
@@ -37,16 +44,52 @@ const $ = (s) => document.querySelector(s);
 const $$ = (s) => [...document.querySelectorAll(s)];
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const hex = (n) => '#' + n.toString(16).padStart(6, '0');
+/* A provenance badge. Titled from SRC_META so hovering says what the badge
+   means, and wired to the 'provenance' glossary entry so tapping one opens
+   the same popover the (i) icons use. */
 const srcTag = (k) => {
   const m = SRC_META[k];
-  return m ? `<span class="src ${m.tone}">${m.label}</span>` : '';
+  if (!m) return '';
+  const title = m.title || m.note || `${m.label}: source kind for this statement`;
+  return `<span class="src ${m.tone}" data-info="provenance" title="${esc(title)}">${m.label}</span>`;
 };
+
+/* Expand [[key]] markers in prose to (i) icons. Applied AFTER esc(), so the
+   data modules can write '[[mach]]' and get a popover without any HTML. An
+   unknown key expands to nothing, so the app runs before the glossary has it. */
+const expandInfo = (s) => String(s).replace(/\[\[([a-zA-Z0-9]+)\]\]/g, (_, k) => info(k));
+const ei = (s) => expandInfo(esc(s));
+/* The same markers dropped, for text that goes into an attribute. */
+const plain = (s) => String(s).replace(/\s*\[\[[a-zA-Z0-9]+\]\]/g, '');
+
+/* A provenance line: the status of a figure, printed next to the figure. The
+   data modules label every performance number CITED, DERIVED, REPORTED or not
+   sourced, and those labels are only worth writing if the reader sees them.
+   An empty or missing string renders nothing. */
+const provLine = (s, label = '') => (typeof s === 'string' && s
+  ? `<p class="prov">${label ? `<b>${esc(label)}</b> ` : ''}${ei(s)}</p>`
+  : '');
+
+/* AIM9.provenance is keyed by field name. This is the order the figures are
+   printed in the card above it, with the label each one is printed under. */
+const AIM9_PROV_ORDER = [
+  ['seeker', 'Seeker'],
+  ['speed', 'Speed'],
+  ['warhead', 'Warhead'],
+  ['rMaxMi', 'Max range'],
+  ['rMaxOptimisticMi', 'Upper published range'],
+  ['rMinMi', 'Min range'],
+];
+
+/* Reference chips for every key in obj.refs, when the data carries one. */
+const refRows = (obj, extraClass = '') =>
+  ((obj && obj.refs) || []).map((k) => refRow(k, extraClass)).join('');
 
 const state = {
   t: T0,
   playing: false,
   rate: 15,
-  claimDepart: 8 * 3600 + 46 * 60,   // user dial: earliest plausible launch
+  claimDepart: 8 * 3600 + 46 * 60 + 40,   // user dial: earliest plausible launch (first impact)
   interceptT: 9 * 3600 + 58 * 60,    // the alleged shot
   follow: true,                      // camera reframes the action as you scrub
   altScale: 1,                       // vertical exaggeration; 1 = true scale
@@ -56,10 +99,16 @@ const state = {
     PANTA: true, QUIT: true, GOFER: true, BULLY: true,
     debris: false, routeDoc: false, routeClaim: false, places: true,
     critic: true,
-    envelope: true, wez: true, hypo: true, calls: true, aware: true,
-    trail: true,
+    envelope: false, wez: false, hypo: true, calls: false, aware: false,
+    trail: false,
+    /* The Mach 2.0 ring is a configuration the record rules out. It is drawn
+       only when the layers drawer is switched to Full. */
+    maxClean: false,
   },
 };
+
+/* Which layers the drawer's Simple / Full switch controls, as a group. */
+const FULL_LAYERS = ['envelope', 'wez', 'trail', 'calls', 'aware', 'maxClean'];
 
 let map;
 
@@ -88,6 +137,7 @@ async function loadTopology() {
     // Panning or zooming by hand is the user taking the wheel.
     map.onManualCamera = () => setFollow(false);
     window.__map = map;
+    window.__state = state;   // read by the headless probes
 
     buildFlag90();
     buildTimelineUI();
@@ -101,9 +151,11 @@ async function loadTopology() {
     renderMilitaryTab();
     renderConflictsTab();
     renderLayersTab();
+    renderNextRows();
     bindChrome();
 
     setAltScale(state.altScale);
+    map.setMaxCleanVisible(!!state.layers.maxClean);
     setTolerance(state.toleranceMin);
     map.setCriticVisible(state.layers.critic);
     map.setAwarenessVisible(state.layers.aware);
@@ -146,7 +198,7 @@ function loop(now) {
   }
 
   const hoverName = map.hover();
-  $('#hud-state').textContent = hoverName || '—';
+  $('#hud-state').textContent = hoverName || '';
 
   map.render();
   drawLabels();
@@ -284,11 +336,37 @@ function setAltScale(k) {
   map.setAltScale(state.altScale);
   $$('#alt-group button').forEach((b) => b.classList.toggle('on', +b.dataset.alt === state.altScale));
   const note = $('#alt-note');
+  /* The caveat is rendered, not only tooltipped: an exaggerated vertical axis
+     is a distortion the reader has to be told about on screen. At 1x the
+     legend stays one row. */
+  note.hidden = state.altScale === 1;
+  let text;
   if (state.altScale === 1) {
-    note.innerHTML = `<b>True scale.</b> A 35,000 ft cruise is 6.6 miles above a country 2,800 miles across — about 1:${Math.round(trueScaleRatio()).toLocaleString()}. The tracks look almost flat because they are.`;
+    note.innerHTML = `<b>True scale.</b> A 35,000 ft cruise is 6.6 miles above a country 2,800 miles across, about 1:${Math.round(trueScaleRatio()).toLocaleString()}. At true scale the tracks are almost flat.`;
+    text = `True scale. A 35,000 ft cruise is 6.6 miles above a country 2,800 miles across, about 1:${Math.round(trueScaleRatio()).toLocaleString()}. At true scale the tracks are almost flat.`;
   } else {
     note.innerHTML = `Altitude exaggerated <b>${state.altScale}×</b> against ground distance, to make climbs and descents readable. The vertical axis is not to scale.`;
+    text = `Altitude exaggerated ${state.altScale}× against ground distance, to make climbs and descents readable. The vertical axis is not to scale.`;
   }
+  // The same wording also rides on the control as a tooltip, for the 1x case
+  // where the legend stays one row.
+  const ag = $('#alt-group');
+  if (ag) ag.title = text;
+}
+
+/* The one place that turns the panel off and on, so the button's label and
+   its accessible name cannot disagree about which way it is about to go. */
+function setPanelHidden(hidden) {
+  document.body.classList.toggle('panel-hidden', hidden);
+  const b = $('#aside-toggle');
+  if (b) {
+    const label = hidden ? 'Show text' : 'Hide text';
+    b.title = label;
+    b.setAttribute('aria-label', label);
+    const w = b.querySelector('.at-word');
+    if (w) w.textContent = label;
+  }
+  setTimeout(() => map.resize(), 280);
 }
 
 function setFollow(on) {
@@ -305,6 +383,31 @@ function setFollow(on) {
 function setPlaying(v) {
   state.playing = v;
   $('#play-glyph').textContent = v ? '❚❚' : '▶';
+  // The playback-rate buttons are hidden on phones until the clock is running.
+  document.body.classList.toggle('playing', !!v);
+}
+
+/* The Reset-view routine, shared by the header button, the map toggle and the
+   walkthrough's "show on the map" chips. */
+function resetViewFit() {
+  setFollow(false);
+  map.resetView();
+}
+
+const isPhone = () => innerWidth <= 860;
+
+/* Swap the phone layout between the reading and the full-height map. The
+   canvas changes size, so the renderer is resized and the view refitted. */
+function setMapOpen(open, refit = true) {
+  document.body.classList.toggle('map-open', open);
+  const mapBtn = $('#btn-map');
+  if (mapBtn) mapBtn.textContent = open ? 'Back to text' : 'Full map';
+  const tab = ($('#tabs button.on') || {}).dataset?.tab || 'brief';
+  document.body.classList.toggle('footer-min', !open && tab !== 'timeline');
+  setTimeout(() => {
+    map.resize();
+    if (refit) resetViewFit();
+  }, 260);
 }
 
 /* =============================================================================
@@ -386,19 +489,29 @@ function updateFlightStrip() {
    ========================================================================== */
 
 function renderEvents() {
+  const CRASH_T = 10 * 3600 + 3 * 60 + 11;
+  const top = $('#timeline-top');
+  if (top) top.innerHTML = `<div class="jump-row">
+      <button class="chip" data-goto="timeline" data-anchor="#crash">The crash &rarr;</button>
+    </div>`;
+
   $('#event-list').innerHTML = EVENTS.map((ev, i) => `
     <div class="ev future${ev.kind === 'claim' ? ' claim-ev' : ''}${ev.kind === 'critic' ? ' critic-ev' : ''}" data-ev="${i}" data-t="${ev.t}">
       <div class="ev-t">${hms(ev.t)}</div>
       <div>
         <div class="ev-label" style="color:${hex(ev.color)}">${esc(ev.label)}</div>
         <div class="ev-text">${esc(ev.text)}</div>
-        <div style="margin-top:5px">${srcTag(ev.src)}</div>
+        <div style="margin-top:5px">${srcTag(ev.src)}
+          ${ev.flight === 'UA93' && Math.abs(ev.t - CRASH_T) < 60
+            ? `<button class="chip chip-inline" data-goto="timeline" data-anchor="#crash">The crash &rarr;</button>` : ''}
+        </div>
       </div>
     </div>`).join('');
 
   evEls = $$('.ev');
   lastNowIdx = -1;
-  evEls.forEach((el) => el.addEventListener('click', () => {
+  evEls.forEach((el) => el.addEventListener('click', (e) => {
+    if (e.target.closest('[data-goto]')) return;   // the chip has its own job
     setPlaying(false);
     setTime(+el.dataset.t);
     const ev = EVENTS[+el.dataset.ev];
@@ -453,26 +566,41 @@ function updateNowCard() {
    Panels — the claim tab
    ========================================================================== */
 
+/* Details on the Claim tab open on a desktop, where there is room, and start
+   closed on a phone, where the tab would otherwise be a very long scroll. */
+const openIfWide = () => (innerWidth > 860 ? ' open' : '');
+
 function renderClaimTab() {
   const g = GIBNEY;
   $('#claim-body').innerHTML = `
+    <div class="verdict verdict-top">
+      <div class="bluf-kicker">The verdict</div>
+      <h3>${ei(VERDICT.headline)}</h3>
+      <p>${ei(VERDICT.body)}</p>
+      <div style="margin-top:8px">${srcTag('derived')}${refRows(VERDICT)}</div>
+      <div class="chip-row">
+        <button class="chip chip-go" data-goto="tour">&#9654; Walk me through it</button>
+        <button class="chip" data-cjump="CLAIM">Disputes about this</button>
+      </div>
+    </div>
+
     <div class="card">
       <h3>The allegation ${conflictChip('CLAIM')}</h3>
-      ${refRow('UA93')}${refRow('COMMISSION')}
-      <p>In <strong>${esc(CRITIC.date)}</strong>, ${esc(CRITIC.claimant)} told ${esc(CRITIC.venue)} that United 93 did not crash — it was shot down. ${srcTag('claim')}</p>
-      <div class="quote">“${esc(CRITIC.quote)}”</div>
+      ${refRow('UA93')}${refRow('COMMISSION')}${refRows(CRITIC)}
+      <p>In <strong>${esc(CRITIC.date)}</strong>, ${esc(CRITIC.claimant)} told ${esc(CRITIC.venue)} that United 93 did not crash: it was shot down. ${srcTag('claim')}</p>
+      <div class="quote">“${esc(CRITIC.quote)}” ${srcTag(CRITIC.src)}</div>
       <dl class="kv">
         ${CRITIC.assertions.map((a) => `<dt>${esc(a.k)}</dt><dd>${esc(a.v)}</dd>`).join('')}
       </dl>
-      <p style="margin-top:10px">This app takes that seriously enough to measure it. Everything below is the test.</p>
+      <p style="margin-top:10px">Everything below tests that claim.</p>
     </div>
 
     <div class="card">
       <h3>Rick Gibney's documented day</h3>
-      ${refRow('GIBNEY_UNIT')}
-      <p><strong>${esc(g.name)}</strong>, 119th Fighter Wing. He was flying an F-16 on the morning of September 11 — that much the claim gets right, and it is probably why the story attached to him. ${srcTag('press')}</p>
+      ${refRow('GIBNEY_UNIT')}${refRows(g)}
+      <p><strong>${esc(g.name)}</strong>, 119th Fighter Wing. He was flying an F-16 on the morning of September 11. That much the claim gets right. ${srcTag(g.src || 'press')}</p>
       <p>His tasking was to fly <strong>${esc(g.passenger)}</strong> home. With every civil aircraft in the country grounded, a fighter was the only way to move him.</p>
-      <p style="font-size:11.5px;color:var(--ink-faint)">${esc(g.rankNote.text)}</p>
+      <p style="font-size:11.5px;color:var(--ink-faint)">${ei(g.rankNote.text)} ${srcTag(g.rankNote.src)}</p>
 
       <h3 style="margin-top:14px">Where he landed</h3>
       ${g.landings.map((l, i) => `
@@ -482,17 +610,18 @@ function renderClaimTab() {
           <span style="font-size:11.5px">${esc(l.role)}</span></div>
         </div>`).join('')}
 
-      ${g.legs.map((l) => `<p style="margin-top:9px;font-size:12px">${esc(l.why)}</p>`).join('')}
-      <p style="font-size:12px">${esc(g.afterword)}</p>
+      ${g.legs.map((l) => `<p style="margin-top:9px;font-size:12px">${ei(l.why)} ${srcTag(l.src)}</p>`).join('')}
+      <p style="font-size:12px">${ei(g.afterword)}</p>
       <div class="chip-row">
         <button class="chip" data-act="show-doc">Draw this route</button>
         <button class="chip" data-act="show-claim">Draw the claimed route</button>
       </div>
     </div>
 
-    <div class="card">
-      <h3>Required speed</h3>
+    <details class="card cd"${openIfWide()}>
+      <summary><h3>Required speed</h3></summary>
       <p>The claim fixes one arrival time: Gibney must be over Somerset County at <strong>09:58</strong>. Set the earliest moment he could have launched from Fargo and the leg is forced.</p>
+      ${refRow('F16')}${refRow('UA93')}
       <div class="dial">
         <label><span>Departure from Fargo</span><b id="dep-read">08:46</b></label>
         <input id="dep-dial" type="range" min="${7 * 3600}" max="${9 * 3600 + 50 * 60}" step="60" value="${state.claimDepart}" />
@@ -509,57 +638,67 @@ function renderClaimTab() {
         Every assumption below favours the claim:
       </p>
       <ul class="plain" style="font-size:11.5px">
-        ${ASSUMPTIONS.map((a) => `<li>${esc(a)}</li>`).join('')}
+        ${ASSUMPTIONS.map((a) => `<li>${ei(a)}</li>`).join('')}
       </ul>
-    </div>
+    </details>
 
-    <div class="card">
-      <h3>Where he could have been</h3>
-      <p>His day has documented <em>places</em> — Fargo, Bozeman, Albany — and essentially no documented <em>times</em>. So for almost the whole morning nothing puts him at any particular point, and the honest way to draw that is a disc rather than a line: everywhere an F-16 could reach from its last anchor in the time elapsed.</p>
+    <details class="card cd" id="reach-card"${openIfWide()}>
+      <summary><h3>Where he could have been</h3></summary>
+      <p>His day has documented <em>places</em> (Fargo, Bozeman, Albany) and essentially no documented <em>times</em>. So for almost the whole morning nothing puts him at any particular point, and the app draws a disc rather than a line: everywhere an F-16 could reach from its last anchor in the time elapsed.</p>
       <div id="reach-out"></div>
+      ${refRow('F16')}
       <p style="font-size:11.5px;color:var(--ink-faint);margin-top:10px">
-        No departure time for Gibney has ever been published, so the rings are drawn as bands rather than hairlines. The bounds that <em>are</em> documented are the day's own: first knowledge at ${hms(DEPARTURE_BOUNDS.firstKnowledge.t).slice(0, 5)}, the national ground stop at ${hms(DEPARTURE_BOUNDS.groundStop.t).slice(0, 5)}, and SCATANA at ${hms(DEPARTURE_BOUNDS.scatana.t).slice(0, 5)} — the point at which the documented tasking, fetching a man civil aviation could no longer move, actually exists. ${srcTag('commission')}
+        No departure time for Gibney has ever been published, so the rings are drawn as bands rather than hairlines. The bounds that <em>are</em> documented are the day's own: first knowledge at ${hms(DEPARTURE_BOUNDS.firstKnowledge.t).slice(0, 5)}, the national ground stop at ${hms(DEPARTURE_BOUNDS.groundStop.t).slice(0, 5)} ${info('groundStop')}, and SCATANA at ${hms(DEPARTURE_BOUNDS.scatana.t).slice(0, 5)} ${info('scatana')}, after which civil aviation could not move Ed Jacoby and the documented tasking to fly him applies. ${srcTag('commission')}
       </p>
       <p style="font-size:11.5px;color:var(--ink-faint);margin-top:10px">
-        An envelope is a statement about circles, not about people. Every point inside one is equally unevidenced, and that morning the envelope of nearly any fighter in the eastern half of the country would have swept over Somerset County eventually. It is drawn to show the size of the gap in the record — and, once the fuel ring is on, how much smaller that gap really is. ${srcTag('derived')}
+        The reach ring shows where an F-16 could have been, not where anyone was. Every point inside it is equally unevidenced, and that morning the reach ring of nearly any fighter in the eastern half of the country would have covered Somerset County eventually. It shows the size of the gap in the record; the fuel ring shows how much smaller that gap is. ${srcTag('derived')}
+      </p>
+      <p style="font-size:11.5px;color:var(--ink-faint);margin-top:10px">
+        The rings measure to the crater (${Math.round(haversineMi(PLACES.KFAR, PLACES.SHKV)).toLocaleString()} mi); the steelman measures to where United 93 was at 09:58 (${Math.round(haversineMi(PLACES.KFAR, hypoTarget() || PLACES.SHKV)).toLocaleString()} mi). ${srcTag('derived')}
       </p>
       <div class="chip-row">
-        <button class="chip" data-act="show-envelope">Draw the envelope</button>
+        <button class="chip" data-act="show-envelope">Draw the reach rings</button>
         <button class="chip" data-act="show-wez">Draw the missile range</button>
       </div>
-    </div>
+    </details>
 
     <div class="card">
       <h3>What he would have had to hit it with</h3>
-      <p><strong>${esc(AIM9.designation)}</strong> ${info('sidewinder')} — ${esc(AIM9.inService)} ${srcTag(AIM9.src)}</p>
-      <p style="font-size:12px;color:var(--ink-dim);line-height:1.55">In plain terms: a short-range
-      missile that steers towards the heat of an engine. It has to be fired from fairly close, and
-      not too close — inside about half a mile it has not armed itself yet. So the area it can
-      actually reach is a ring, not a circle ${info('wez')}.</p>
+      <p><strong>${esc(AIM9.designation)}</strong> ${info('sidewinder')}. ${esc(AIM9.inService)} ${srcTag(AIM9.src)}</p>
+      ${refRows(AIM9)}
+      <p style="font-size:12px;color:var(--ink-dim);line-height:1.55">A short-range missile that
+      steers towards the heat of an engine. It has to be fired from fairly close, and inside about
+      half a mile it has not armed itself yet, so the area it can reach is a ring rather than a
+      circle ${info('wez')}.</p>
       <dl class="kv">
         <dt>Seeker</dt><dd>${esc(AIM9.seeker)}</dd>
         <dt>Speed</dt><dd>${esc(AIM9.speed)}</dd>
         <dt>Warhead</dt><dd>${esc(AIM9.warhead)}</dd>
         <dt>Max range</dt><dd>~${AIM9.rMaxMi} mi (published figures run to ${AIM9.rMaxOptimisticMi})</dd>
-        <dt>Min range</dt><dd>~${AIM9.rMinMi} mi — the zone is a ring, not a disc</dd>
+        <dt>Min range</dt><dd>~${AIM9.rMinMi} mi, so the zone is a ring, not a disc</dd>
       </dl>
       <div id="wez-out"></div>
-      ${AIM9.notes.map((n) => `<p style="margin-top:9px;font-size:12px">${esc(n.text)} ${srcTag(n.src)}</p>`).join('')}
+      ${AIM9.notes.map((n) => `<p style="margin-top:9px;font-size:12px">${ei(n.text)} ${srcTag(n.src)}</p>`).join('')}
+      ${AIM9.provenance ? `<div class="prov-block">
+        <p class="prov-head">Where each figure above comes from</p>
+        ${AIM9_PROV_ORDER.filter((r) => AIM9.provenance[r[0]]).map((r) => provLine(AIM9.provenance[r[0]], r[1] + ':')).join('')}
+      </div>` : ''}
     </div>
 
     <div class="card steel">
       <h3>The strongest possible version</h3>
-      <p>Everything else here tests the allegation. This grants it every favourable assumption at once and asks what still fails — which is the only way to find out which objections were load-bearing.</p>
-      <p class="hypo-warn"><strong>${esc(HYPO.callsign)} — ${esc(HYPO.status)}.</strong> ${esc(HYPO.disclaimer)}
+      <p>Everything else here tests the allegation. This grants it every favourable assumption at once and asks what still fails, to identify which objections matter.</p>
+      <p class="hypo-warn"><strong>${esc(HYPO.callsign)}: ${esc(HYPO.status)}.</strong> ${esc(HYPO.disclaimer)}
       This is a <em>steelman</em> ${info('steelman')}: the claim's best possible case, built so it can be tested properly.</p>
       <p style="font-size:12px;color:var(--ink-dim);line-height:1.55;margin-top:8px">
         <strong style="color:var(--ink)">Standing premise: the aircraft is carrying external fuel
-        tanks</strong> ${info('dropTanks')}. That is not a favour to the claim — the documented
-        Montana-to-Albany leg cannot be flown without them. Everything below assumes a tanked
-        jet, so fuel is never the objection. The combat-radius ring this app once drew has been
-        removed for the same reason: it measures an aircraft carrying nothing, which this one
-        demonstrably was not. What the tanks <em>do</em> cost the claim is Mach 2.0, which is
-        only available clean ${info('placard')}.</p>
+        tanks</strong> ${info('dropTanks')}. The documented Montana-to-Albany leg, flown nonstop
+        as reported, cannot be flown without them. Everything below assumes a tanked jet, so fuel
+        is not an objection. The tanks do cost the claim Mach 2.0, which is available only clean
+        ${info('placard')}. The 340-mile combat-radius ring this app once drew, the figure for a
+        fighter carrying no tanks, has been removed for the same reason: it described a
+        configuration the record rules out.</p>
+      ${refRow('F16')}${refRow('GIBNEY')}
       <div id="steel-out"></div>
       <div id="concessions"></div>
       <div class="chip-row">
@@ -570,87 +709,119 @@ function renderClaimTab() {
 
     <div class="card fk-card">
       <h3>${esc(FOREKNOWLEDGE.title)}</h3>
-      <p>United 93 was seized at <strong>09:28</strong>. Before that it was an ordinary flight climbing out of Newark. So a launch aimed at it earlier than 09:28 is not a response to a hijacking — it is a response to one that has not happened yet.</p>
+      <p>United 93 was seized at <strong>09:28</strong>. Before that it was an ordinary flight climbing out of Newark. So a launch aimed at it before 09:28 would be a response to a hijacking that had not yet happened.</p>
       <div id="fk-out"></div>
-      <p class="fk-caution">${esc(FOREKNOWLEDGE.caution)} ${srcTag(FOREKNOWLEDGE.src)}</p>
+      <p class="fk-caution">${ei(FOREKNOWLEDGE.caution)} ${srcTag(FOREKNOWLEDGE.src)}</p>
     </div>
 
     <div class="card">
       <h3>${esc(CONFIG_TRADE.title)}</h3>
+      ${refRows(CONFIG_TRADE)}
       <p>Speed and range come off the same wing stations, so an F-16 can have one or the other.
-      This used to be left open here, because nobody observed the aircraft. It is not open: the
-      Montana-to-Albany leg cannot be flown without external tanks ${info('dropTanks')}, so the
-      tanks are established and the configuration is decided.</p>
+      Nobody observed the aircraft's configuration directly, but the Montana-to-Albany leg cannot
+      be flown without external tanks ${info('dropTanks')}, so the tanks are established and the
+      configuration is decided.</p>
       <div class="cmd-row">
         <div class="t" style="color:#fff">${CONFIG_TRADE.clean.topMph} mph</div>
-        <div class="x"><strong style="color:var(--ink)">${esc(CONFIG_TRADE.clean.label)}</strong> — ${esc(CONFIG_TRADE.clean.note)}</div>
+        <div class="x"><strong style="color:var(--ink)">${esc(CONFIG_TRADE.clean.label)}.</strong> ${ei(CONFIG_TRADE.clean.note)}
+        ${provLine(CONFIG_TRADE.clean.provenance, 'Provenance:')}</div>
       </div>
       <div class="cmd-row">
         <div class="t" style="color:${hex(0xff8a5c)}">${CONFIG_TRADE.tanked.topMph} mph</div>
-        <div class="x"><strong style="color:var(--ink)">${esc(CONFIG_TRADE.tanked.label)}</strong> — ${esc(CONFIG_TRADE.tanked.note)}</div>
+        <div class="x"><strong style="color:var(--ink)">${esc(CONFIG_TRADE.tanked.label)}.</strong> ${ei(CONFIG_TRADE.tanked.note)}
+        ${provLine(CONFIG_TRADE.tanked.provenance, 'Provenance:')}</div>
       </div>
-      <p style="margin-top:11px"><strong>${esc(CONFIG_TRADE.reading)}</strong> ${srcTag(CONFIG_TRADE.src)}</p>
+      <p style="margin-top:11px">${ei(CONFIG_TRADE.reading)} ${srcTag(CONFIG_TRADE.src)}</p>
     </div>
 
     <div class="card">
-      <h3>What the claim actually requires</h3>
+      <h3>What the claim requires</h3>
       <div id="findings"></div>
+      ${refRow('COMMISSION')}${refRow('F16')}
     </div>
 
-    <div class="card">
-      <h3>Route comparison</h3>
+    <details class="card cd"${openIfWide()}>
+      <summary><h3>Route comparison</h3></summary>
       <div id="route-compare"></div>
-    </div>
+    </details>
 
     <div class="card">
       <h3>${esc(COMMAND_CHECK.title)}</h3>
       <p>Set aside speed and fuel entirely. An intercept has to be <em>ordered</em>. ${srcTag('commission')}</p>
       ${COMMAND_CHECK.rows.map((r) => `
         <div class="cmd-row${r.src === 'claim' ? ' claim-row' : ''}">
-          <div class="t">${esc(r.t)}</div><div class="x">${esc(r.text)}</div>
+          <div class="t">${esc(r.t)}</div><div class="x">${ei(r.text)} ${srcTag(r.src)}</div>
         </div>`).join('')}
-      <p style="margin-top:11px"><strong>${esc(COMMAND_CHECK.conclusion)}</strong></p>
+      <p style="margin-top:11px">${ei(COMMAND_CHECK.conclusion)}</p>
+      ${refRows(COMMAND_CHECK)}
     </div>
 
     <div class="card kernel-card">
       <h3>${esc(KERNEL.title)}</h3>
-      ${KERNEL.paras.map((p) => `<p>${esc(p)}</p>`).join('')}
+      ${KERNEL.paras.map((p) => `<p>${ei(p)}</p>`).join('')}
       <div style="margin-top:8px">${srcTag(KERNEL.src)}</div>
+      ${refRows(KERNEL)}
       <div class="chip-row">
         <button class="chip" data-act="show-quit">Fly to QUIT flight</button>
         <button class="chip" data-act="show-gofer">Fly to GOFER 06</button>
+        <button class="chip" data-goto="aware" data-anchor="#airborne">What was airborne &rarr;</button>
       </div>
     </div>
 
     <div class="card">
-      <h3>The people actually involved</h3>
+      <h3>The people involved</h3>
       ${GIBNEY.rebuttals.map((r) => `
         <div class="finding soft">
           <h4>${esc(r.who)}</h4>
-          <p>${esc(r.text)}</p>
-          <div style="margin-top:5px">${srcTag(r.src)}</div>
+          <p>${ei(r.text)}</p>
+          <div style="margin-top:5px">${srcTag(r.src)}${refRows(r)}</div>
         </div>`).join('')}
     </div>
 
     <div class="verdict">
       <h3>Where this leaves the claim</h3>
-      <p>The allegation rests on a single unsourced assertion by one man on a radio show, three years after the fact. Against it: the pilot's unit, the pilot's passenger, the distances, the fuel, and a command timeline in which the authority to fire arrived half an hour after the alleged shot.</p>
-      <p>It is worth being precise about what is <em>not</em> being claimed here. Nobody has published Gibney's minute-by-minute logs, and this app does not pretend to have them. The point is narrower and stronger than that: <strong>the claim fails on geometry it cannot escape.</strong> No assumption about missing paperwork puts one F-16 over Pennsylvania and in Bozeman, Montana on the same morning.</p>
+      <p>The allegation rests on a single unsourced assertion by one man on a radio show, three years after the fact. Against it: the pilot's unit, the pilot's passenger, the distances, the Montana leg, and a command timeline in which the authority to fire arrived half an hour after the alleged shot.</p>
+      <p>Nobody has published Gibney's minute-by-minute logs, and this app does not claim to have them. The finding is narrower: no single F-16 can be over Pennsylvania at 09:58 and in Bozeman, Montana, on the times required, and no assumption about missing records changes that.</p>
       <div style="margin-top:8px">${srcTag('derived')}</div>
     </div>
 
-    <div class="card">
-      <h3>The airframe</h3>
+    <details class="card cd"${openIfWide()}>
+      <summary><h3>The airframe</h3></summary>
       <p><strong>${esc(F16.model)}</strong></p>
+      ${refRows(F16)}
       <dl class="kv">
         <dt>Cruise</dt><dd>~${F16.cruiseMph} mph</dd>
         <dt>Max, low</dt><dd>~${F16.maxSeaLevelMph} mph (Mach ${machAt(F16.maxSeaLevelMph, 0).toFixed(1)} at sea level)</dd>
         <dt>Max, high</dt><dd>~${F16.maxAltitudeMph} mph (Mach ${machAt(F16.maxAltitudeMph, 40000).toFixed(1)} at 40,000 ft)</dd>
-        <dt>Range, tanks fitted</dt><dd>~${F16.ferryRangeMi.toLocaleString()} mi one way</dd>
-        <dt>Ferry range</dt><dd>~${F16.ferryRangeMi} mi with external tanks</dd>
+        <dt>Max, with tanks</dt><dd>~${F16.maxWithTanksMph.toLocaleString()} mph (Mach ${machAt(F16.maxWithTanksMph, 40000).toFixed(1)} at 40,000 ft)</dd>
+        <dt>Ferry range</dt><dd>~${F16.ferryRangeMi.toLocaleString()} mi one way with external tanks</dd>
       </dl>
-      ${F16.notes.map((n) => `<p style="margin-top:9px;font-size:12px">${esc(n.text)} ${srcTag(n.src)}</p>`).join('')}
-    </div>`;
+      ${(F16.provenance || []).length ? `<div class="prov-block">
+        <p class="prov-head">Where each figure above comes from</p>
+        ${F16.provenance.map((p) => provLine(p.text, p.figure + ':')).join('')}
+      </div>` : ''}
+      ${F16.notes.map((n) => `<p style="margin-top:9px;font-size:12px">${ei(n.text)} ${srcTag(n.src)}</p>`).join('')}
+    </details>`;
+
+  /* Opening "Where he could have been" turns the rings on, so the reader who
+     opens the card sees the thing it describes. Nothing is ever turned off
+     from a panel. */
+  const rc = $('#reach-card');
+  if (rc) {
+    /* A details rendered with the open attribute fires one toggle as it is
+       inserted. That is not the reader opening it, so it is ignored: the
+       rings start off and come on when the card is opened by hand. */
+    let armed = false;
+    rc.addEventListener('toggle', () => {
+      if (!armed || !rc.open) return;
+      state.layers.envelope = true;
+      state.layers.wez = true;
+      map.setReachVisible(true);
+      syncLayerChecks();
+      updateReach();
+    });
+    setTimeout(() => { armed = true; }, 0);
+  }
 
   $$('#tol-group button').forEach((b) => b.addEventListener('click', () => {
     setTolerance(+b.dataset.tol);
@@ -663,7 +834,7 @@ function renderClaimTab() {
     updateReach();
   });
 
-  $$('#claim-body .chip').forEach((b) => b.addEventListener('click', () => {
+  $$('#claim-body .chip[data-act]').forEach((b) => b.addEventListener('click', () => {
     if (b.dataset.act === 'tour') { tourEnter(); return; }
     if (b.dataset.act === 'show-hypo') {
       state.layers.hypo = true;
@@ -731,39 +902,43 @@ function renderForeknowledgePanel() {
   if (!out) return;
   const target = hypoTarget();
   if (!target) return;
-  const v = foreknowledgeVerdict(haversineMi(PLACES.KFAR, target), state.interceptT, BANDS);
+  /* The Mach 2.0 band is a clean-jet figure and the tanks are established, so
+     it is not available to this claim and is left out of the best case. */
+  const usable = BANDS.filter((b) => !b.unavailable);
+  const v = foreknowledgeVerdict(haversineMi(PLACES.KFAR, target), state.interceptT, usable);
 
   out.innerHTML = `
     <div class="leg fk-leg">
       <div class="leg-head">
-        <span class="leg-name">Best case, at the fastest the airframe goes</span>
+        <span class="leg-name">Best case, at the fastest a tanked jet goes</span>
         <span class="leg-dist">${v.best.mph} mph</span>
       </div>
       <div class="leg-speed v-impossible">
         ${Math.round(v.best.leadMin)}<small>minutes of foreknowledge required</small>
       </div>
       <div class="leg-mach">
-        He must be off the ground at ${hms(v.best.departBy).slice(0, 5)} —
+        He must be off the ground at ${hms(v.best.departBy).slice(0, 5)},
         ${Math.round(v.best.leadMin)} minutes before United 93 was seized.
       </div>
     </div>
     <p style="font-size:11.5px;color:var(--ink-faint);margin:10px 0 4px">
-      Every speed the airframe can manage, and how far ahead of the hijacking each one puts the launch:
+      Every speed the tanked jet can manage, and how far ahead of the hijacking each one puts the launch:
     </p>
     ${v.rows.map((r) => `
       <div class="cmd-row">
         <div class="t" style="color:${hex(r.color)}">${hms(r.departBy).slice(0, 5)}</div>
-        <div class="x"><strong style="color:var(--ink)">${esc(r.label)}</strong> — ${r.mph} mph.
+        <div class="x"><strong style="color:var(--ink)">${esc(r.label)}</strong>, ${r.mph} mph.
         ${r.requires
           ? `<strong class="v-impossible">${Math.round(r.leadMin)} min before the hijacking.</strong>`
           : 'No foreknowledge needed.'}</div>
       </div>`).join('')}
     <div class="fk-verdict">
       <strong>${v.allRequire ? 'Every achievable speed requires foreknowledge.' : 'Some speeds avoid it.'}</strong>
-      The furthest he could start from and still arrive without leaving early — the fastest speed
-      multiplied by the thirty minutes between the seizure and the alleged shot — is
+      The furthest he could start from and still arrive without leaving early (the fastest tanked speed
+      multiplied by the thirty minutes between the seizure and the alleged shot) is
       <strong>${Math.round(v.horizonMi)} miles</strong>. Fargo is <strong>${Math.round(v.distMi)}</strong>,
       further by <strong class="v-impossible">${Math.round(v.outsideBy)} miles</strong>.
+      Mach 2.0 is clean only and not available to this claim ${info('placard')}.
     </div>`;
 }
 
@@ -785,23 +960,67 @@ function renderLosPanel(h) {
         ${w.enter === null
           ? 'Never inside AIM-9 range.'
           : `Inside AIM-9 range from <strong style="color:var(--ink)">${hms(w.enter).slice(0, 8)}</strong>
-             to <strong style="color:var(--ink)">${hms(w.exit).slice(0, 8)}</strong> —
+             to <strong style="color:var(--ink)">${hms(w.exit).slice(0, 8)}</strong>,
              a window of <strong class="v-impossible">${(w.durationS / 60).toFixed(1)} minutes</strong>.`}
       </div>
       <p style="margin:8px 0 0;font-size:12px;color:var(--ink-dim);line-height:1.5">
-        That window is the whole of the opportunity the claim needs, and it exists only because
-        this track was <em>built</em> to arrive there. The record has to put a specific aircraft
-        inside it, to the minute. Nothing does.
+        That window is the only opportunity the claim has, and it exists only because this track
+        was constructed to arrive there. No record puts any specific aircraft inside it.
       </p>
     </div>
     <div class="cmd-row">
       <div class="t" style="color:${hex(LOS_HORIZON.color)}">${Math.round(lv.losMi)} mi</div>
-      <div class="x"><strong style="color:var(--ink)">Line-of-sight horizon</strong> — what it can
+      <div class="x"><strong style="color:var(--ink)">Line-of-sight horizon</strong> ${info('lineOfSight')}: what it can
         <em>see</em>, from 31,000 ft against a target at 5,000. Against
         <strong>${lv.wezMi} mi</strong> of weapon, that is a ratio of
         <strong class="v-impossible">${Math.round(lv.ratio)}:1</strong>.
-        ${esc(LOS_HORIZON.note)} Seeing was never the constraint.</div>
+        ${ei(LOS_HORIZON.note)} ${srcTag(LOS_HORIZON.src)}</div>
     </div>`;
+}
+
+/* Whether the concession data carries its own cited/granted marking. Until it
+   does, the list renders as it did before rather than labelling every premise
+   from a guess. */
+const CONCESSION_STATUS_PRESENT =
+  CONCESSIONS.some((c) => c.cited != null || c.granted != null || c.status);
+
+/* A premise in the steelman is established by a source, contradicted by one,
+   or assumed in the claim's favour. The status label is compared case-blind,
+   because the data writes CITED and GRANTED in upper case. `blocking` decides
+   which way a citation runs: on a blocking premise the named record is what
+   the grant runs into, so it is badged Cited against rather than Cited.
+
+   Every field that names a document, an arithmetic step or an unsourced figure
+   is returned for rendering. A citation that never reaches the page is not a
+   citation. */
+function concessionStatus(c) {
+  if (!CONCESSION_STATUS_PRESENT) return { badge: '', notes: [] };
+  const citedVal = c.cited ?? c.citation ?? null;
+  const grantedVal = c.granted ?? null;
+  const status = String(c.status || '').toLowerCase();
+  const isCited = status === 'cited' || (citedVal != null && citedVal !== false);
+  const badgeFor = (label, tone, title) =>
+    `<span class="src ${tone}" title="${esc(title)}">${label}</span>`;
+
+  let badge;
+  if (isCited && c.blocking) {
+    badge = badgeFor('Cited against', 'against',
+      'A source contradicts this premise. The record named below is what the grant runs into.');
+  } else if (isCited) {
+    badge = badgeFor('Cited', 'solid', 'A source establishes this premise; the app is not assuming it.');
+  } else {
+    badge = badgeFor('Granted', 'warn', 'No source establishes this. The app assumes it in the claim’s favour.');
+  }
+  if (typeof citedVal === 'string' && SRC_META[citedVal]) badge += ` ${srcTag(citedVal)}`;
+
+  const notes = [];
+  const add = (label, v) => { if (typeof v === 'string' && v) notes.push([label, v]); };
+  add(isCited && c.blocking ? 'The record' : 'Source', c.source);
+  if (typeof citedVal === 'string' && !SRC_META[citedVal]) add('Source', citedVal);
+  add('Computed here', c.derived);
+  add('Not sourced', c.open);
+  add('Assumed', grantedVal);
+  return { badge, notes };
 }
 
 function renderSteelPanel() {
@@ -821,7 +1040,7 @@ function renderSteelPanel() {
       <div class="leg-mach">
         Mach ${h.mach.toFixed(2)} · ${h.withinTankedLimit
           ? 'inside the Mach 1.6 placard for a tanked jet'
-          : 'beyond the tanked placard — needs a clean jet, which has no external fuel'} ·
+          : 'beyond the tanked placard; needs a clean jet, which has no external fuel'} ·
         ${Math.round(h.ferryFraction * 100)}% of ferry range
       </div>
     </div>
@@ -834,10 +1053,10 @@ function renderSteelPanel() {
     </div>
     <div class="cmd-row">
       <div class="t">${Math.round(h.totalMi).toLocaleString()} mi</div>
-      <div class="x">Whole day — <strong class="v-routine">${Math.round(h.totalFerryFraction * 100)}% of ferry range</strong>,
-        inside one tankful. <strong>And it never goes to Bozeman.</strong> That is the shortest
-        flyable version of the claim, and it is one in which Ed Jacoby is never collected —
-        which is contradicted by Jacoby, who was.</div>
+      <div class="x">Whole day: <strong class="v-routine">${Math.round(h.totalFerryFraction * 100)}% of ferry range</strong>,
+        inside one tankful, and it does not go to Bozeman. This shortest flyable
+        version of the claim is one in which Ed Jacoby is not collected; Jacoby was collected,
+        and has said so.</div>
     </div>`;
 
   renderLosPanel(h);
@@ -846,21 +1065,40 @@ function renderSteelPanel() {
      the concession list cannot drift from the model the panel above it uses. */
   const ctx = { fuel: fuelProof(), boz: bozemanCost(target, state.claimDepart, state.interceptT) };
 
+  /* Counted from the data rather than typed in, and phrased as "the last N"
+     only while the blocking premises really are the last N. */
+  const blocking = CONCESSIONS.filter((c) => c.blocking).length;
+  const tail = CONCESSIONS.slice(CONCESSIONS.length - blocking).every((c) => c.blocking);
+  const word = ['none', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine'][blocking] || String(blocking);
+  const blockingLine = blocking
+    ? `${tail ? `The last ${word}` : `${word[0].toUpperCase()}${word.slice(1)} of them`} cannot be granted at all.`
+    : '';
+
   $('#concessions').innerHTML = `
     <p style="font-size:11.5px;color:var(--ink-faint);margin:12px 0 6px">
-      Granted simultaneously. The last four cannot be bought at any price — and the first is
-      not a concession at all, because the documented mission establishes it.
+      Granted simultaneously.
+      ${CONCESSION_STATUS_PRESENT
+    ? `Each premise is marked <span class="src solid">Cited</span> where a source establishes it,
+         <span class="src against">Cited against</span> where the record named under it runs the
+         other way, and <span class="src warn">Granted</span> where this app is assuming it in the
+         claim's favour.`
+    : 'The first is established by the documented mission rather than granted by this app.'}
+      ${blockingLine}
     </p>
-    ${CONCESSIONS.map((c) => `
+    ${CONCESSIONS.map((c) => {
+    const st = concessionStatus(c);
+    return `
       <div class="concession ${c.blocking ? 'blocking' : 'free'}">
-        <div class="cn-grant">${esc(c.grant)}</div>
-        <div class="cn-detail">${esc(c.detail)}</div>
-        <div class="cn-cost">${esc(c.costFn ? c.costFn(ctx) : c.cost)}</div>
-      </div>`).join('')}
+        <div class="cn-grant">${esc(c.grant)} ${st.badge}</div>
+        <div class="cn-detail">${ei(c.detail)}</div>
+        ${st.notes.map(([label, text]) => `<div class="cn-note"><b>${esc(label)}:</b> ${ei(text)}</div>`).join('')}
+        <div class="cn-cost">${ei(c.costFn ? c.costFn(ctx) : c.cost)}</div>
+      </div>`;
+  }).join('')}
     <div class="verdict" style="margin-top:12px">
-      <h3>${esc(VERDICT.headline)}</h3>
-      <p>${esc(VERDICT.body)}</p>
-      <div style="margin-top:8px">${srcTag(VERDICT.src)}</div>
+      <h3>${ei(VERDICT.headline)}</h3>
+      <p>${ei(VERDICT.body)}</p>
+      <div style="margin-top:8px">${srcTag(VERDICT.src)}${refRows(VERDICT)}</div>
     </div>`;
 }
 
@@ -868,12 +1106,19 @@ function renderReachPanel() {
   const t = shanksvilleTest(state.claimDepart);
   const rows = t.bands.map((b) => {
     const reached = state.t >= b.entersAt;
-    return `<div class="cmd-row">
+    const label = b.unavailable ? 'Max clean, not available to this claim' : b.label;
+    return `<div class="cmd-row"${b.unavailable ? ' style="opacity:.6"' : ''}>
       <div class="t" style="color:${hex(b.color)}">${hms(b.entersAt).slice(0, 5)}</div>
-      <div class="x"><strong style="color:var(--ink)">${esc(b.label)}</strong> — ${Math.round(b.mph)} mph.
-      Somerset County enters this envelope ${Math.round(b.minutes)} min after departure${reached ? ' <span style="color:var(--claim)">— reached</span>' : ''}.</div>
+      <div class="x"><strong style="color:var(--ink)">${esc(label)}</strong>, ${Math.round(b.mph)} mph.
+      Somerset County enters this reach ring ${Math.round(b.minutes)} min after departure${reached ? ' <span style="color:var(--claim)">(reached)</span>' : ''}.
+      ${provLine(b.note)}${provLine(b.provenance, 'Provenance:')}</div>
     </div>`;
   }).join('');
+
+  /* The whole claimed itinerary against the tank, computed from the route
+     rather than typed in, so the two cannot drift apart. */
+  const claimMi = CLAIM_ROUTE.legs.reduce((s, l) => s + haversineMi(PLACES[l.from], PLACES[l.to]), 0);
+  const claimFerry = claimMi / F16.ferryRangeMi;
 
   const elapsed = Math.max(0, state.t - state.claimDepart);
   const rNow = reachMi(BANDS[1].mph, elapsed);
@@ -891,27 +1136,29 @@ function renderReachPanel() {
         ${Math.round(band.inner).toLocaleString()}–${Math.round(band.outer).toLocaleString()}<small>mi</small>
       </div>
       <div class="leg-mach">
-        Band is ${Math.round(band.outer - band.inner).toLocaleString()} mi thick — ${state.toleranceMin ? `±${state.toleranceMin} min of departure` : 'no tolerance applied'}.
+        Band is ${Math.round(band.outer - band.inner).toLocaleString()} mi thick: ${state.toleranceMin ? `±${state.toleranceMin} min of departure` : 'no tolerance applied'}.
         Fargo to Somerset County is ${Math.round(t.miles)} mi.
       </div>
     </div>
     <div class="cmd-row" style="border-top:1px solid var(--line-2)">
       <div class="t" style="color:#fff">${Math.round(ceil).toLocaleString()} mi</div>
-      <div class="x"><strong style="color:var(--ink)">Evidence ceiling</strong> — the furthest he can possibly be, taking the earliest departure the record permits (${hms(DEPARTURE_BOUNDS.firstKnowledge.t).slice(0, 5)}, ${esc(DEPARTURE_BOUNDS.firstKnowledge.why)}) ${srcTag(DEPARTURE_BOUNDS.firstKnowledge.src)}</div>
+      <div class="x"><strong style="color:var(--ink)">Furthest he could be by now</strong>: the evidence ceiling, taking the earliest departure the record permits (${hms(DEPARTURE_BOUNDS.firstKnowledge.t).slice(0, 5)}, ${ei(DEPARTURE_BOUNDS.firstKnowledge.why)}) ${srcTag(DEPARTURE_BOUNDS.firstKnowledge.src)}</div>
     </div>
     ${rows}
     <div class="cmd-row" style="border-top:1px solid var(--line-2)">
       <div class="t" style="color:${hex(HALF_FERRY_RING.color)}">${HALF_FERRY_RING.miles.toLocaleString()} mi</div>
-      <div class="x"><strong style="color:var(--ink)">Ferry half-radius</strong> — the furthest point he could reach and still
+      <div class="x"><strong style="color:var(--ink)">Farthest he could go and still get home</strong> (ferry half-radius ${info('ferryRange')}): the furthest point he could reach and still
       return on the same tanks. Somerset County is <strong class="v-routine">${Math.round(t.miles / HALF_FERRY_RING.miles * 100)}%</strong> of it,
-      so even the round trip is not excluded by fuel alone.</div>
+      so even the round trip is not excluded by fuel alone.
+      ${provLine(HALF_FERRY_RING.provenance, 'Provenance:')}</div>
     </div>
     <div class="cmd-row">
       <div class="t" style="color:${hex(FERRY_RING.color)}">${FERRY_RING.miles.toLocaleString()} mi</div>
-      <div class="x"><strong style="color:var(--ink)">${esc(FERRY_RING.label)}</strong> — Somerset County is
+      <div class="x"><strong style="color:var(--ink)">${esc(FERRY_RING.label)}</strong>: Somerset County is
       <strong class="v-routine">${(t.fuel.ferryFraction * 100).toFixed(0)}%</strong> of this, well inside it.
-      <strong>Fuel does not rule out the Pennsylvania leg.</strong> What it rules out is the full 4,522-mile itinerary,
-      about 1.85× ferry range, which needs a refuelling stop. ${srcTag('press')}</div>
+      Fuel does not rule out the Pennsylvania leg. It rules out the full ${Math.round(claimMi).toLocaleString()}-mile itinerary,
+      about ${claimFerry.toFixed(2)}× ferry range, which needs a refuelling stop. ${srcTag('derived')}
+      ${provLine(FERRY_RING.provenance, 'Provenance:')}</div>
     </div>`;
 }
 
@@ -932,7 +1179,7 @@ function renderWezPanel() {
         <span class="leg-dist">${(AIM9.rMaxMi * 2).toFixed(0)} mi across</span>
       </div>
       <p style="margin:0 0 8px;font-size:12.5px;color:var(--ink-dim);line-height:1.5">
-        To fire, he must have been within about <strong style="color:var(--ink)">${AIM9.rMaxMi} miles</strong> of United 93 — and no closer than ${AIM9.rMinMi}. The map draws that ring at Fargo, the one place the record puts him, so its size can be read against the envelope it sits inside.
+        To fire, he must have been within about <strong style="color:var(--ink)">${AIM9.rMaxMi} miles</strong> of United 93, and no closer than ${AIM9.rMinMi}. The map draws that ring at Fargo, the one place the record puts him, so its size can be read against the reach ring it sits inside.
       </p>
       ${started ? `
       <div class="leg-mach">
@@ -942,7 +1189,7 @@ function renderWezPanel() {
       </div>
       <p style="margin:9px 0 0;font-size:12px;color:var(--ink-dim);line-height:1.5">
         By area that is about <strong class="v-impossible">1 part in ${Math.round(sc.areaRatio).toLocaleString()}</strong>.
-        The question was never whether he could reach Pennsylvania. It is whether he was inside a twenty-mile circle around one airliner at one instant — and nothing in the record puts him there, or anywhere else.
+        Line of sight is not the limit. The missile requires being within about ${AIM9.rMaxMi} miles of the airliner at one instant, and no record places him there, or anywhere else, at that time.
       </p>` : `
       <div class="leg-mach">
         The clock is at ${hms(state.t).slice(0, 5)}, before the takeoff this app grants him at
@@ -950,9 +1197,8 @@ function renderWezPanel() {
         compare the missile's reach against.
       </div>
       <p style="margin:9px 0 0;font-size:12px;color:var(--ink-dim);line-height:1.5">
-        Move the clock past ${hms(state.claimDepart).slice(0, 5)} and this becomes the whole
-        argument: the area he could be in grows every second, while the area he could shoot into
-        stays ${(AIM9.rMaxMi * 2).toFixed(0)} miles across and never moves.
+        After ${hms(state.claimDepart).slice(0, 5)} the area he could be in grows every second;
+        the area he could shoot into stays ${(AIM9.rMaxMi * 2).toFixed(0)} miles across.
       </p>`}
     </div>`;
 }
@@ -984,7 +1230,7 @@ function updateSpeedPanel() {
   $('#findings').innerHTML = a.findings.map((f) => `
     <div class="finding ${f.weight}">
       <h4>${esc(f.title)}</h4>
-      <p>${esc(f.text)}</p>
+      <p>${ei(f.text)} ${f.src ? srcTag(f.src) : ''}</p>
     </div>`).join('');
 }
 
@@ -1005,13 +1251,161 @@ function renderRouteCompare() {
 
     <p style="margin-top:14px;color:var(--claim)"><strong>Required by the claim</strong> ${srcTag('claim')}</p>
     ${claimLegs.map(row).join('')}
-    <p style="margin-top:6px"><strong style="color:var(--claim);font-family:var(--mono)">${Math.round(claimTotal)} mi</strong> total — ${(claimTotal / doc.totalMi).toFixed(1)}× the documented route, and ${(claimTotal / F16.ferryRangeMi).toFixed(1)}× the jet's maximum ferry range.</p>
-    <p style="margin-top:9px;font-size:12px">The claimed itinerary crosses the continent three times to end up exactly where the documented one ends up after crossing it once.</p>`;
+    <p style="margin-top:6px"><strong style="color:var(--claim);font-family:var(--mono)">${Math.round(claimTotal)} mi</strong> total: ${(claimTotal / doc.totalMi).toFixed(1)}× the documented route, and ${(claimTotal / F16.ferryRangeMi).toFixed(1)}× the jet's maximum ferry range ${info('ferryRange')}. ${srcTag('derived')}</p>
+    <p style="margin-top:9px;font-size:12px">The claimed itinerary crosses the continent three times; the documented one crosses it once.</p>`;
 }
 
 /* =============================================================================
    Panels — Flight 93 / debris
    ========================================================================== */
+
+/* Eyewitness reports, rendered under The crash because that is what they
+   describe. The data module may hold them as a bare list or as a wrapper with
+   a note, and field names are read defensively so this renders whatever shape
+   arrives. Where a witness account and the explanation for it differ, both are
+   shown: the report is not deleted and the explanation is not omitted. */
+function witnessItems() {
+  const w = DATA.EYEWITNESS;
+  if (!w) return [];
+  if (Array.isArray(w)) return w;
+  for (const k of ['items', 'witnesses', 'reports', 'list']) {
+    if (Array.isArray(w[k])) return w[k];
+  }
+  return [];
+}
+
+/* Turn a string, or an array of them, into paragraphs. The eyewitness note
+   holds some sections as one string and some as a list. */
+const paras = (v, cls = '') => (Array.isArray(v) ? v : (v ? [v] : []))
+  .map((t) => `<p${cls ? ` class="${cls}"` : ''}>${ei(t)}</p>`).join('');
+
+/* The framing this family needs to be read correctly, rendered in the same
+   card stack as the accounts themselves rather than on another tab. The data
+   module fixes the order and this follows it: what the witnesses said, then
+   how the reports were handled, then the explanation offered for them. */
+function eyewitnessNoteCard(meta) {
+  const sa = meta.secondAircraft;
+  const ex = sa && sa.explanation;
+  const sections = [];
+
+  if (sa) {
+    sections.push(`
+      <h4>${esc(sa.title || 'The second aircraft')}</h4>
+      ${paras(sa.reports)}
+      ${sa.reportsSrc ? `<p class="prov">${srcTag(sa.reportsSrc)}</p>` : ''}
+      ${paras(sa.officialHandling)}
+      ${sa.officialHandlingSrc ? `<p class="prov">${srcTag(sa.officialHandlingSrc)}</p>` : ''}`);
+
+    if (ex) {
+      sections.push(`
+        <h4>${esc(ex.title || 'The explanation offered')}</h4>
+        ${paras(ex.text)}
+        ${ex.quote ? `<blockquote class="ew-quote">${esc(ex.quote)}</blockquote>` : ''}
+        ${paras(ex.weight)}
+        <p class="prov">${ex.src ? srcTag(ex.src) : ''} ${ex.source ? esc(ex.source) : ''}</p>`);
+    }
+
+    if (Array.isArray(sa.otherAircraft) && sa.otherAircraft.length) {
+      sections.push(sa.otherAircraft
+        .map((o) => `<p>${ei(o.text)} ${o.src ? srcTag(o.src) : ''}</p>`).join(''));
+    }
+  }
+
+  for (const k of ['missile', 'debris', 'commissionSilence', 'claimSideText']) {
+    const s = meta[k];
+    if (!s) continue;
+    sections.push(`
+      <h4>${esc(s.title || k)}</h4>
+      ${paras(s.paras)}
+      ${paras(s.text)}
+      ${paras(s.claimSide)}
+      ${paras(s.officialSide)}
+      ${paras(s.rovingEngine)}
+      ${paras(s.windAttribution)}
+      <p class="prov">${s.src ? srcTag(s.src) : ''} ${s.source ? esc(s.source) : ''}</p>`);
+  }
+
+  if (Array.isArray(meta.unverified) && meta.unverified.length) {
+    sections.push(`
+      <h4>Accounts in circulation that are not used here</h4>
+      <ul class="ew-unver">${meta.unverified.map((t) => `<li>${ei(t)}</li>`).join('')}</ul>`);
+  }
+
+  if (!sections.length) return '';
+  return `<div class="card">
+      <h3>${esc(meta.title || 'Reading the eyewitness reports')}</h3>
+      ${sections.join('')}
+    </div>`;
+}
+
+function eyewitnessCard() {
+  const items = witnessItems();
+  if (!items.length) return '';
+  /* The records may arrive as a bare array with the framing held separately,
+     or as a wrapper carrying both. Either way the framing is found, because
+     an unrendered note is the same as no note. */
+  const meta = (Array.isArray(DATA.EYEWITNESS) ? DATA.EYEWITNESS_NOTE : DATA.EYEWITNESS) || {};
+
+  const pick = (o, keys) => { for (const k of keys) if (o[k]) return o[k]; return ''; };
+
+  /* Which way a record cuts is a field on the record, not a judgement made
+     here. Colour follows the app's existing key: claim yellow for accounts
+     that support the allegation, documented green for accounts that cut
+     against it, faint for accounts that bear on it without settling it. */
+  const WAY = {
+    'supports-claim':  { label: 'Supports the claim', tally: 'support the claim', color: 'var(--claim)' },
+    'undercuts-claim': { label: 'Cuts against the claim', tally: 'cut against it', color: 'var(--doc)' },
+    'neutral':         { label: 'Neither way', tally: 'settle neither way', color: 'var(--ink-faint)' },
+  };
+  const WAY_ORDER = ['supports-claim', 'undercuts-claim', 'neutral'];
+
+  const rows = items.map((w) => {
+    const who = pick(w, ['who', 'name', 'witness']);
+    const role = pick(w, ['role', 'place', 'from']);
+    const where = pick(w, ['where', 'vantage']);
+    const said = pick(w, ['said', 'described', 'account', 'report', 'text', 'what']);
+    const quote = pick(w, ['quote']);
+    const dist = pick(w, ['distanceText']);
+    const cite = pick(w, ['source']);
+    const citeNote = pick(w, ['sourceNote']);
+    const other = pick(w, ['explanation', 'counter', 'official', 'against', 'differs', 'reading']);
+    const otherSrc = pick(w, ['explanationSrc', 'counterSrc', 'officialSrc', 'againstSrc']);
+    const way = WAY[w.cutsWhichWay];
+    const label = who || role || (typeof w.t === 'number' ? hms(w.t).slice(0, 5) : '');
+    const stand = [role, where, dist].filter(Boolean).join('. ');
+    return `<div class="cmd-row">
+      <div class="t">${esc(label)}</div>
+      <div class="x">
+        ${stand ? `<div style="color:var(--ink-dim);font-size:11.5px;margin-bottom:3px">${esc(stand)}.</div>` : ''}
+        ${ei(said)}
+        ${w.src ? srcTag(w.src) : ''}
+        ${way ? `<div style="margin-top:4px;font-size:11px;font-family:var(--mono);color:${way.color}">${esc(way.label)}</div>` : ''}
+        ${quote ? `<div style="margin-top:5px;padding-left:8px;border-left:2px solid var(--line);color:var(--ink-dim);font-size:11.5px">${esc(quote)}</div>` : ''}
+        ${other ? `<div style="margin-top:5px;color:var(--ink-faint)">
+          <strong style="color:var(--ink-dim)">Against it:</strong> ${ei(other)} ${otherSrc ? srcTag(otherSrc) : ''}
+        </div>` : ''}
+        ${cite ? `<div style="margin-top:5px;font-size:11px;color:var(--ink-faint)">${esc(cite)}${citeNote ? ` ${esc(citeNote)}` : ''}</div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+
+  const tally = items.reduce((a, w) => { if (w.cutsWhichWay) a[w.cutsWhichWay] = (a[w.cutsWhichWay] || 0) + 1; return a; }, {});
+  const tallyLine = Object.keys(tally).length
+    ? `<p style="font-size:11.5px;color:var(--ink-faint);margin-top:0">
+        ${items.length} accounts:
+        ${WAY_ORDER.filter((k) => tally[k]).map((k) => `<span style="color:${WAY[k].color}">${tally[k]} ${esc(WAY[k].tally)}</span>`).join(', ')}.
+      </p>`
+    : '';
+
+  return `<div class="card">
+      <h3>Eyewitness reports</h3>
+      ${paras(meta.intro)}
+      ${tallyLine}
+      ${rows}
+      ${meta.note ? `<p style="font-size:11.5px;color:var(--ink-faint);margin-top:9px">${ei(meta.note)} ${meta.src ? srcTag(meta.src) : ''}</p>` : ''}
+    </div>
+    ${eyewitnessNoteCard(meta)}`;
+}
 
 function renderDebrisTab() {
   const crater = DEBRIS[0];
@@ -1022,16 +1416,17 @@ function renderDebrisTab() {
         <span class="leg-name">${esc(d.name)}</span>
         <span class="leg-dist">${mi < 0.1 ? 'origin' : mi.toFixed(2) + ' mi'}</span>
       </div>
-      <p style="margin:0;font-size:12px;color:var(--ink-dim);line-height:1.5">${esc(d.note)}</p>
+      <p style="margin:0;font-size:12px;color:var(--ink-dim);line-height:1.5">${ei(d.note)}</p>
       <div style="margin-top:6px">${srcTag(d.src)}</div>
     </div>`;
   }).join('');
 
   $('#debris-body').innerHTML = `
     <div class="card">
-      <h3>United 93 — final minutes ${conflictChip('UA93')}</h3>
+      <h3>United 93, final minutes ${conflictChip('UA93')}</h3>
+      ${refRow('UA93')}
       <p>Departed Newark 25 minutes late, which is the reason the hijackers were still airborne when news of the other three aircraft reached the passengers by phone. ${srcTag('commission')}</p>
-      <p>The revolt began at <strong>09:57</strong>. At 09:59 the aircraft was down to <strong>5,000 ft</strong>; the fight for the controls then pitched it back up to about 10,000 before it went over. It hit the ground at <strong>10:03:11</strong>, 40 degrees nose-down and inverted, at about <strong>490 knots (563 mph)</strong>. ${srcTag('ntsb')}</p>
+      <p>The revolt began at <strong>09:57</strong>. At 09:59 the aircraft was down to <strong>5,000 ft</strong>; the fight for the controls then pitched it back up to about 10,000 before it went over. It hit the ground at <strong>10:03:11</strong>, 40 degrees nose-down and inverted, at about <strong>490 knots (563 mph)</strong> ${info('knots')}. ${srcTag('ntsb')}</p>
       <div class="chip-row">
         <button class="chip" data-act="fly-crash">Fly to the impact site</button>
         <button class="chip" data-act="show-debris">Show debris field</button>
@@ -1041,7 +1436,8 @@ function renderDebrisTab() {
 
     <div class="card">
       <h3>${esc(WHY_THEY_MATTER.title)}</h3>
-      ${WHY_THEY_MATTER.paras.map((t) => `<p>${esc(t)}</p>`).join('')}
+      ${refRows(WHY_THEY_MATTER)}
+      ${WHY_THEY_MATTER.paras.map((t) => `<p>${ei(t)}</p>`).join('')}
       <div class="call-split">
         <div class="cs-cell"><b>${CALL_TOTALS.total}</b><span>calls</span></div>
         <div class="cs-cell airfone"><b>${CALL_TOTALS.airfone}</b><span>Airfone</span></div>
@@ -1056,13 +1452,14 @@ function renderDebrisTab() {
     <div class="card">
       <h3>${esc(FARADAY.title)}</h3>
       <div class="quote">“${esc(FARADAY.claim)}” ${srcTag(FARADAY.claimSrc)}</div>
+      ${refRows(FARADAY)}
       ${FARADAY.answers.map((a) => `
         <div class="finding hard">
           <h4>${esc(a.head)}</h4>
-          <p>${esc(a.text)}</p>
+          <p>${ei(a.text)}</p>
           <div style="margin-top:5px">${srcTag(a.src)}</div>
         </div>`).join('')}
-      <p style="margin-top:11px"><strong>${esc(FARADAY.reading)}</strong> ${srcTag(FARADAY.src)}</p>
+      <p style="margin-top:11px">${ei(FARADAY.reading)} ${srcTag(FARADAY.src)}</p>
     </div>
 
     <div class="card">
@@ -1073,28 +1470,30 @@ function renderDebrisTab() {
           <div>
             <div class="cr-who">${esc(c.who)} <span class="cr-to">→ ${esc(c.to)}</span>
               <span class="cr-type">${c.type === 'cellular' ? 'CELLULAR' : 'Airfone'}</span></div>
-            <div class="cr-note">${esc(c.note)}</div>
+            <div class="cr-note">${ei(c.note)} ${c.src ? srcTag(c.src) : ''}</div>
           </div>
         </div>`).join('')}
       <p style="font-size:11.5px;color:var(--ink-faint);margin-top:9px">
-        A representative set, not all ${CALL_TOTALS.total} — many of the total are repeat calls by the same people. Times are approximate to the minute; sources vary by a minute or two on several. ${srcTag('press')}
+        A representative set, not all ${CALL_TOTALS.total}; many of the total are repeat calls by the same people. Times are approximate to the minute; sources vary by a minute or two on several. ${srcTag('press')}
       </p>
     </div>
 
     <div class="card">
       <h3>${esc(DEBRIS_NOTE.title)}</h3>
-      ${refRow('UA93')}${refRow('SHKV')}
-      ${DEBRIS_NOTE.body.split('\n\n').map((p) => `<p>${esc(p)}</p>`).join('')}
+      ${refRow('UA93')}${refRow('SHKV')}${refRows(DEBRIS_NOTE)}
+      ${DEBRIS_NOTE.body.split('\n\n').map((p) => `<p>${ei(p)}</p>`).join('')}
       <div>${srcTag(DEBRIS_NOTE.src)}</div>
     </div>
 
     <div class="card">
       <h3>Recorded debris locations</h3>
-      <p style="font-size:11.5px;color:var(--ink-faint)">Distances below are true, computed from the crater coordinates, and the rings on the map mark 1, 3 and 8 true miles. <strong style="color:var(--debris)">The field is drawn on the map at roughly ${DEBRIS_MAGNIFY}× magnification</strong> — an 8-mile scatter is smaller than a single pixel on a map of the whole country. ${srcTag('derived')}</p>
+      <p style="font-size:11.5px;color:var(--ink-faint)">Distances below are true, computed from the crater coordinates, and the rings on the map mark 1, 3 and 8 true miles. <strong style="color:var(--debris)">The field is drawn on the map at roughly ${DEBRIS_MAGNIFY}× magnification</strong>; an 8-mile scatter is smaller than a single pixel on a map of the whole country. ${srcTag('derived')}</p>
       ${rows}
-    </div>`;
+    </div>
 
-  $$('#debris-body .chip').forEach((b) => b.addEventListener('click', () => {
+    ${eyewitnessCard()}`;
+
+  $$('#debris-body .chip[data-act]').forEach((b) => b.addEventListener('click', () => {
     const act = b.dataset.act;
     if (act === 'show-calls') {
       state.layers.calls = true;
@@ -1163,13 +1562,12 @@ function renderCriticVsSteelman() {
         <div class="cmd-row">
           <div class="t" style="color:var(--critic)">${hms(k.c.t).slice(0, 5)}</div>
           <div class="x">
-            <strong style="color:var(--ink)">${esc(k.c.mapLabel)}</strong> —
+            <strong style="color:var(--ink)">${esc(k.c.mapLabel)}</strong>:
             ${HYPO.callsign} would be <strong class="v-impossible">${Math.round(k.sepMi)} mi</strong>
             from United 93. That is <strong>${k.outsideBy.toFixed(1)}×</strong> the reach of its
             own missile, with ${Math.round(k.minsToShot)} minutes left to close.
-            <span style="color:var(--ink-faint)">In sight of it — the two could see each other
-            ${Math.round(k.losMi)} mi apart ${info('lineOfSight')} — but nowhere near able to
-            shoot at it.</span>
+            <span style="color:var(--ink-faint)">In sight of it (the two could see each other
+            ${Math.round(k.losMi)} mi apart ${info('lineOfSight')}) but not able to shoot at it.</span>
           </div>
         </div>`;
     }
@@ -1177,7 +1575,7 @@ function renderCriticVsSteelman() {
       <div class="cmd-row">
         <div class="t" style="color:var(--critic)">${hms(k.c.t).slice(0, 5)}</div>
         <div class="x">
-          <strong style="color:var(--ink)">${esc(k.c.mapLabel)}</strong> — United 93 has been on
+          <strong style="color:var(--ink)">${esc(k.c.mapLabel)}</strong>: United 93 has been on
           the ground <strong>${Math.round(k.minsAfterImpact)} minutes</strong>.
           ${k.landed
             ? `${HYPO.callsign} has already landed at Albany.`
@@ -1190,17 +1588,16 @@ function renderCriticVsSteelman() {
     ${snaps.map(row).join('')}
     <p style="margin:11px 0 0;font-size:12px;color:var(--ink-dim);line-height:1.55">
       The first two messages go out while the best-case shooter is still tens of miles short.
-      That is not damning on its own — he is closing fast, and the claim only needs one instant.
-      The second pair is the harder question. If an American fighter had just destroyed an
-      American airliner, the channel built to reach the President in ten minutes is where that
-      would appear, and two messages went out on it after United 93 was down.
+      That does not rule the claim out on its own: he is closing fast, and the claim needs only
+      one instant. The two later messages are the harder question. If an American fighter had
+      just destroyed an American airliner, the channel built to reach the President in ten
+      minutes is where that would appear, and two messages went out on it after United 93 was down.
     </p>
     <p style="margin:9px 0 0;font-size:12px;color:var(--ink-dim);line-height:1.55">
-      <strong style="color:var(--ink)">What this app can and cannot say.</strong> It cannot tell
-      you those messages are silent about a shootdown, because their contents are withheld. It
-      can tell you that this is the record which would settle the question either way, that it is
-      timestamped to the minute, that it sits in NSA's own files, and that the reason you cannot
-      read it is a decision somebody made and can be asked to justify. ${srcTag('derived')}
+      The contents of all four messages are withheld, so this app cannot say whether they
+      mention a shootdown. The messages are timestamped to the minute, sit in NSA's own files,
+      and are withheld under a stated ground that the pending request contests. A record of that
+      kind would settle the question either way. ${srcTag('derived')}
     </p>`;
 }
 
@@ -1212,28 +1609,35 @@ function renderCriticTab() {
         <span class="dtg">${esc(c.dtg)}</span>
       </div>
       <div class="leg-name" style="margin-bottom:5px">${esc(c.title)}</div>
-      <p style="margin:0;font-size:12.5px;color:var(--ink-dim);line-height:1.5">${esc(c.body)}</p>
-      <div class="redact"><b>Withheld:</b> ${esc(c.gap)}</div>
-      <div class="critic-ctx">${esc(c.context)}</div>
+      <p style="margin:0;font-size:12.5px;color:var(--ink-dim);line-height:1.5">${ei(c.body)}</p>
+      <div class="redact"><b>Withheld:</b> ${ei(c.gap)}</div>
+      <div class="critic-ctx">${ei(c.context)}</div>
       <div style="margin-top:6px">${srcTag(c.src)} ${conflictChip('CRITIC')}</div>
+      ${refRows(c)}
     </div>`;
 
   $('#critic-body').innerHTML = `
     <div class="card">
-      <h3>${esc(CRITIC_BACKGROUND.title)}</h3>
+      <h3>DIRNSA CRITIC 1-2001: the four withheld messages</h3>
       <p style="font-size:12.5px;color:var(--ink);line-height:1.55">
-        In plain terms: a <strong>CRITIC</strong> ${info('critic')} is the most urgent message
+        A <strong>CRITIC</strong> ${info('critic')} is the most urgent message
         type US intelligence has. It is supposed to be in front of the President within ten
-        minutes. Four went out that morning, and what they said is still withheld — which is
+        minutes. Four went out that morning, and what they said is still withheld. That text is
         what the public-records request ${info('foia')} behind this app is asking for.</p>
-      ${CRITIC_BACKGROUND.paras.map((t) => `<p>${esc(t)}</p>`).join('')}
-      <div>${srcTag(CRITIC_BACKGROUND.src)}</div>
+      ${refRow('NSA_RELEASE')}${refRow('MUCKROCK')}${refRow('KARA_CRITIC')}
+      <details class="more">
+        <summary>More about how a CRITIC works</summary>
+        ${CRITIC_BACKGROUND.paras.map((t) => `<p>${ei(t)}</p>`).join('')}
+        <div>${srcTag(CRITIC_BACKGROUND.src)}</div>
+        ${refRows(CRITIC_BACKGROUND)}
+      </details>
       ${refRow('NSA')}${refRow('NORAD')}${refRow('NEADS')}
     </div>
 
     <div class="card">
-      <h3>DIRNSA CRITIC 1-2001 — the chain</h3>
-      <p style="font-size:11.5px;color:var(--ink-faint)">The codes beside each time are military timestamps ${info('dtg')} — NSA's own, from its records release. Clock times here are New York time. ${srcTag('foia')}</p>
+      <h3>DIRNSA CRITIC 1-2001: the chain</h3>
+      <p style="font-size:11.5px;color:var(--ink-faint)">The codes beside each time are military timestamps ${info('dtg')}, NSA's own, from its records release. Clock times here are New York time. ${srcTag('foia')}</p>
+      ${refRow('NSA_RELEASE')}
       ${CRITIC_CHAIN.map(msg).join('')}
       <div class="leg critic-msg" style="opacity:.75">
         <div class="leg-head">
@@ -1241,38 +1645,42 @@ function renderCriticTab() {
           <span class="dtg">${esc(CRITIC_SUMMARY.dtg)}</span>
         </div>
         <div class="leg-name" style="margin-bottom:5px">${esc(CRITIC_SUMMARY.title)}</div>
-        <p style="margin:0;font-size:12.5px;color:var(--ink-dim);line-height:1.5">${esc(CRITIC_SUMMARY.body)}</p>
-        <div class="redact"><b>Withheld:</b> ${esc(CRITIC_SUMMARY.gap)}</div>
+        <p style="margin:0;font-size:12.5px;color:var(--ink-dim);line-height:1.5">${ei(CRITIC_SUMMARY.body)}</p>
+        <div class="redact"><b>Withheld:</b> ${ei(CRITIC_SUMMARY.gap)}</div>
         <div class="critic-ctx">Two days later, so it sits outside this app's clock.</div>
+        ${CRITIC_SUMMARY.src ? `<div style="margin-top:6px">${srcTag(CRITIC_SUMMARY.src)}</div>` : ''}
+        ${refRows(CRITIC_SUMMARY)}
       </div>
     </div>
 
     <div class="card critic-steel-card">
       <h3>Where the shootdown claim would have been, each time one went out</h3>
       <p style="font-size:12px;color:var(--ink-dim);line-height:1.55">
-        Every other source in this app describes what <em>happened</em>. The CRITIC describes
-        what the government <em>believed was happening</em>, to the minute. So it is worth
-        asking where ${esc(HYPO.callsign)} — the best case the shootdown story can have
-        ${info('steelman')} — would have been at each of these four moments.
+        Every other source in this app describes what happened. The CRITIC describes
+        what the government believed was happening, to the minute. Where
+        ${esc(HYPO.callsign)}, the best case the shootdown story can have ${info('steelman')},
+        would have been at each of these four moments:
       </p>
       <div id="critic-steel"></div>
     </div>
 
     <div class="card glimpse">
       <h3>${esc(CRITIC_GLIMPSE.title)}</h3>
+      ${refRows(CRITIC_GLIMPSE)}
       ${CRITIC_GLIMPSE.items.map((i) => `
         <div class="finding hard">
           <h4>${esc(i.text)}</h4>
-          <p>${esc(i.note)}</p>
+          <p>${ei(i.note)}</p>
           <div style="margin-top:5px">${srcTag(i.src)}</div>
         </div>`).join('')}
-      <p style="margin-top:11px">${esc(CRITIC_GLIMPSE.reading)}</p>
+      <p style="margin-top:11px">${ei(CRITIC_GLIMPSE.reading)}</p>
       <div>${srcTag(CRITIC_GLIMPSE.src)}</div>
     </div>
 
     <div class="card">
       <h3>Distribution</h3>
-      <p>${esc(DISTRIBUTION.note)} ${srcTag(DISTRIBUTION.src)}</p>
+      <p>${ei(DISTRIBUTION.note)} ${srcTag(DISTRIBUTION.src)}</p>
+      ${refRows(DISTRIBUTION)}
       <div class="chip-row">
         <button class="chip" data-act="show-critic">Show the alert network</button>
       </div>
@@ -1282,20 +1690,21 @@ function renderCriticTab() {
       <h3>The pending request</h3>
       <dl class="foia-row">
         <dt>Status</dt><dd>${esc(FOIA.status)}</dd>
-        <dt>Filed via</dt><dd>${esc(FOIA.filedVia)}</dd>
-        <dt>Publication</dt><dd>${esc(FOIA.publishAt)}</dd>
+        <dt>Filed</dt><dd>${esc(FOIA.filed)}, via <a href="${FOIA.requestUrl}" target="_blank" rel="noopener noreferrer">${esc(FOIA.filedVia)}: &ldquo;${esc(FOIA.requestTitle)}&rdquo;</a></dd>
+        <dt>Publication</dt><dd><a href="${FOIA.publishUrl}" target="_blank" rel="noopener noreferrer">${esc(FOIA.publishAt)}</a></dd>
         <dt>Auto-declass</dt><dd>${esc(FOIA.autoDeclass)}</dd>
       </dl>
-      <p style="margin-top:9px;font-size:12px">${esc(FOIA.autoDeclassNote)}</p>
+      <p style="margin-top:9px;font-size:12px">${ei(FOIA.autoDeclassNote)}</p>
       <h3 style="margin-top:14px">What is being asked for</h3>
-      <ul class="plain">${FOIA.scope.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>
+      <ul class="plain">${FOIA.scope.map((x) => `<li>${ei(x)}</li>`).join('')}</ul>
       <p style="margin-top:10px;font-size:12px;color:var(--ink-faint)">If records are released, they land here: each message against the minute of the morning it was sent, with the rest of the timeline already drawn around it.</p>
       <div>${srcTag(FOIA.src)}</div>
+      ${refRows(FOIA)}
     </div>`;
 
   renderCriticVsSteelman();
 
-  $$('#critic-body .chip').forEach((b) => b.addEventListener('click', () => {
+  $$('#critic-body .chip[data-act]').forEach((b) => b.addEventListener('click', () => {
     if (b.dataset.act !== 'show-critic') return;
     state.layers.critic = true;
     map.setCriticVisible(true);
@@ -1322,23 +1731,24 @@ function renderMilitaryTab() {
         <div class="armed ${/UNARMED/.test(f.armed) ? 'unarmed' : ''}">${esc(f.armed)}</div>
       </div>
       <div style="margin-top:8px">
-        ${f.events.map((e) => `<div class="cmd-row"><div class="t">${hms(e[0]).slice(0, 5)}</div><div class="x">${esc(e[1])}</div></div>`).join('')}
+        ${f.events.map((e) => `<div class="cmd-row"><div class="t">${hms(e[0]).slice(0, 5)}</div><div class="x">${ei(e[1])} ${e[2] ? srcTag(e[2]) : ''}</div></div>`).join('')}
       </div>
-      ${refRow(f.id)}
+      ${refRow(f.id)}${refRows(f)}
       <div class="chip-row"><button class="chip" data-milshow="${f.id}">Fly to</button></div>
     </div>`;
 
   $('#military-body').innerHTML = `
     <div class="card">
-      <h3>What was actually airborne</h3>
+      <h3>What was airborne</h3>
       <p>An air defence built to look outward had a handful of alert fighters for the whole continental United States that morning. This is what got up, when, and where it went. ${srcTag('commission')}</p>
-      <p style="font-size:11.5px;color:var(--ink-faint)">Tracks are reconstructions from documented endpoints and events, like the airliner tracks. Callsigns are as recorded on the NEADS tapes and in interviews; where sources disagree on a rendering, the entry says so.</p>
+      <p style="font-size:11.5px;color:var(--ink-faint)">Tracks are reconstructions from documented endpoints and events, like the airliner tracks. Callsigns are as recorded on the NEADS ${info('neads')} tapes and in interviews; where sources disagree on a rendering, the entry says so. ${srcTag('recon')}</p>
     </div>
 
     <div class="card kernel-card">
       <h3>${esc(KERNEL.title)}</h3>
-      ${KERNEL.paras.map((p) => `<p>${esc(p)}</p>`).join('')}
+      ${KERNEL.paras.map((p) => `<p>${ei(p)}</p>`).join('')}
       <div style="margin-top:8px">${srcTag(KERNEL.src)}</div>
+      ${refRows(KERNEL)}
       <div class="chip-row">
         <button class="chip" data-milshow="QUIT">Fly to QUIT flight</button>
         <button class="chip" data-milshow="GOFER">Fly to GOFER 06</button>
@@ -1357,9 +1767,10 @@ function renderMilitaryTab() {
         <div class="cs-row">
           <div class="cs-name">${esc(c.cs)}${/GOFER/.test(c.cs) ? ' ' + conflictChip('GOFER') : ''}${/BULLY/.test(c.cs) ? ' ' + conflictChip('BULLY') : ''}</div>
           <div>
-            <div class="cs-what">${esc(c.what)}</div>
-            <div class="cs-note">${esc(c.note)}</div>
+            <div class="cs-what">${ei(c.what)}</div>
+            <div class="cs-note">${ei(c.note)}</div>
             <div style="margin-top:4px">${srcTag(c.src)}</div>
+            ${refRows(c)}
           </div>
         </div>`).join('')}
     </div>`;
@@ -1393,35 +1804,48 @@ function showMil(id) {
    ========================================================================== */
 
 /* A small inline marker other panels can drop next to an affected record. */
+/* A tag names a group of register entries; an id names one. Chips carry
+   either, so both are resolved here. */
+function conflictsForKey(key) {
+  const byTag = conflictsFor(key);
+  if (byTag.length) return byTag;
+  const one = CONFLICTS.find((c) => c.id === key);
+  return one ? [one] : [];
+}
+
 function conflictChip(tag) {
-  const cs = conflictsFor(tag);
+  const cs = conflictsForKey(tag);
   if (!cs.length) return '';
   const bad = cs.filter((c) => c.status === 'todo').length;
-  return `<button class="cflag ${bad ? 'bad' : ''}" data-cjump="${tag}"
-    title="${cs.length} recorded discrepancy/discrepancies affecting this record">&#9888; ${cs.length}</button>`;
+  const n = cs.length;
+  return `<button class="cflag ${bad ? 'bad' : ''}" data-cjump="${esc(tag)}"
+    title="${n} recorded ${n === 1 ? 'discrepancy affects' : 'discrepancies affect'} this record">${n} ${n === 1 ? 'dispute' : 'disputes'}</button>`;
 }
 
 function renderConflictsTab() {
+  renderCertainty();
+  renderCorrections();
   const card = (c) => {
     const st = STATUS_META[c.status];
     return `
-    <div class="card conflict" id="cf-${c.id}">
+    <div class="card conflict" id="cf-${c.id}" data-tags="${esc(c.tags.join(' '))}">
       <div class="cf-head">
         <span class="cf-status ${st.tone}">${esc(st.label)}</span>
         <span class="cf-tags">${c.tags.map(esc).join(' · ')}</span>
       </div>
       <h4 class="cf-subject">${esc(c.subject)}</h4>
-      <p class="cf-why">${esc(c.why)}</p>
+      <p class="cf-why">${ei(c.why)}</p>
+      ${refRows(c)}
       <div class="cf-readings">
         ${c.readings.map((r, i) => `
           <div class="cf-reading${i === 0 ? ' first' : ''}">
-            <div class="cf-v">${esc(r.v)}</div>
+            <div class="cf-v">${ei(r.v)}</div>
             <div class="cf-who">${esc(r.who)} ${srcTag(r.src)}</div>
-            <div class="cf-weight">${esc(r.weight)}</div>
+            <div class="cf-weight">${ei(r.weight)}</div>
           </div>`).join('')}
       </div>
-      <div class="cf-reading-note"><strong>Reading:</strong> ${esc(c.reading)}</div>
-      ${c.appSays ? `<div class="cf-app"><strong>In this app:</strong> ${esc(c.appSays)}</div>` : ''}
+      <div class="cf-reading-note"><strong>Reading:</strong> ${ei(c.reading)}</div>
+      ${c.appSays ? `<div class="cf-app"><strong>In this app:</strong> ${ei(c.appSays)}</div>` : ''}
     </div>`;
   };
 
@@ -1430,9 +1854,10 @@ function renderConflictsTab() {
 
   $('#conflicts-body').innerHTML = `
     <div class="card">
-      <h3>Where the sources disagree</h3>
-      <p>Every account of that morning conflicts with some other account somewhere. Hiding that would make this app look more settled than the evidence is, so each known discrepancy is recorded here with its competing readings and — where one can be had — a view on which deserves more weight.</p>
-      <p>This app's own errors are in the same list, under the same headings, with no softer wording. ${srcTag('derived')}</p>
+      <h3>Sources and disputes</h3>
+      <div id="cf-showing" class="cf-showing hidden"></div>
+      <p>Every account of that morning conflicts with some other account somewhere. Each known discrepancy is recorded here with its competing readings and, where one can be had, a view on which deserves more weight.</p>
+      <p>This app's own errors are in the same list, under the same headings. ${srcTag('derived')}</p>
       <div class="cf-legend">
         ${Object.entries(STATUS_META).map(([k, m]) => `
           <div class="cf-legend-row">
@@ -1445,13 +1870,24 @@ function renderConflictsTab() {
     ${CONFLICTS.map(card).join('')}`;
 }
 
+/* The 'Showing disputes about' line at the top of the Sources tab. A plain
+   tap on the tab clears it (see gotoTab). */
+function setConflictHeader(text) {
+  const el = $('#cf-showing');
+  if (!el) return;
+  if (!text) { el.classList.add('hidden'); el.textContent = ''; return; }
+  el.textContent = `Showing disputes about: ${text}`;
+  el.classList.remove('hidden');
+}
+
 /* Jump from an inline marker to the first matching register entry. */
-function jumpToConflict(tag) {
-  $$('#tabs button').forEach((x) => x.classList.remove('on'));
-  $('#tabs button[data-tab="conflicts"]').classList.add('on');
-  $$('.tab-body').forEach((sec) => sec.classList.toggle('hidden', sec.dataset.body !== 'conflicts'));
-  const first = conflictsFor(tag)[0];
-  if (!first) return;
+function jumpToConflict(key) {
+  gotoTab('conflicts');
+  const cs = conflictsForKey(key);
+  const first = cs[0];
+  if (!first) { setConflictHeader(''); return; }
+  const label = conflictsFor(key).length ? key : first.subject;
+  setConflictHeader(label);
   const el = $(`#cf-${first.id}`);
   if (el) {
     el.scrollIntoView({ block: 'start', behavior: 'smooth' });
@@ -1460,174 +1896,356 @@ function jumpToConflict(tag) {
   }
 }
 
+/* The 'Next' footer at the bottom of every tab: one road through the app in
+   the order the argument is made, and a way back to the start. */
+const TAB_ORDER = ['brief', 'claim', 'aware', 'critic', 'timeline', 'conflicts'];
+const TAB_LABELS = {
+  brief: 'Start here', claim: 'The claim', aware: 'Who knew', critic: 'CRITIC',
+  timeline: 'Timeline', conflicts: 'Sources',
+};
+
+function nextRow(name) {
+  const i = TAB_ORDER.indexOf(name);
+  const next = TAB_ORDER[(i + 1) % TAB_ORDER.length];
+  return `<div class="next-row">
+    <button class="chip chip-next" data-goto="${next}">Next: ${esc(TAB_LABELS[next])} &rarr;</button>
+    ${name !== 'brief' ? `<button class="chip" data-goto="brief">Back to Start here</button>` : ''}
+  </div>`;
+}
+
+function renderNextRows() {
+  for (const name of TAB_ORDER) {
+    const host = $(`#${name}-next`);
+    if (host) host.innerHTML = nextRow(name);
+  }
+}
+
 /* =============================================================================
    Panels — layers
    ========================================================================== */
 
+/* Push one layer's state at the map. The drawer's checkboxes, the Simple /
+   Full switch and the panels' chips all end up here. */
+function applyLayer(k) {
+  const on = !!state.layers[k];
+  if (FLIGHTS.some((f) => f.id === k) || MIL_FLIGHTS.some((f) => f.id === k)) {
+    map.setFlightVisible(k, on);
+  }
+  else if (k === 'debris') map.setDebrisVisible(on);
+  else if (k === 'critic') map.setCriticVisible(on);
+  else if (k === 'aware') map.setAwarenessVisible(on);
+  else if (k === 'hypo') { map.setHypoVisible(on); if (on) updateHypo(); }
+  else if (k === 'calls') { map.setCallsVisible(on); map.setCalls(ua93StateAt, state.t); }
+  else if (k === 'trail') { map.setTrailVisible(on); map.setTrail(state.t); }
+  else if (k === 'envelope' || k === 'wez') {
+    map.setReachVisible(state.layers.envelope || state.layers.wez);
+    updateReach();
+  }
+  else if (k === 'maxClean') { map.setMaxCleanVisible(on); updateReach(); }
+  else if (k === 'routeDoc') map.setRouteVisible('documented', on);
+  else if (k === 'routeClaim') map.setRouteVisible('claim', on);
+  else if (k === 'places') map.placeGroup.visible = on;
+  map.setTime(state.t);
+}
+
+/* The Simple / Full switch reads the group: Full when every grouped layer
+   is on, Simple when none is, and neither when the reader has mixed them. */
+function syncModeSwitch() {
+  const all = FULL_LAYERS.every((k) => state.layers[k]);
+  const none = FULL_LAYERS.every((k) => !state.layers[k]);
+  $$('[data-mode]').forEach((b) => {
+    b.classList.toggle('on', (b.dataset.mode === 'full' && all) || (b.dataset.mode === 'simple' && none));
+  });
+}
+
+function setLayerMode(mode) {
+  for (const k of FULL_LAYERS) state.layers[k] = mode === 'full';
+  syncLayerChecks();
+  applyAllLayers();
+}
+
+/* The last six minutes, rendered as its marked beats rather than as all 371
+   rows. A reader asking to understand something needs a shape before a
+   database; the full second-by-second array is one toggle away and is the same
+   data. The rung filter is the certainty ladder made operable: ask for measured
+   only, and watch most of the narration go. */
+let reconRung = 'all';
+let reconAll = false;
+
+function reconVoiceHTML(v) {
+  const cls = v.kind.replace(/-shout$/, '');
+  const shout = /-shout$/.test(v.kind) ? ' rv-shout' : '';
+  const tag = cls === 'arabic' ? 'translated from Arabic'
+    : cls === 'english' ? 'English as spoken'
+      : cls === 'mixed' ? 'Arabic with English words' : '';
+  return `<div class="rv rv-${cls}${shout}">
+    ${v.who ? `<span class="rv-who">${v.who}</span>` : ''}
+    ${v.text ? `<span class="rv-text">${v.text}</span>` : ''}
+    ${v.note ? `<span class="rv-note">${v.note}</span>` : ''}
+    ${tag ? `<span class="rv-tag">${tag}</span>` : ''}
+  </div>`;
+}
+
+function renderRecon() {
+  const host = $('#recon-host');
+  if (!host) return;
+  const beats = RECONSTRUCTION.filter((r) => r.beat);
+  const shown = beats.filter((b) => reconRung === 'all' || b.beatRung === reconRung);
+  const rungs = ['all', ...new Set(beats.map((b) => b.beatRung))];
+
+  const block = (b) => {
+    const near = RECONSTRUCTION.filter(
+      (r) => Math.abs(r.t - b.t) <= 3 && r.voices.length,
+    ).flatMap((r) => r.voices);
+    const st = [
+      b.alt != null ? `${b.alt.toLocaleString()} ft` : null,
+      b.roll != null ? `roll ${b.roll}\u00b0` : null,
+      b.pitch != null ? `pitch ${b.pitch}\u00b0` : null,
+      b.g != null ? `${b.g} g` : null,
+    ].filter(Boolean);
+    return `<li class="beat" data-rung="${b.beatRung}">
+      <div class="beat-t">${hms(b.t)}</div>
+      <div class="beat-main">
+        <p class="beat-head">${expandInfo(b.beat)}</p>
+        ${b.beatNote ? `<p class="beat-note">${expandInfo(b.beatNote)}</p>` : ''}
+        ${st.length ? `<div class="beat-state">${st.join('<span class="sep">\u00b7</span>')}</div>` : ''}
+        ${near.length ? `<div class="beat-voices">${near.map(reconVoiceHTML).join('')}</div>` : ''}
+        <span class="pill cert-pill cert-${b.beatRung}">${b.beatRung}</span>
+      </div>
+    </li>`;
+  };
+
+  const rowLine = (r) => `<tr>
+    <td class="mono">${hms(r.t)}</td>
+    <td class="mono num">${r.alt != null ? r.alt.toLocaleString() : ''}</td>
+    <td class="mono num">${r.roll != null ? r.roll : ''}</td>
+    <td class="mono num">${r.pitch != null ? r.pitch : ''}</td>
+    <td class="mono num">${r.g != null ? r.g : ''}</td>
+    <td>${r.voices.map((v) => `<span class="rv-mini rv-${v.kind.replace(/-shout$/, '')}">${v.text || v.note}</span>`).join(' ')}</td>
+  </tr>`;
+
+  host.innerHTML = `
+    <section class="card recon">
+      <p class="kicker">truth.help</p>
+      <h2>Help me understand the last six minutes</h2>
+      <p class="recon-range">09:57:00 to 10:03:11, the revolt to the ground.</p>
+      <p class="sec-note">${RECON_NOTE}</p>
+      <div class="recon-filter">
+        <span class="rf-label">Show</span>
+        ${rungs.map((r) => `<button class="chip${r === reconRung ? ' on' : ''}" data-rung="${r}">${r === 'all' ? 'everything' : r}</button>`).join('')}
+      </div>
+      <ol class="beats">${shown.map(block).join('')}</ol>
+      ${shown.length === 0 ? '<p class="sec-note">Nothing in this reconstruction sits on that rung.</p>' : ''}
+      <button class="chip" id="recon-toggle">${reconAll ? 'Hide' : 'Show'} every recorded second (${RECONSTRUCTION.length} rows)</button>
+      ${reconAll ? `<div class="recon-table-wrap"><table class="recon-table">
+        <thead><tr><th>time</th><th>alt ft</th><th>roll</th><th>pitch</th><th>g</th><th>voices and sounds</th></tr></thead>
+        <tbody>${RECONSTRUCTION.map(rowLine).join('')}</tbody></table></div>` : ''}
+    </section>`;
+
+  host.querySelectorAll('[data-rung]').forEach((btn) => {
+    if (btn.tagName !== 'BUTTON') return;
+    btn.addEventListener('click', () => { reconRung = btn.dataset.rung; renderRecon(); });
+  });
+  const tg = $('#recon-toggle');
+  if (tg) tg.addEventListener('click', () => { reconAll = !reconAll; renderRecon(); });
+}
+
+/* Corrections. Dated, with the wrong version kept beside the right one. */
+function renderCorrections() {
+  const host = $('#corrections-host');
+  if (!host) return;
+  host.innerHTML = `
+    <section class="card">
+      <h2>Corrections</h2>
+      <p class="sec-note">${CORRECTIONS_NOTE}</p>
+      <ol class="corr">
+        ${CORRECTIONS.map((c) => `
+          <li class="corr-item">
+            <div class="corr-head"><span class="corr-date mono">${c.on}</span>
+              <span class="pill cert-pill cert-${c.rung}">${c.rung}</span></div>
+            <p class="corr-what">${expandInfo(c.what)}</p>
+            <p class="corr-wrong"><span class="corr-k">Said</span>${expandInfo(c.wrong)}</p>
+            <p class="corr-right"><span class="corr-k">Now</span>${expandInfo(c.right)}</p>
+            <p class="corr-why"><span class="corr-k">Why</span>${expandInfo(c.why)}</p>
+          </li>`).join('')}
+      </ol>
+    </section>`;
+}
+
+/* The certainty ladder. Rendered beside the glossary because it is the same
+   kind of thing: a key to how the rest of the app should be read. */
+function renderCertainty() {
+  const host = $('#certainty-host');
+  if (!host) return;
+  host.innerHTML = `
+    <section class="card">
+      <h2>How well is each thing known?</h2>
+      <p class="sec-note">${CERTAINTY_NOTE}</p>
+      <ol class="certainty">
+        ${CERTAINTY.map((c) => `
+          <li class="cert cert-${c.id}">
+            <div class="cert-head">
+              <span class="cert-rank">${c.rank}</span>
+              <span class="cert-label">${c.label}</span>
+              ${srcTag(c.src)}
+            </div>
+            <p class="cert-gloss">${expandInfo(c.gloss)}</p>
+            <p class="cert-detail">${expandInfo(c.detail)}</p>
+            <ul class="cert-ex">${c.examples.map((e) => `<li>${expandInfo(e)}</li>`).join('')}</ul>
+          </li>`).join('')}
+      </ol>
+    </section>`;
+}
+
+/* The layers drawer. Rendered once at boot into #layers-body, which lives
+   inside #layers-drawer on the stage; it is the single home of every
+   [data-layer] checkbox, so syncLayerChecks has one place to look. */
+
 function renderLayersTab() {
-  /* A flight carrying a pathNote gets it printed under its own toggle. The
-     note is the difference between what the recorder says and what this app
-     drew, and a caveat nobody can read is not a caveat. */
-  const fl = FLIGHTS.map((f) => `
+  const toggle = (key, swatch, label, meta, extra = '') => `
     <label class="toggle">
-      <input type="checkbox" data-layer="${f.id}" ${state.layers[f.id] ? 'checked' : ''}>
-      <span class="swatch" style="background:${hex(f.color)}"></span>
-      <span>${esc(f.label)}</span>
-      <span class="meta">${esc(f.type.replace('Boeing ', 'B'))}</span>
-    </label>
-    ${f.pathNote ? `<p style="font-size:11px;color:var(--ink-faint);line-height:1.55;
-        margin:2px 0 10px 26px;border-left:2px solid var(--rule);padding-left:8px">
-        ${esc(f.pathNote)} ${srcTag(f.src)}</p>` : ''}
+      <input type="checkbox" data-layer="${key}" ${state.layers[key] ? 'checked' : ''}>
+      <span class="swatch" style="background:${swatch}"></span>
+      <span>${label}</span>
+      <span class="meta">${meta}${extra}</span>
+    </label>`;
+
+  const fl = FLIGHTS.map((f) => `
+    ${toggle(f.id, hex(f.color), esc(f.label), esc(f.type.replace('Boeing ', 'B')))}
     ${refRow(f.id, 'ref-indent')}`).join('');
+
+  /* A flight carrying a pathNote is the difference between what the recorder
+     says and what this app drew. Kept, behind one disclosure. */
+  const notes = FLIGHTS.filter((f) => f.pathNote).map((f) => `
+    <p style="font-size:11px;color:var(--ink-faint);line-height:1.55;margin:6px 0 8px;
+        border-left:2px solid var(--line-2);padding-left:8px">
+      <strong style="color:var(--ink-dim)">${esc(f.label)}.</strong> ${ei(f.pathNote)} ${srcTag(f.src)}</p>`).join('');
 
   $('#layers-body').innerHTML = `
     <div class="card">
-      <h3>Hijacked aircraft</h3>
-      ${fl}
+      <div class="mode-switch" role="group" aria-label="How much to draw">
+        <button data-mode="simple">Simple</button>
+        <button data-mode="full">Full</button>
+      </div>
       <p style="font-size:11.5px;color:var(--ink-faint);margin-top:8px">
-        Tracks are reconstructions: documented positions and times, with the segments between them interpolated. The shape is indicative, not radar data. United 93 and American 77 are the two whose recorders were recovered, so their altitudes and timings are FDR values and their notes say where the drawing starts and the record stops. American 11 and United 175 have no recorder at all. ${srcTag('recon')}
+        Simple draws the aircraft, the places and the four messages. Full adds the reach rings,
+        the missile range, the recorder points, the phone calls and the who-knew network.
       </p>
-    </div>
-
-    <div class="card">
-      <h3>Military aircraft</h3>
-      ${MIL_FLIGHTS.map((f) => `
-        <label class="toggle">
-          <input type="checkbox" data-layer="${f.id}" ${state.layers[f.id] ? 'checked' : ''}>
-          <span class="swatch" style="background:${hex(f.color)}"></span>
-          <span style="font-family:var(--mono);font-size:11.5px">${esc(f.label)}</span>
-          <span class="meta">${esc(f.type.split(' ')[0])}</span>
-        </label>`).join('')}
-      <p style="font-size:11.5px;color:var(--ink-faint);margin-top:8px">
-        Shown by default. QUIT flight is the North Dakota Air National Guard detachment at Langley — the unit at the centre of the claim. ${srcTag('press')}
-      </p>
-    </div>
-
-    <div class="card">
-      <h3>Gibney routes</h3>
-      <label class="toggle">
-        <input type="checkbox" data-layer="routeDoc" ${state.layers.routeDoc ? 'checked' : ''}>
-        <span class="swatch" style="background:var(--doc)"></span>
-        <span>Documented route</span><span class="meta">solid</span>
-      </label>
-      <label class="toggle">
-        <input type="checkbox" data-layer="routeClaim" ${state.layers.routeClaim ? 'checked' : ''}>
-        <span class="swatch" style="background:var(--claim)"></span>
-        <span>Route required by the claim</span><span class="meta">dashed</span>
-      </label>
+      <div class="legend-key in-drawer">
+        <div><i style="background:#35d6a4"></i>How far he could have flown, at cruise</div>
+        <div><i style="background:#ffd447"></i>Fastest possible</div>
+        <div><i class="dash" style="border-color:#ff8a5c"></i>Fuel limit</div>
+        <div><i class="dash" style="border-color:#fff"></i>STEELMAN, the constructed track</div>
+        <div><i style="background:#ff1f3d"></i>The four withheld messages</div>
+      </div>
     </div>
 
     <div class="card">
       <h3>Geometry of the claim</h3>
-      <label class="toggle">
-        <input type="checkbox" data-layer="envelope" ${state.layers.envelope ? 'checked' : ''}>
-        <span class="swatch" style="background:#ffd447"></span>
-        <span>Reachability envelope</span><span class="meta">from Fargo</span>
-      </label>
-      <label class="toggle">
-        <input type="checkbox" data-layer="wez" ${state.layers.wez ? 'checked' : ''}>
-        <span class="swatch" style="background:#ff4d4d"></span>
-        <span>Sidewinder engagement zone</span><span class="meta">${AIM9.rMaxMi} mi, from Fargo</span>
-      </label>
-      <label class="toggle">
-        <input type="checkbox" data-layer="trail" ${state.layers.trail ? 'checked' : ''}>
-        <span class="swatch" style="background:var(--ua93)"></span>
-        <span>Recorded-data trail</span><span class="meta">UA93 + AA77 · FDR</span>
-      </label>
-      <label class="toggle">
-        <input type="checkbox" data-layer="calls" ${state.layers.calls ? 'checked' : ''}>
-        <span class="swatch" style="background:#74c7ff"></span>
-        <span>Phone calls from United 93</span><span class="meta">37 calls</span>
-      </label>
-      <label class="toggle">
-        <input type="checkbox" data-layer="aware" ${state.layers.aware ? 'checked' : ''}>
-        <span class="swatch" style="background:#35d6a4"></span>
-        <span>Who knew, and when</span><span class="meta">FAA &rarr; military</span>
-      </label>
-      <label class="toggle">
-        <input type="checkbox" data-layer="hypo" ${state.layers.hypo ? 'checked' : ''}>
-        <span class="swatch" style="background:#fff"></span>
-        <span>${esc(HYPO.callsign)} — best-case track</span><span class="meta">constructed</span>
-      </label>
+      ${toggle('envelope', '#ffd447', 'How far the fighter could have flown (rings)', 'reach envelope', ' ' + info('ferryRange'))}
+      ${toggle('wez', '#ff4d4d', `Missile range (Sidewinder, ${Math.round(AIM9.rMaxMi)} mi)`, 'engagement zone', ' ' + info('wez'))}
+      ${toggle('trail', 'var(--ua93)', 'Points the flight recorders confirm', 'FDR', ' ' + info('fdr'))}
+      ${toggle('calls', '#74c7ff', 'Phone calls from United 93', `${CALL_TOTALS.total} calls`, ' ' + info('airfone'))}
+      ${toggle('aware', '#35d6a4', 'Who knew, and when', 'FAA &rarr; military', ' ' + info('neads'))}
+      ${toggle('hypo', '#fff', 'The fighter the claim needs (built here)', esc(HYPO.callsign), ' ' + info('steelman'))}
+      ${toggle('maxClean', '#ffffff', 'Mach 2.0 ring (clean jet, not available to the claim)', 'Full only', ' ' + info('placard'))}
       <p style="font-size:11.5px;color:var(--ink-faint);margin-top:8px">
-        Rings grow from the departure time set on the claim tab. The red ring around United 93 is the zone a shooter had to be inside; at national zoom it is a dot, which is the honest impression. ${srcTag('derived')}
+        Rings grow from the departure time set on the claim tab. The red ring is the missile's reach drawn from Fargo, the only place he is documented to have been; at national zoom it is a dot. The constructed fighter carries the same ring with it. ${srcTag('derived')}
       </p>
     </div>
 
     <div class="card">
       <h3>Alert network</h3>
-      <label class="toggle">
-        <input type="checkbox" data-layer="critic" ${state.layers.critic ? 'checked' : ''}>
-        <span class="swatch" style="background:var(--critic)"></span>
-        <span>CRITIC chain</span><span class="meta">NORAD &rarr; NSA</span>
-      </label>
+      ${toggle('critic', 'var(--critic)', 'The four withheld messages', 'CRITIC chain', ' ' + info('critic'))}
       <p style="font-size:11.5px;color:var(--ink-faint);margin-top:8px">
-        Links appear as the clock reaches each date-time group. Solid is documented; dashed is where a CRITIC is designed to land, since the addressee lists are redacted. ${srcTag('foia')}
+        Links appear as the clock reaches each date-time group ${info('dtg')}. Solid is documented; dashed is where a CRITIC is designed to land, since the addressee lists are redacted. ${srcTag('foia')}
       </p>
     </div>
 
     <div class="card">
-      <h3>Ground</h3>
-      <label class="toggle">
-        <input type="checkbox" data-layer="debris" ${state.layers.debris ? 'checked' : ''}>
-        <span class="swatch" style="background:var(--debris)"></span>
-        <span>Flight 93 debris field</span><span class="meta">${DEBRIS_MAGNIFY}× mag</span>
-      </label>
-      <label class="toggle">
-        <input type="checkbox" data-layer="places" ${state.layers.places ? 'checked' : ''}>
-        <span class="swatch" style="background:#9fb6cc"></span>
-        <span>Airports &amp; landmarks</span>
-      </label>
+      <h3>Hijacked aircraft</h3>
+      ${fl}
+      <p style="font-size:11.5px;color:var(--ink-faint);margin-top:8px">
+        Tracks are reconstructions: documented positions and times, with the segments between them interpolated. The shape is indicative, not radar data. United 93 and American 77 are the two whose recorders ${info('fdr')} were recovered, so their altitudes and timings are FDR values. American 11 and United 175 have no recorder at all. ${srcTag('recon')}
+      </p>
+      ${notes ? `<details class="more"><summary>Why this track is drawn this way</summary>${notes}</details>` : ''}
     </div>
 
+    <div class="card">
+      <h3>Military aircraft</h3>
+      ${MIL_FLIGHTS.map((f) => toggle(f.id, hex(f.color),
+        `<span style="font-family:var(--mono);font-size:11.5px">${esc(f.label)}</span>`, esc(f.type.split(' ')[0]))).join('')}
+      <p style="font-size:11.5px;color:var(--ink-faint);margin-top:8px">
+        Shown by default. QUIT flight is the North Dakota Air National Guard detachment at Langley, the unit at the centre of the claim. ${srcTag('press')}
+      </p>
+    </div>
+
+    <div class="card">
+      <h3>Gibney routes</h3>
+      ${toggle('routeDoc', 'var(--doc)', 'Documented route', 'solid')}
+      ${toggle('routeClaim', 'var(--claim)', 'Route required by the claim', 'dashed')}
+    </div>
+
+    <div class="card">
+      <h3>Ground</h3>
+      ${toggle('debris', 'var(--debris)', 'Flight 93 debris field', `${DEBRIS_MAGNIFY}× mag`)}
+      ${toggle('places', '#9fb6cc', 'Airports &amp; landmarks', '')}
+    </div>`;
+
+  const gh = $('#glossary-host');
+  if (gh) gh.innerHTML = `
     <div class="card">
       <h3>Plain-English glossary</h3>
       <p style="font-size:12px;color:var(--ink-dim);line-height:1.55">Every technical term this
       app uses, in ordinary words. The same definitions sit behind the small
       <span class="ii" style="cursor:default;pointer-events:none"></span> marks throughout the
-      page &mdash; click one wherever you see it.</p>
+      page; click one wherever you see it.</p>
       ${glossaryList().map((g) => `
         <div class="gl-row">
           <div class="gl-term">${esc(g.term)}</div>
           <div class="gl-plain">${esc(g.plain)}</div>
           ${g.more ? `<div class="gl-more">${esc(g.more)}</div>` : ''}
-          ${g.link ? `<div class="ref-row"><a class="ref ref-wiki" href="${g.link.url}"
-            target="_blank" rel="noopener noreferrer">${esc(g.link.label)}</a></div>` : ''}
+          <div class="ref-row">${srcTag(g.src)}${g.link ? `<a class="ref ref-wiki" href="${g.link.url}"
+            target="_blank" rel="noopener noreferrer">${esc(g.link.label)}</a>` : ''}</div>
         </div>`).join('')}
-    </div>
+    </div>`;
 
+  const mh = $('#mapkey-host');
+  if (mh) mh.innerHTML = `
     <div class="card">
       <h3>How to read this map ${conflictChip('DATA')}</h3>
-      <p>States are real geometry — US Census cartographic boundaries at 1:10,000,000, extruded. Alaska, Hawaii and Puerto Rico sit in the conventional insets and are <em>not</em> at true position or scale. ${srcTag('geo')}</p>
-      <p>The vertical axis defaults to <strong>true scale</strong> — the same units up as across. That makes the tracks look nearly flat, which is the honest picture: a cruising airliner is about 1:${Math.round(trueScaleRatio()).toLocaleString()} against the width of the country. The control in the map legend raises it to 2× or 5× when you need to read altitude structure, and says so whenever it is not 1.</p>
-      <p>Provenance badges appear on every claim in this app: <span class="src solid">solid</span> for the documentary record, <span class="src soft">soft</span> for reconstruction or arithmetic done here, <span class="src warn">warn</span> for an allegation being tested.</p>
+      <p>States are real geometry: US Census cartographic boundaries at 1:10,000,000, extruded. Alaska, Hawaii and Puerto Rico sit in the conventional insets and are <em>not</em> at true position or scale. ${srcTag('geo')}</p>
+      <p>The vertical axis defaults to <strong>true scale</strong>, the same units up as across. That makes the tracks look nearly flat, which is accurate: a cruising airliner is about 1:${Math.round(trueScaleRatio()).toLocaleString()} against the width of the country. The control in the map legend raises it to 2× or 5× when you need to read altitude structure, and says so whenever it is not 1.</p>
+      <p>Provenance badges ${info('provenance')} appear on every claim in this app: <span class="src solid">solid</span> for the documentary record, <span class="src soft">soft</span> for reconstruction or arithmetic done here, <span class="src warn">warn</span> for an allegation being tested.</p>
+      <div class="legend-key in-drawer">
+        <div><i style="background:#35d6a4"></i>Green ring: how far he could have flown, at cruise</div>
+        <div><i style="background:#ffd447"></i>Yellow ring: fastest possible</div>
+        <div><i class="dash" style="border-color:#ff8a5c"></i>Orange dashed: fuel limit</div>
+        <div><i class="dash" style="border-color:#fff"></i>White dashed: STEELMAN, the constructed track</div>
+        <div><i style="background:#ff1f3d"></i>Red: the four withheld messages</div>
+      </div>
     </div>`;
 
   $$('[data-layer]').forEach((cb) => cb.addEventListener('change', () => {
-    const k = cb.dataset.layer;
-    state.layers[k] = cb.checked;
-    if (FLIGHTS.some((f) => f.id === k) || MIL_FLIGHTS.some((f) => f.id === k)) {
-      map.setFlightVisible(k, cb.checked);
-    }
-    else if (k === 'debris') map.setDebrisVisible(cb.checked);
-    else if (k === 'critic') map.setCriticVisible(cb.checked);
-    else if (k === 'aware') map.setAwarenessVisible(cb.checked);
-    else if (k === 'hypo') { map.setHypoVisible(cb.checked); if (cb.checked) updateHypo(); }
-    else if (k === 'calls') { map.setCallsVisible(cb.checked); map.setCalls(ua93StateAt, state.t); }
-    else if (k === 'trail') { map.setTrailVisible(cb.checked); map.setTrail(state.t); }
-    else if (k === 'envelope' || k === 'wez') {
-      map.setReachVisible(state.layers.envelope || state.layers.wez);
-      updateReach();
-    }
-    else if (k === 'routeDoc') map.setRouteVisible('documented', cb.checked);
-    else if (k === 'routeClaim') map.setRouteVisible('claim', cb.checked);
-    else if (k === 'places') map.placeGroup.visible = cb.checked;
-    map.setTime(state.t);
+    state.layers[cb.dataset.layer] = cb.checked;
+    applyLayer(cb.dataset.layer);
+    syncModeSwitch();
   }));
+  $$('[data-mode]').forEach((b) => b.addEventListener('click', () => setLayerMode(b.dataset.mode)));
+  syncModeSwitch();
 }
 
 function syncLayerChecks() {
   $$('[data-layer]').forEach((cb) => { cb.checked = !!state.layers[cb.dataset.layer]; });
+  syncModeSwitch();
+}
+
+function setDrawerOpen(open) {
+  const d = $('#layers-drawer');
+  if (!d) return;
+  d.classList.toggle('hidden', !open);
+  const b = $('#btn-layers');
+  if (b) { b.classList.toggle('on', open); b.setAttribute('aria-expanded', String(open)); }
 }
 
 /* =============================================================================
@@ -1636,8 +2254,27 @@ function syncLayerChecks() {
 
 const labelEls = new Map();
 
+/* Where a pin label may sit relative to its anchor, tried in order: above
+   first, then round the compass. dx/dy are in label half-widths / heights. */
+const PIN_FAN = [
+  { dx: 0, dy: -1 }, { dx: 1, dy: -1 }, { dx: 1, dy: 0 }, { dx: 1, dy: 1 },
+  { dx: 0, dy: 1 }, { dx: -1, dy: 1 }, { dx: -1, dy: 0 }, { dx: -1, dy: -1 },
+];
+
+/* The freshest two of a set of arc badges are shown; the rest fold into the
+   second one as 'and N earlier', so the map never fills with old messages. */
+function capBadges(list) {
+  const sorted = [...list].sort((a, b) => (b.t ?? 0) - (a.t ?? 0));
+  if (sorted.length <= 2) return sorted;
+  const keep = sorted.slice(0, 2);
+  const n = sorted.length - 2;
+  keep[1] = { ...keep[1], text: `${keep[1].text} · and ${n} earlier` };
+  return keep;
+}
+
 function drawLabels() {
   const wanted = new Map();
+  const phone = isPhone();
 
   if (state.layers.places) {
     for (const { key, mesh, p } of map.placeDots) {
@@ -1645,13 +2282,21 @@ function drawLabels() {
     }
   }
 
+  // NORAD, where the CRITIC chain starts, is a place on this map from the start.
+  if (map.criticNodePos && map.criticNodePos.NORAD) {
+    wanted.set('p:NORAD', { pos: map.criticNodePos.NORAD, text: 'NORAD', cls: 'dim', rank: 2.9 });
+  }
+
   for (const [id, o] of map.flightObjs) {
     if (!o.visible) continue;
     if (o.marker.visible) {
       const s = o.sample;
+      const name = o.isMil
+        ? (phone ? (id === 'QUIT' ? 'QUIT F-16' : id) : (o.f.label || id))
+        : id;
       wanted.set(`f:${id}`, {
         pos: o.marker.position,
-        text: `${id} · ${Math.round((s?.altFt ?? 0) / 100) * 100} ft`,
+        text: `${name} · ${Math.round((s?.altFt ?? 0) / 100) * 100} ft`,
         cls: 'flight', color: hex(o.f.color), rank: o.isMil ? 1.5 : 0,
       });
     } else if (o.impact.visible) {
@@ -1659,23 +2304,26 @@ function drawLabels() {
     }
   }
 
-  if (map.hypoGroup && map.hypoGroup.visible && map.hypoHorizonInfo) {
+  if (!phone && map.hypoGroup && map.hypoGroup.visible && map.hypoHorizonInfo) {
     const hz = map.hypoHorizonInfo;
     wanted.set('horizon', {
       ringLL: hz.ringLL, order: hz.order,
-      text: `Line-of-sight horizon · ${Math.round(hz.miles)} mi`,
-      cls: 'ring', color: hex(LOS_HORIZON.color), rank: 2.4,
+      text: `How far he could see · ${Math.round(hz.miles)} mi`,
+      cls: 'ring', color: hex(LOS_HORIZON.color), rank: 0.05,
     });
   }
 
   if (map.hypoGroup && map.hypoGroup.visible && map.hypoLosInfo) {
     const li = map.hypoLosInfo;
+    const mi = li.miles < 1 ? li.miles.toFixed(2) : Math.round(li.miles).toLocaleString();
     wanted.set('los', {
       pos: li.mid,
-      text: `${li.miles < 1 ? li.miles.toFixed(2) : Math.round(li.miles)} mi${li.inWez ? ' — WITHIN AIM-9 RANGE' : ''}`,
+      text: phone
+        ? `${mi} mi${li.inWez ? ' · IN RANGE' : ''}`
+        : `${HYPO.callsign} → UA93 · ${mi} mi${li.inWez ? ' · WITHIN AIM-9 RANGE' : ''}`,
       cls: `flight los${li.inWez ? ' hot' : ''}`,
       color: li.inWez ? '#ff4d4d' : li.miles <= 50 ? '#ffd447' : '#9fb6cc',
-      rank: 1.1,
+      rank: 0.06,
     });
   }
 
@@ -1683,13 +2331,16 @@ function drawLabels() {
     const sm = map._hypoSample;
     wanted.set('hypo', {
       pos: map.hypoMarker.position,
-      text: `${HYPO.callsign} — CONSTRUCTED · ${Math.round((sm?.altFt ?? 0) / 100) * 100} ft`,
-      cls: 'flight hypo', color: '#ffffff', rank: 1.2,
+      text: `${HYPO.callsign} · CONSTRUCTED · ${Math.round((sm?.altFt ?? 0) / 100) * 100} ft`,
+      cls: 'flight hypo', color: '#ffffff', rank: 0.07,
     });
   }
 
-  /* The awareness handoffs, and a standing counter on the military node. */
-  for (const al of map.awarenessLabels()) {
+  /* The awareness handoffs, capped to the freshest two, and a standing
+     counter on the military node. */
+  const aw = map.awarenessLabels();
+  const awDark = aw.filter((l) => l.dark);
+  for (const al of [...awDark, ...capBadges(aw.filter((l) => !l.dark))]) {
     wanted.set(al.key, {
       pos: al.pos,
       text: al.text,
@@ -1700,7 +2351,7 @@ function drawLabels() {
 
   /* The CRITIC arcs, named as each message fires. These outrank almost
      everything else on the map: the withheld messages are the subject. */
-  for (const cl of map.criticLabels()) {
+  for (const cl of capBadges(map.criticLabels())) {
     wanted.set(cl.key, {
       pos: cl.pos,
       text: cl.text,
@@ -1709,10 +2360,11 @@ function drawLabels() {
     });
   }
 
-  if (map.reachGroup.visible && map.reachLabelAnchors) {
+  // Ring labels are desktop only: on a phone there is no room beside a ring.
+  if (!phone && map.reachGroup.visible && map.reachLabelAnchors) {
     for (const a of map.reachLabelAnchors) {
-      wanted.set(`r:${a.text}`, {
-        ringLL: a.ringLL, order: a.order, text: a.text,
+      wanted.set(`r:${a.key || a.text}`, {
+        ringLL: a.ringLL, order: a.order, text: a.text, title: a.title,
         cls: 'ring', color: hex(a.color), rank: 2.5,
       });
     }
@@ -1731,71 +2383,116 @@ function drawLabels() {
 
   const host = $('#labels');
   const W = host.clientWidth, H = host.clientHeight;
+  const M = 6;   // nothing is placed closer than this to the stage edge
 
-  /* Seed the declutter with the HUD and legend boxes so a label never lands
-     underneath them. They are HTML siblings, not part of the scene, so the
-     layout has no other way to know they are in the way. */
+  /* Seed the declutter with the HUD, legend and buttons so a label never
+     lands underneath them. They are HTML siblings, not part of the scene, so
+     the layout has no other way to know they are in the way. */
   const hostBox = host.getBoundingClientRect();
-  const taken = ['#hud', '#legend', '#aside-toggle'].map((sel) => {
-    const el = $(sel);
-    if (!el) return null;
-    const r = el.getBoundingClientRect();
-    return {
-      l: r.left - hostBox.left - 6, r: r.right - hostBox.left + 6,
-      t: r.top - hostBox.top - 6, b: r.bottom - hostBox.top + 6,
-    };
-  }).filter(Boolean);
+  const taken = ['#hud', '#legend', '#aside-toggle', '#btn-layers', '#layers-drawer:not(.hidden)', '#tour:not(.hidden)']
+    .map((sel) => {
+      const el = $(sel);
+      if (!el || !el.offsetParent) return null;
+      const r = el.getBoundingClientRect();
+      if (!r.width || !r.height) return null;
+      return {
+        l: r.left - hostBox.left - 6, r: r.right - hostBox.left + 6,
+        t: r.top - hostBox.top - 6, b: r.bottom - hostBox.top + 6,
+      };
+    }).filter(Boolean);
 
+  const overlaps = (box) => taken.some((o) => box.l < o.r + 2 && box.r > o.l - 2 && box.t < o.b + 2 && box.b > o.t - 2);
+  const inside = (box) => box.l > M && box.t > M && box.r < W - M && box.b < H - M;
+
+  // Strictly rank order: the flight pins are registered before any place label.
   const ordered = [...wanted.entries()].sort((a, b) => (a[1].rank ?? 9) - (b[1].rank ?? 9));
 
   for (const [k, w] of ordered) {
     let el = labelEls.get(k);
     if (!el) {
       el = document.createElement('div');
+      el.innerHTML = '<i class="lead"></i><span class="lt"></span>';
       host.appendChild(el);
       labelEls.set(k, el);
     }
-    if (el.textContent !== w.text) el.textContent = w.text;
+    const lt = el.lastElementChild;
+    if (lt.textContent !== w.text) lt.textContent = w.text;
     el.className = `map-label ${w.cls}`;
+    if (w.title !== undefined) el.title = w.title || '';
     if (w.color) el.style.color = w.color;
 
-    /* A ring label walks its own ring, from the preferred bearing outward,
-       and stops at the first vertex on screen. So if any part of a ring is
-       visible, its label is too — which is the rule the reader expects. */
-    let s;
+    // The label box, measured before anything is placed, so the fit test is
+    // on the box rather than on the anchor point.
+    const w2 = (el.offsetWidth || w.text.length * 6.5) / 2;
+    const h = el.offsetHeight || 16;
+    const lead = el.firstElementChild;
+
     if (w.ringLL) {
-      const M = 10;
-      const fits = (q) => !q.behind && q.x > M && q.y > M && q.x < W - M && q.y < H - M;
+      /* A ring label walks its own ring, from the preferred bearing outward,
+         and stops at the first vertex whose label box is on screen and clear
+         of everything placed so far. If none fits, it is hidden rather than
+         clipped. The box sits just above the ring point, with a tick down
+         to it. */
+      let box = null, s = null;
       for (const i of w.order) {
         const q = map.llToScreen(w.ringLL[i]);
-        if (fits(q)) { s = q; break; }
+        if (q.behind) continue;
+        const b = { l: q.x - w2, r: q.x + w2, t: q.y - h - 7, b: q.y };
+        if (inside(b) && !overlaps(b)) { box = b; s = q; break; }
       }
-      if (!s) { el.style.display = 'none'; continue; }
-    } else {
-      s = map.toScreen(w.pos);
-      if (s.behind || s.x < -60 || s.y < -30 || s.x > W + 60 || s.y > H + 30) {
-        el.style.display = 'none';
-        continue;
-      }
+      if (!box) { el.style.display = 'none'; continue; }
+      taken.push(box);
+      el.style.display = '';
+      el.style.left = `${box.l}px`;
+      el.style.top = `${box.t}px`;
+      lead.style.display = '';
+      lead.style.left = `${w2}px`;
+      lead.style.top = `${h}px`;
+      lead.style.width = '1px';
+      lead.style.height = '7px';
+      lead.style.transform = '';
+      continue;
     }
 
-    // Pin labels are translated (-50%, -140%) so their box sits above the
-    // anchor; ring labels are centred on it. Using the wrong box makes the
-    // declutter reject the wrong ones.
-    const w2 = (el.offsetWidth || w.text.length * 6) / 2;
-    const h = el.offsetHeight || 15;
-    const centred = w.cls === 'ring';
-    const box = centred
-      ? { l: s.x - w2, r: s.x + w2, t: s.y - h * 0.5, b: s.y + h * 0.5 }
-      : { l: s.x - w2, r: s.x + w2, t: s.y - h * 1.4, b: s.y - h * 0.4 };
+    const s = map.toScreen(w.pos);
+    if (s.behind || s.x < -60 || s.y < -30 || s.x > W + 60 || s.y > H + 30) {
+      el.style.display = 'none';
+      continue;
+    }
 
-    const blocked = taken.some((o) => box.l < o.r + 2 && box.r > o.l - 2 && box.t < o.b + 2 && box.b > o.t - 2);
-    if (blocked) { el.style.display = 'none'; continue; }
+    /* Pin labels try a fan of offsets round the anchor before giving up,
+       and are never placed outside the stage. A short leader ties the box
+       back to the point it names. */
+    const gap = 8;
+    let box = null, off = null;
+    for (const f of PIN_FAN) {
+      const cx = s.x + f.dx * (w2 + gap);
+      const cy = s.y + f.dy * (h * 0.5 + gap);
+      const b = { l: cx - w2, r: cx + w2, t: cy - h / 2, b: cy + h / 2 };
+      if (inside(b) && !overlaps(b)) { box = b; off = f; break; }
+    }
+    if (!box) { el.style.display = 'none'; continue; }
 
     taken.push(box);
     el.style.display = '';
-    el.style.left = `${s.x}px`;
-    el.style.top = `${s.y}px`;
+    el.style.left = `${box.l}px`;
+    el.style.top = `${box.t}px`;
+
+    // Leader: from the anchor to the near edge of the box, in box coordinates.
+    const ax = s.x - box.l, ay = s.y - box.t;
+    const ex = Math.max(0, Math.min(2 * w2, ax));
+    const ey = Math.max(0, Math.min(h, ay));
+    const len = Math.hypot(ax - ex, ay - ey);
+    if (len < 2) { lead.style.display = 'none'; }
+    else {
+      lead.style.display = '';
+      lead.style.left = `${ex}px`;
+      lead.style.top = `${ey}px`;
+      lead.style.width = `${len}px`;
+      lead.style.height = '1px';
+      lead.style.transform = `rotate(${Math.atan2(ay - ey, ax - ex)}rad)`;
+    }
+    void off;
   }
 }
 
@@ -1958,6 +2655,7 @@ function applyAllLayers() {
   map.setRouteVisible('documented', state.layers.routeDoc);
   map.setRouteVisible('claim', state.layers.routeClaim);
   map.setReachVisible(state.layers.envelope || state.layers.wez);
+  map.setMaxCleanVisible(!!state.layers.maxClean);
   map.setHypoVisible(state.layers.hypo);
   map.setCallsVisible(state.layers.calls);
   map.setTrailVisible(state.layers.trail);
@@ -1966,6 +2664,7 @@ function applyAllLayers() {
   map.setTrail(state.t);
   map.setCalls(ua93StateAt, state.t);
   map.setTime(state.t);
+  syncModeSwitch();
 }
 
 const tourTab = (name) => gotoTab(name);
@@ -2048,9 +2747,18 @@ function tourGo(i) {
   $('#tour-chapter').textContent = tone.label;
   $('#tour-count').textContent = `${i + 1} / ${TOUR_STEPS.length}`;
   $('#tour-title').textContent = step.title;
-  $('#tour-body').innerHTML = typeof step.body === 'function'
-    ? step.body(tourContext(), info)
-    : step.body;
+  const body = typeof step.body === 'function' ? step.body(tourContext(), info) : step.body;
+  /* The foot of each step: where it comes from, and where to read it. The
+     final step also opens the road to the Sources tab. */
+  const foot = (step.src || (step.refs && step.refs.length) || step.last) ? `
+    <div class="tour-src">
+      ${step.src ? srcTag(step.src) : ''}${refRows(step)}
+      ${step.last ? `<div class="chip-row" style="margin-top:8px">
+        <button class="chip" data-tour-goto="conflicts">Sources and disputes &rarr;</button>
+        <button class="chip" data-tour-goto="brief">Back to Start here</button>
+      </div>` : ''}
+    </div>` : '';
+  $('#tour-body').innerHTML = expandInfo(body) + foot;
   $('#tour-body').scrollTop = 0;
 
   // The position bar now says where you are, not how long you have left.
@@ -2120,6 +2828,16 @@ function buildTourDots() {
 function bindTour() {
   $('#btn-tour').addEventListener('click', () => (tour.on ? tourExit() : tourEnter()));
   $('#tour-close').addEventListener('click', tourExit);
+  const end = $('#tour-end');
+  if (end) end.addEventListener('click', tourExit);
+  // The final step's chips leave the tour and land on a tab.
+  $('#tour-body').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-tour-goto]');
+    if (!b) return;
+    const to = b.dataset.tourGoto;
+    tourExit();
+    gotoTab(to);
+  });
   $('#tour-prev').addEventListener('click', () => tourGo(tour.i - 1));
   $('#tour-next').addEventListener('click', () => {
     if (TOUR_STEPS[tour.i].last) { tourExit(); return; }
@@ -2188,9 +2906,14 @@ function showInfo(btn) {
   infoOpenFor = btn;
 }
 
+/* Everything that opens the popover: the (i) icons, and the provenance
+   badges, which carry data-info="provenance". Bound once at document level,
+   so icons in HTML rendered later work without any rebinding. */
+const INFO_SEL = '.ii, .src[data-info]';
+
 function bindInfo() {
   document.addEventListener('click', (e) => {
-    const btn = e.target.closest('.ii');
+    const btn = e.target.closest(INFO_SEL);
     if (btn) {
       e.preventDefault();
       e.stopPropagation();
@@ -2316,8 +3039,30 @@ function refRow(key, extraClass = '') {
    that only appears after the reader is convinced is decoration.
    ========================================================================== */
 
+/* Put the map where a walkthrough section is talking about, without
+   entering the tour: the clock, the layers and the camera of that section's
+   `show`, reusing the tour's view logic. On a phone the map is opened too. */
+function showOnMap(show) {
+  if (!show) return;
+  setPlaying(false);
+  if (typeof show.t === 'number') setTime(show.t);
+  Object.assign(state.layers, show.layers || {});
+  syncLayerChecks();
+  applyAllLayers();
+  setFollow(false);
+  tourView(show);
+  if (isPhone()) {
+    setMapOpen(true, false);
+    setTimeout(() => { map.resize(); tourView(show); }, 300);
+  }
+}
+
 function renderBriefTab() {
+  renderRecon();
   const bl = BOTTOM_LINE, wc = WHY_CRITIC;
+  const walkthroughLine = 'The walkthrough below is the argument in text. The tour shows the same argument on the map, and the claim tab holds the working.';
+  const alreadySaid = WALKTHROUGH.some((w) =>
+    (w.body || []).some((p) => /the working/i.test(String(p))));
 
   const section = (w) => `
     <details class="wt" id="${w.id}">
@@ -2327,37 +3072,43 @@ function renderBriefTab() {
         <span class="wt-more" aria-hidden="true"></span>
       </summary>
       <div class="wt-body">
-        ${w.body.map((p) => `<p>${p}</p>`).join('')}
+        ${w.body.map((p) => `<p>${expandInfo(p)}</p>`).join('')}
         ${w.counter ? `
           <div class="wt-counter">
             <div class="wt-counter-q">${esc(w.counter.point)}</div>
-            <p>${w.counter.text}</p>
+            <p>${expandInfo(w.counter.text)}</p>
             ${w.counter.more === 'awareness'
               ? `<button class="chip" data-goto="aware">See the whole chain &rarr;</button>` : ''}
           </div>` : ''}
+        <div class="wt-src">${w.src ? srcTag(w.src) : ''}${refRows(w)}</div>
+        <div class="chip-row">
+          ${w.show ? `<button class="chip" data-show="${esc(w.id)}">Show on the map</button>` : ''}
+          ${w.id === 'w-shot' ? `<button class="chip" data-goto="timeline" data-anchor="#crash">The crash &rarr;</button>` : ''}
+        </div>
       </div>
     </details>`;
 
+  const blocker = bl.paras[2] || bl.paras[bl.paras.length - 1] || '';
+  const rest = bl.paras.filter((p) => p !== blocker);
+
   $('#brief-body').innerHTML = `
     <div class="card bluf">
-      <div class="bluf-kicker">${esc(bl.kicker)}</div>
-      <h2>${esc(bl.headline)}</h2>
-      ${bl.paras.map((p) => `<p>${p}</p>`).join('')}
-      <p class="bluf-note">${esc(bl.verdictNote)} ${srcTag(bl.src)}</p>
+      <div class="bluf-kicker">The question</div>
+      <h2>Did a US fighter shoot down United 93?</h2>
+      <p class="bluf-answer">${expandInfo(bl.headline)}</p>
+      <p>${expandInfo(blocker)} ${srcTag(bl.src)}</p>
       <div class="chip-row">
-        <button class="chip chip-go" data-goto="tour">&#9654; Walk me through it</button>
+        <button class="chip chip-go" data-goto="tour">&#9654; Walk me through it (2 min)</button>
+        <button class="chip" data-scroll="#w-claim">Read the ${WALKTHROUGH.length} steps</button>
       </div>
+      <details class="more">
+        <summary>More</summary>
+        ${rest.map((p) => `<p>${expandInfo(p)} ${srcTag(bl.src)}</p>`).join('')}
+        <p class="bluf-note">${expandInfo(esc(bl.verdictNote))} ${srcTag(bl.src)}</p>
+      </details>
     </div>
 
-    <div class="card critic-steel-card">
-      <div class="bluf-kicker">${esc(wc.kicker)}</div>
-      <h3>${esc(wc.headline)}</h3>
-      ${wc.paras.map((p) => `<p>${p}</p>`).join('')}
-      <p class="bluf-note">${esc(wc.hook)} ${srcTag(wc.src)}</p>
-      <div class="chip-row">
-        <button class="chip" data-goto="critic">The four messages &rarr;</button>
-      </div>
-    </div>
+    ${alreadySaid ? '' : `<p class="sec-note">${walkthroughLine}</p>`}
 
     <h3 class="sec-head">The walkthrough</h3>
     <p class="sec-note">${WALKTHROUGH.length} steps. Headlines alone are the short version;
@@ -2365,19 +3116,35 @@ function renderBriefTab() {
     ${WALKTHROUGH.map(section).join('')}
 
     <h3 class="sec-head">However long you have</h3>
-    <div class="paths">
+    <div class="paths compact">
       ${PATHS.map((p) => `
-        <button class="path" data-goto="${esc(p.act.replace('tab:', ''))}">
+        <button class="path" data-goto="${esc(p.act.replace('tab:', ''))}" title="${esc(plain(p.note))}">
           <span class="path-min">${esc(p.min)}</span>
-          <span class="path-label">${esc(p.label)}</span>
-          <span class="path-note">${esc(p.note)}</span>
+          <span class="path-label">${esc(plain(p.label))}</span>
         </button>`).join('')}
-    </div>`;
+    </div>
 
-  $$('#brief-body [data-goto]').forEach((b) => b.addEventListener('click', () => {
-    const to = b.dataset.goto;
-    if (to === 'tour') { tourEnter(); return; }
-    gotoTab(to);
+    <div class="card critic-steel-card">
+      <div class="bluf-kicker">${esc(wc.kicker)}</div>
+      <h3>${esc(wc.headline)}</h3>
+      ${wc.paras.map((p) => `<p>${expandInfo(p)}</p>`).join('')}
+      <p class="bluf-note">${expandInfo(esc(wc.hook))} ${srcTag(wc.src)}${refRows(wc)}</p>
+      <div class="chip-row">
+        <button class="chip" data-goto="critic">The four messages &rarr;</button>
+      </div>
+    </div>
+
+    ${nextRow('brief')}`;
+
+  $$('#brief-body [data-show]').forEach((b) => b.addEventListener('click', () => {
+    const w = WALKTHROUGH.find((x) => x.id === b.dataset.show);
+    if (w && w.show) showOnMap(w.show);
+  }));
+  $$('#brief-body [data-scroll]').forEach((b) => b.addEventListener('click', () => {
+    const el = $(b.dataset.scroll);
+    if (!el) return;
+    el.open = true;
+    el.scrollIntoView({ block: 'start', behavior: 'smooth' });
   }));
 }
 
@@ -2402,12 +3169,18 @@ function renderAwareTab() {
         <div class="aw-main">
           <div class="aw-actor">${esc(act.label)}</div>
           <div class="aw-who">${esc(a.who)}</div>
-          <p class="aw-what">${esc(a.what)}</p>
-          <p class="aw-bearing"><strong>What it establishes:</strong> ${esc(a.bearing)}
+          ${a.bluf ? `<p class="aw-bluf">${ei(a.bluf)}</p>` : ''}
+          <p class="aw-what">${ei(a.what)}</p>
+          <p class="aw-bearing"><strong>What it establishes:</strong> ${ei(a.bearing)}
             ${srcTag(a.src)}</p>
+          ${refRows(a)}
+          <div class="chip-row" style="margin-top:6px">
           ${a.weigh === 'fighters-question' ? `
             <button class="chip" data-weigh="fighters-question">
               Does this show foreknowledge? &rarr;</button>` : ''}
+          ${a.conflict ? conflictChip(a.conflict) : ''}
+          ${a.pivotal ? `<button class="chip" data-goto="aware" data-anchor="#airborne">What was airborne &rarr;</button>` : ''}
+          </div>
         </div>
       </div>`;
   };
@@ -2415,25 +3188,28 @@ function renderAwareTab() {
   const fq = FIGHTERS_QUESTION;
 
   $('#aware-body').innerHTML = `
+    <div class="jump-row">
+      <button class="chip" data-goto="aware" data-anchor="#airborne">What was airborne &rarr;</button>
+    </div>
     <div class="card bluf">
       <div class="bluf-kicker">The short version</div>
-      <h2>The crash was not a surprise to the government. It was a surprise to the military.</h2>
+      <h2>The FAA knew about the hijacking for ${Math.round(g.civilMinutes)} minutes. The military learned of it ${Math.round(g.militaryLateMinutes)} minutes after the crash.</h2>
       <p>The civil side had United 93 continuously for
         <strong>${Math.round(g.civilMinutes)} minutes</strong> before it went down. They heard the
-        takeover live, kept it on radar after the transponder went off, and worked out how many
-        minutes it was from Washington.</p>
-      <p>The air defence sector heard the words "United 93" for the first time
-        <strong>${Math.round(g.militaryLateMinutes)} minutes after it had already crashed</strong> —
-        a gap of ${Math.round(g.gapMinutes)} minutes between the two halves of the same government.</p>
-      <p class="bluf-note">That gap is the most important fact about Flight 93, and it is the
-        thing the shootdown story needs not to exist. ${srcTag('derived')}</p>
+        takeover live, kept it on radar after the transponder ${info('transponder')} went off, and
+        worked out how many minutes it was from Washington.</p>
+      <p>The air defence sector ${info('neads')} heard the words "United 93" for the first time
+        <strong>${Math.round(g.militaryLateMinutes)} minutes after it had already crashed</strong>:
+        a gap of ${Math.round(g.gapMinutes)} minutes between the FAA and the military.</p>
+      <p class="bluf-note">The shootdown claim requires that gap not to exist. ${srcTag('derived')}</p>
+      ${refRow('COMMISSION')}${refRow('NEADS')}
     </div>
 
     <div class="card">
       <h3>Who is who</h3>
       ${Object.values(ACTORS).map((a) => `
         <div class="aw-key"><i style="background:${a.color}"></i>
-          <b>${esc(a.label)}</b> — ${esc(a.note)}</div>`).join('')}
+          <b>${esc(a.label)}</b>: ${ei(a.note)}</div>`).join('')}
     </div>
 
     <h3 class="sec-head">The chain, minute by minute</h3>
@@ -2441,26 +3217,28 @@ function renderAwareTab() {
 
     <div class="card fk-card" id="fighters-question">
       <h3>${esc(fq.title)}</h3>
-      <p><strong>${esc(fq.short)}</strong></p>
+      <p><strong>${ei(fq.short)}</strong></p>
+      ${refRows(fq)}
       ${fq.readings.map((r) => `
         <div class="cmd-row">
           <div class="t" style="color:var(--ink-faint)">${esc(r.who)}</div>
-          <div class="x">${esc(r.v)} <span style="color:var(--ink-faint)">${esc(r.weight)}</span>
+          <div class="x">${ei(r.v)} <span style="color:var(--ink-faint)">${ei(r.weight)}</span>
             ${srcTag(r.src)}</div>
         </div>`).join('')}
       <ul class="plain" style="margin-top:10px">
-        ${fq.points.map((p) => `<li>${esc(p)}</li>`).join('')}
+        ${fq.points.map((p) => `<li>${ei(p)}</li>`).join('')}
       </ul>
-      <p class="fk-caution"><strong>The limit:</strong> ${esc(fq.limit)} ${srcTag(fq.src)}</p>
+      <p class="fk-caution"><strong>The limit:</strong> ${ei(fq.limit)} ${srcTag(fq.src)}</p>
     </div>
 
     <div class="card">
       <h3>The objection this answers</h3>
-      <p class="aw-obj">${esc(AWARENESS_COUNTER.objection)}</p>
+      <p class="aw-obj">${ei(AWARENESS_COUNTER.objection)}</p>
+      ${refRows(AWARENESS_COUNTER)}
       ${AWARENESS_COUNTER.answers.map((a) => `
         <div class="finding">
           <h4>${esc(a.point)}</h4>
-          <p>${esc(a.detail)} ${srcTag(a.src)}</p>
+          <p>${ei(a.detail)} ${srcTag(a.src)}</p>
         </div>`).join('')}
     </div>`;
 
@@ -2475,7 +3253,19 @@ function renderAwareTab() {
 
 /* One way in and out of every tab, so the brief's chips and the tab bar cannot
    get out of step. */
-function gotoTab(name) {
+/* Old tab names still used by data and chips resolve to where that content
+   now lives: a tab plus an anchor inside it, or the layers drawer. */
+const ALIAS = {
+  debris: ['timeline', '#crash'],
+  military: ['aware', '#airborne'],
+  layers: 'drawer',
+};
+
+function gotoTab(name, anchor) {
+  const alias = ALIAS[name];
+  if (alias === 'drawer') { setDrawerOpen($('#layers-drawer').classList.contains('hidden')); return; }
+  if (Array.isArray(alias)) { anchor = anchor || alias[1]; name = alias[0]; }
+
   const btn = $(`#tabs button[data-tab="${name}"]`);
   if (!btn) return;
   $$('#tabs button').forEach((x) => x.classList.toggle('on', x === btn));
@@ -2483,6 +3273,24 @@ function gotoTab(name) {
   const body = $(`.tab-body[data-body="${name}"]`);
   if (body) body.scrollTop = 0;
   document.body.classList.remove('map-open');
+  const mapBtn = $('#btn-map');
+  if (mapBtn) mapBtn.textContent = 'Full map';
+  // The footer is a scrubber row everywhere except the Timeline tab.
+  document.body.classList.toggle('footer-min', name !== 'timeline');
+  btn.scrollIntoView({ inline: 'nearest', block: 'nearest' });
+
+  // The who-knew network is what that tab is about, so it comes on with it.
+  // A tab never turns a layer off.
+  if (name === 'aware' && !state.layers.aware) {
+    state.layers.aware = true;
+    syncLayerChecks();
+    applyLayer('aware');
+  }
+
+  if (anchor) {
+    const el = $(anchor);
+    if (el) requestAnimationFrame(() => el.scrollIntoView({ block: 'start', behavior: 'smooth' }));
+  }
 }
 
 function bindChrome() {
@@ -2491,9 +3299,18 @@ function bindChrome() {
     setPlaying(!state.playing);
   });
 
+  /* One delegated handler for every cross-tab chip on the page, so chips in
+     HTML rendered later need no binding of their own. */
   document.addEventListener('click', (e) => {
     const chip = e.target.closest('[data-cjump]');
-    if (chip) { e.preventDefault(); e.stopPropagation(); jumpToConflict(chip.dataset.cjump); }
+    if (chip) { e.preventDefault(); e.stopPropagation(); jumpToConflict(chip.dataset.cjump); return; }
+    const go = e.target.closest('[data-goto]');
+    if (go) {
+      e.preventDefault(); e.stopPropagation();
+      const to = go.dataset.goto;
+      if (to === 'tour') { tourEnter(); return; }
+      gotoTab(to, go.dataset.anchor);
+    }
   }, true);
 
   const n = openCount();
@@ -2503,10 +3320,7 @@ function bindChrome() {
 
   $('#btn-follow').addEventListener('click', () => setFollow(!state.follow));
 
-  $('#btn-reset-view').addEventListener('click', () => {
-    setFollow(false);
-    map.resetView();
-  });
+  $('#btn-reset-view').addEventListener('click', resetViewFit);
 
   $$('#rate-group button').forEach((b) => b.addEventListener('click', () => {
     $$('#rate-group button').forEach((x) => x.classList.remove('on'));
@@ -2514,20 +3328,41 @@ function bindChrome() {
     state.rate = +b.dataset.rate;
   }));
 
-  $$('#tabs button').forEach((b) => b.addEventListener('click', () => gotoTab(b.dataset.tab)));
+  // A plain tap on a tab clears any 'Showing disputes about' header.
+  $$('#tabs button').forEach((b) => b.addEventListener('click', () => {
+    setConflictHeader('');
+    gotoTab(b.dataset.tab);
+  }));
 
   // Mobile: swap between the map and the reading, since both cannot be tall.
   const mapBtn = $('#btn-map');
   if (mapBtn) mapBtn.addEventListener('click', () => {
-    document.body.classList.toggle('map-open');
-    mapBtn.textContent = document.body.classList.contains('map-open') ? 'Read' : 'Map';
-    setTimeout(() => map.resize(), 260);
+    setMapOpen(!document.body.classList.contains('map-open'));
   });
 
   $('#aside-toggle').addEventListener('click', () => {
-    document.body.classList.toggle('panel-hidden');
-    setTimeout(() => map.resize(), 280);
+    setPanelHidden(!document.body.classList.contains('panel-hidden'));
   });
+
+  // The layers drawer.
+  const lb = $('#btn-layers');
+  if (lb) lb.addEventListener('click', () => setDrawerOpen($('#layers-drawer').classList.contains('hidden')));
+  const dc = $('#drawer-close');
+  if (dc) dc.addEventListener('click', () => setDrawerOpen(false));
+
+  /* A right-edge fade on the sideways-scrolling strips, switched off once the
+     strip is scrolled to its end so it never suggests content that is not
+     there. */
+  for (const sel of ['#tabs', '#flight-strip']) {
+    const el = $(sel);
+    if (!el) continue;
+    const upd = () => el.classList.toggle('at-end', el.scrollLeft + el.clientWidth >= el.scrollWidth - 1);
+    el.addEventListener('scroll', upd, { passive: true });
+    addEventListener('resize', upd);
+    setTimeout(upd, 0);
+  }
+
+  document.body.classList.toggle('footer-min', (($('#tabs button.on') || {}).dataset?.tab || 'brief') !== 'timeline');
 
   bindTour();
   bindInfo();

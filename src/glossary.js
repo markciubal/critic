@@ -20,7 +20,7 @@ export const GLOSSARY = {
   steelman: {
     term: 'Steelman',
     plain: 'Building the strongest possible version of an argument you disagree with, then testing that instead of an easy version.',
-    more: 'It is the opposite of a straw man. If you only ever knock down the weakest form of a claim, you never find out which of your objections actually mattered — so this app grants the claim every favourable assumption at once and looks at what is still standing.',
+    more: 'The opposite of a straw man. Testing only the weakest form of a claim does not show which objections matter, so this app grants the claim every favourable assumption at once and tests what remains.',
     src: 'derived',
     link: { label: 'Wikipedia — steelmanning', url: 'https://en.wikipedia.org/wiki/Straw_man#Steelmanning' },
   },
@@ -36,9 +36,9 @@ export const GLOSSARY = {
   placard: {
     term: 'Placarded limit',
     plain: 'The maximum speed the aircraft is legally and structurally allowed to fly in a given configuration — literally written on a placard in the cockpit.',
-    more: 'An F-16 carrying external fuel tanks and wingtip missiles is limited to 600 knots indicated or Mach 1.6, whichever comes first. The famous "Mach 2" figure applies only to a clean jet carrying nothing, which no aircraft flying across the country could be.',
+    more: 'An F-16 carrying external fuel tanks and wingtip missiles is limited to 600 knots indicated or Mach 1.6, whichever comes first. The "Mach 2" figure applies only to a clean jet carrying nothing, which no aircraft flying across the country could be. The limit is in the F-16 flight manual (T.O. 1F-16C-1); the Wikipedia page is background only.',
     src: 'press',
-    link: { label: 'Wikipedia — F-16', url: 'https://en.wikipedia.org/wiki/General_Dynamics_F-16_Fighting_Falcon' },
+    link: { label: 'Wikipedia — F-16 (background only)', url: 'https://en.wikipedia.org/wiki/General_Dynamics_F-16_Fighting_Falcon' },
   },
 
   dropTanks: {
@@ -84,7 +84,7 @@ export const GLOSSARY = {
   lineOfSight: {
     term: 'Line-of-sight horizon',
     plain: 'How far apart two aircraft can be and still see each other, before the curve of the Earth gets in the way.',
-    more: 'It rises with height: from 31,000 ft against a target at 5,000 ft, two aircraft can see each other about 360 miles apart. That is roughly thirty times further than a Sidewinder can shoot — so seeing the target was never the hard part.',
+    more: 'It rises with height: from 31,000 ft against a target at 5,000 ft, two aircraft can see each other about 360 miles apart. That is roughly thirty times further than a Sidewinder can shoot; seeing the target is not the constraint.',
     src: 'derived',
     link: { label: 'Wikipedia — line of sight', url: 'https://en.wikipedia.org/wiki/Line-of-sight_propagation' },
   },
@@ -118,7 +118,7 @@ export const GLOSSARY = {
     plain: 'The highest-priority message in US intelligence, meant to reach the President within ten minutes.',
     more: 'Short for Critical Intelligence Communication. It is reserved for events of immediate national consequence. Four were sent on the morning of 11 September; their contents are still withheld, which is what the FOIA request behind this app is asking for.',
     src: 'foia',
-    link: { label: 'Wikipedia — NSA', url: 'https://en.wikipedia.org/wiki/National_Security_Agency' },
+    link: { label: 'NSA FOIA release — the redacted messages (archived scan)', url: 'https://web.archive.org/web/20181202044029/http://www.911myths.com/images/d/d4/NSA_FOIA.pdf' },
   },
 
   dtg: {
@@ -165,6 +165,97 @@ export const GLOSSARY = {
     more: 'Agencies may withhold material under specific exemptions, and they must say which one they are using. This app is a companion to a pending request for the text of the 11 September CRITIC messages.',
     src: 'foia',
     link: { label: 'Wikipedia — FOIA', url: 'https://en.wikipedia.org/wiki/Freedom_of_Information_Act_(United_States)' },
+  },
+
+  /* --- terms added for the plain-language pass. Definitions are not redacted
+     or reported, so every one is badged 'derived'. ---------------------- */
+
+  vector: {
+    term: 'To vector',
+    plain: 'To give an aircraft a heading to fly. Civil controllers do it to keep traffic apart; a military controller does it to put a fighter onto a target.',
+    more: 'A fighter cannot find one airliner in a wide sky on its own. It flies the headings a controller with a radar picture gives it.',
+    src: 'derived',
+    link: { label: 'Wikipedia — air traffic control', url: 'https://en.wikipedia.org/wiki/Air_traffic_control' },
+  },
+
+  faa: {
+    term: 'FAA',
+    plain: 'The Federal Aviation Administration: the civil agency that runs air traffic control. It operates radar and controllers and has no fighters of its own.',
+    more: 'Its en-route centers each handle a region of high-altitude airspace; Cleveland Center held United 93. The Command Center at Herndon, Virginia manages national traffic flow. FAA headquarters in Washington is where a request for military help would have been authorised.',
+    src: 'derived',
+    link: { label: 'Wikipedia — FAA', url: 'https://en.wikipedia.org/wiki/Federal_Aviation_Administration' },
+  },
+
+  norad: {
+    term: 'NORAD',
+    plain: 'North American Aerospace Defense Command: the joint US-Canadian command that defends North American airspace. It can launch and direct fighters, but it has to be told there is a target.',
+    more: 'Headquartered at Colorado Springs. Its Northeast sector, NEADS, handled the fighters on 11 September. NORAD originated the CRITIC at 09:49 and did not hold a track on United 93.',
+    src: 'derived',
+    link: { label: 'Wikipedia — NORAD', url: 'https://en.wikipedia.org/wiki/North_American_Aerospace_Defense_Command' },
+  },
+
+  ang: {
+    term: 'Air National Guard',
+    plain: 'The state-organised reserve of the US Air Force. Its units flew much of the air defence on 11 September, and the Fargo unit named in the claim, the 119th Fighter Wing, is one.',
+    more: 'Guard units answer to their state governor in normal times and to federal command when called up. Their pilots are often part-time, and their aircraft are the same types the regular Air Force flies.',
+    src: 'derived',
+    link: { label: 'Wikipedia — Air National Guard', url: 'https://en.wikipedia.org/wiki/Air_National_Guard' },
+  },
+
+  dirnsa: {
+    term: 'DIRNSA',
+    plain: 'Director, National Security Agency. "DIRNSA CRITIC 1-2001" is the first CRITIC of 2001 sent under the Director\'s authority.',
+    more: 'A message of this kind carries the originator\'s office rather than a name. NSA relayed NORAD\'s alert across the intelligence community under this header at 09:52.',
+    src: 'derived',
+    link: { label: 'Wikipedia — Director of the NSA', url: 'https://en.wikipedia.org/wiki/Director_of_the_National_Security_Agency' },
+  },
+
+  oga: {
+    term: 'OGA',
+    plain: '"Other government agency": the phrase released documents use for an agency the releasing body will not name, most often the CIA.',
+    more: 'In a redacted release it marks a line the reader cannot follow. The record says another agency was involved without saying which.',
+    src: 'derived',
+    link: { label: 'Wikipedia — CIA', url: 'https://en.wikipedia.org/wiki/Central_Intelligence_Agency' },
+  },
+
+  atc: {
+    term: 'Air traffic control',
+    plain: 'The civil system that keeps aircraft separated and moving. It monitors traffic and issues instructions to civil aircraft, and has no authority to order a fighter to do anything.',
+    more: 'Controllers work from radar scopes at en-route centers, approach facilities and towers. Cleveland Center\'s controllers held United 93 from the takeover to the crash.',
+    src: 'derived',
+    link: { label: 'Wikipedia — air traffic control', url: 'https://en.wikipedia.org/wiki/Air_traffic_control' },
+  },
+
+  scatana: {
+    term: 'SCATANA',
+    plain: 'Security Control of Air Traffic and Air Navigation Aids: a standing plan under which the military takes control of civil airspace in a national emergency.',
+    more: 'A modified form was invoked later on 11 September. The mid-morning order to land every aircraft came from the FAA itself. Neither was in effect when United 93 was seized at 09:28.',
+    src: 'derived',
+    link: { label: 'Wikipedia — SCATANA', url: 'https://en.wikipedia.org/wiki/SCATANA' },
+  },
+
+  groundStop: {
+    term: 'Ground stop',
+    plain: 'At 09:26 the FAA stopped every civil departure in the country. Nothing on the ground could take off.',
+    more: 'A ground stop holds aircraft on the ground. It does not touch aircraft already flying: United 93 had departed Newark at 08:42 and was not affected.',
+    src: 'derived',
+    link: { label: 'Wikipedia — ground stop', url: 'https://en.wikipedia.org/wiki/Ground_stop' },
+  },
+
+  scramble: {
+    term: 'Scramble',
+    plain: 'To launch alert fighters at short notice against a specific threat. The order comes from the air defence sector, not from a civil controller.',
+    more: 'Alert jets sit armed with their pilots nearby and can be airborne within minutes. Two scrambles are documented before United 93 was seized: Otis at 08:46 and Langley at 09:24. Each has tail numbers, tapes and pilots on record.',
+    src: 'derived',
+    link: { label: 'Wikipedia — scramble', url: 'https://en.wikipedia.org/wiki/Scrambling_(military)' },
+  },
+
+  primaryRadar: {
+    term: 'Primary radar',
+    plain: 'The raw echo of an aircraft\'s body on a radar screen, with no identity or altitude attached. It is what remains when a transponder is switched off.',
+    more: 'Controllers can follow a primary return, but they have to work out which blip is which and cannot read its height. Cleveland Center followed United 93 this way after its transponder stopped at 09:41.',
+    src: 'derived',
+    link: { label: 'Wikipedia — primary radar', url: 'https://en.wikipedia.org/wiki/Primary_radar' },
   },
 };
 

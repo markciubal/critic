@@ -349,6 +349,13 @@ export class Map3D {
     this.criticGroup.visible = false;
     this.scene.add(this.criticGroup);
     this.criticLinks = [];
+    /* Every arc on the map, so their heights can be rescaled with the camera:
+       a 14-unit arch reads well at national zoom and fills the screen when
+       the camera is close. */
+    this.arcs = [];
+    this._arcScale = 1;
+    // Node positions by key, for the label layer.
+    this.criticNodePos = {};
 
     for (const [key, n] of Object.entries(CRITIC_NODES)) {
       const [x, z] = projectLL(n);
@@ -359,11 +366,12 @@ export class Map3D {
       m.position.set(x, STATE_DEPTH + 0.35, z);
       m.userData = { kind: 'criticNode', key, name: n.name, note: n.note, src: n.src };
       this.criticGroup.add(m);
+      this.criticNodePos[key] = m.position.clone();
     }
 
     const arc = (fromKey, toKey, lift, dashed) => {
-      const pts = gcPoints(CRITIC_NODES[fromKey], CRITIC_NODES[toKey], 48).map((p, i, a) => {
-        const [x, z] = projectLL(p);
+      const ground = gcPoints(CRITIC_NODES[fromKey], CRITIC_NODES[toKey], 48).map((p) => projectLL(p));
+      const pts = ground.map(([x, z], i, a) => {
         const t = i / (a.length - 1);
         return new THREE.Vector3(x, STATE_DEPTH + 0.4 + Math.sin(t * Math.PI) * lift, z);
       });
@@ -379,6 +387,8 @@ export class Map3D {
       // sitting under a node marker or another arc.
       line.userData.apex = pts[Math.floor(pts.length / 2)].clone();
       line.userData.dest = toKey;
+      line.userData.landing = this.criticNodePos[toKey].clone().setY(STATE_DEPTH + 1.1);
+      this.arcs.push({ line, ground, lift, base: STATE_DEPTH + 0.4 });
       return line;
     };
 
@@ -420,34 +430,58 @@ export class Map3D {
 
       const when = hms(c.t).slice(0, 5);
 
+      /* Labels sit at the arc's landing node rather than its apex: the apex
+         climbs with the arc and, close in, leaves the screen. */
       if (c.to) {
         const l = lines[0];
         if (!l.visible) continue;
         out.push({
           key: `critic:${c.id}`,
-          pos: l.userData.apex,
+          pos: l.userData.landing,
+          t: c.t,
           text: `${c.mapLabel || 'CRITIC'} · ${when} · `
             + `${CRITIC_NODES[c.from].short || c.from} → ${CRITIC_NODES[c.to].short || c.to}`,
           fresh,
         });
       } else {
         /* The lateral pushes leave the same place for the same addressees, so
-           anchoring each at the middle of its fan puts three labels in one
-           spot and the declutter keeps only one. Each message labels a
-           DIFFERENT arc of its fan instead, which spreads them across the
-           recipients they are actually going to. */
+           labelling each at the same node puts three labels in one spot and
+           the declutter keeps only one. Each message labels a DIFFERENT arc
+           of its fan instead, which spreads them across the recipients they
+           are actually going to. */
         const l = lines[lateral % lines.length];
         lateral += 1;
         if (!l || !l.visible) continue;
         out.push({
           key: `critic:${c.id}`,
-          pos: l.userData.apex,
+          pos: l.userData.landing,
+          t: c.t,
           text: `${c.mapLabel || 'CRITIC'} · ${when} · ${lines.length} addressees, withheld`,
           fresh,
         });
       }
     }
     return out;
+  }
+
+  /* Arc heights scaled with camera distance: a 14-unit arch is right at the
+     national view and fills the screen when the camera is close, so it is
+     brought down as the camera comes in. */
+  _rescaleArcs() {
+    const k = clamp(this.dist / 152, 0.22, 1);
+    if (Math.abs(k - this._arcScale) < 0.03) return;
+    this._arcScale = k;
+    for (const { line, ground, lift, base } of this.arcs) {
+      const attr = line.geometry.attributes.position;
+      const n = ground.length;
+      for (let i = 0; i < n; i++) {
+        const t = i / (n - 1);
+        attr.setXYZ(i, ground[i][0], base + Math.sin(t * Math.PI) * lift * k, ground[i][1]);
+      }
+      attr.needsUpdate = true;
+      line.geometry.computeBoundingSphere();
+      if (line.material.isLineDashedMaterial) line.computeLineDistances();
+    }
   }
 
 
@@ -508,8 +542,8 @@ export class Map3D {
 
       const lift = 8 + arcN * 4.5;
       arcN += 1;
-      const pts = gcPoints(from, to, 40).map((p, i, arr) => {
-        const [x, z] = projectLL(p);
+      const ground = gcPoints(from, to, 40).map((p) => projectLL(p));
+      const pts = ground.map(([x, z], i, arr) => {
         const f = i / (arr.length - 1);
         return new THREE.Vector3(x, STATE_DEPTH + 0.45 + Math.sin(f * Math.PI) * lift, z);
       });
@@ -522,7 +556,12 @@ export class Map3D {
       );
       line.visible = false;
       this.awareGroup.add(line);
-      this.awareArcs.push({ a, line, apex: pts[Math.floor(pts.length / 2)].clone() });
+      this.arcs.push({ line, ground, lift, base: STATE_DEPTH + 0.45 });
+      this.awareArcs.push({
+        a, line,
+        apex: pts[Math.floor(pts.length / 2)].clone(),
+        landing: this.awareNodes.get(a.to).pos.clone().setY(STATE_DEPTH + 1.1),
+      });
     }
   }
 
@@ -556,11 +595,12 @@ export class Map3D {
     const t = this._t ?? 0;
     const out = [];
 
-    for (const { a, line, apex } of this.awareArcs) {
+    for (const { a, line, landing } of this.awareArcs) {
       if (!line.visible) continue;
       out.push({
         key: `aw:${a.t}:${a.from}`,
-        pos: apex,
+        pos: landing,
+        t: a.t,
         text: `${hms(a.t).slice(0, 5)} · ${AWARE_NODES[a.from].short} → ${AWARE_NODES[a.to].short}`,
         actor: a.actor,
         fresh: (t - a.t) < 90,
@@ -575,14 +615,16 @@ export class Map3D {
         out.push({
           key: 'aw:dark',
           pos: mil.pos,
-          text: `NEADS · NOT TOLD · ${mins} min to go`,
+          t: told.t,
+          text: `NEADS · not yet told · ${mins} min to go`,
           actor: 'military', dark: true,
         });
       } else {
         out.push({
           key: 'aw:dark',
           pos: mil.pos,
-          text: 'NEADS · told at 10:07 · 4 min after the crash',
+          t: told.t,
+          text: `NEADS · told ${hms(told.t).slice(0, 5)} · 4 min after the crash`,
           actor: 'military', fresh: (t - told.t) < 90,
         });
       }
@@ -676,24 +718,34 @@ export class Map3D {
        202 degrees — out over empty map rather than through the crowded
        northeast — and spirals outward, so placement stays put while the camera
        is still and only moves when it has to. */
+    /* Each ring starts its label search at a different bearing, so the
+       labels of nested rings do not stack on one radial. */
     this.reachLabelAnchors = [];
-    const anchorAt = (ringLL, text, color) => {
+    let ringN = 0;
+    const anchorAt = (ringLL, key, text, color, title = '') => {
+      const bearing = RING_BEARINGS[ringN % RING_BEARINGS.length];
+      ringN += 1;
       this.reachLabelAnchors.push({
-        ringLL, order: searchOrder(ringLL.length), text, color,
+        ringLL, order: searchOrder(ringLL.length, bearing), key, text, color, title,
       });
     };
+    const mi = (n) => Math.round(n).toLocaleString();
 
     for (const { band, outer, inner } of this.reachRings) {
       const r = bandRadii(band.mph, now, depart, toleranceMin);
-      const on = showEnvelope && r.outer > 1 && r.outer < MAX_DRAW_MI;
+      // The Mach 2.0 ring is a clean-jet figure the record rules out. It is
+      // drawn only when the drawer is switched to Full.
+      const allowed = !band.unavailable || this._maxClean;
+      const on = allowed && showEnvelope && r.outer > 1 && r.outer < MAX_DRAW_MI;
       outer.visible = on;
       inner.visible = on && r.inner > 1;
       if (on) {
         const pts = ringPoints(anchor, r.outer, 120);
         this._writeRing(outer, pts);
         if (r.inner > 1) this._writeRing(inner, ringPoints(anchor, r.inner, 120));
-        const span = toleranceMin > 0 ? ` (${Math.round(r.inner)}–${Math.round(r.outer)})` : '';
-        anchorAt(pts, `${band.label} · ${band.mph} mph · ${Math.round(r.outer)} mi${span}`, band.color);
+        const span = toleranceMin > 0 ? `${mi(r.inner)}–${mi(r.outer)} mi at ${band.mph} mph` : `${band.mph} mph`;
+        anchorAt(pts, `band:${band.key}`, `${RING_PHRASE[band.key] || band.label} · ${mi(r.outer)} mi`,
+          band.color, `${band.label}: ${span}`);
       }
     }
 
@@ -703,7 +755,8 @@ export class Map3D {
     if (ceilOn) {
       const pts = ringPoints(anchor, ceil, 120);
       this._writeRing(this.ceilingRing, pts);
-      anchorAt(pts, `Evidence ceiling · earliest possible departure ${Math.round(ceil)} mi`, 0xffffff);
+      anchorAt(pts, 'ceiling', `Furthest he could be by now · ${mi(ceil)} mi`, 0xffffff,
+        `Evidence ceiling: the earliest departure the record permits, ${hms(DEPARTURE_BOUNDS.firstKnowledge.t).slice(0, 5)}`);
     }
 
     const halfOn = showEnvelope && HALF_FERRY_RING.miles < MAX_DRAW_MI;
@@ -711,9 +764,9 @@ export class Map3D {
     if (halfOn) {
       const pts = ringPoints(anchor, HALF_FERRY_RING.miles, 120);
       this._writeRing(this.halfFerryRing, pts);
-      anchorAt(pts,
-        `Ferry half-radius · ${HALF_FERRY_RING.miles.toLocaleString()} mi · furthest he could still return from`,
-        HALF_FERRY_RING.color);
+      anchorAt(pts, 'halfferry',
+        `Farthest he could go and still get home · ${mi(HALF_FERRY_RING.miles)} mi`,
+        HALF_FERRY_RING.color, HALF_FERRY_RING.label);
     }
 
     const ferryOn = showEnvelope && FERRY_RING.miles < MAX_DRAW_MI;
@@ -721,18 +774,29 @@ export class Map3D {
     if (ferryOn) {
       const pts = ringPoints(anchor, FERRY_RING.miles, 120);
       this._writeRing(this.ferryRing, pts);
-      anchorAt(pts, `${FERRY_RING.label} · ${FERRY_RING.miles.toLocaleString()} mi`, FERRY_RING.color);
+      anchorAt(pts, 'ferry', `Farthest he could go, one way · ${mi(FERRY_RING.miles)} mi`,
+        FERRY_RING.color, FERRY_RING.label);
     }
 
     // The weapon drawn from the only place he is documented to have been.
-    // At national zoom it is a dot, which is the honest impression.
+    // At national zoom it is a dot.
     this.wezHome.visible = showWez;
-    if (showWez) this._writeRing(this.wezHome, ringPoints(anchor, AIM9.rMaxMi, 120));
+    if (showWez) {
+      const pts = ringPoints(anchor, AIM9.rMaxMi, 120);
+      this._writeRing(this.wezHome, pts);
+      anchorAt(pts, 'wez', 'Missile reach', 0xff4d4d, `${AIM9.designation}: about ${AIM9.rMaxMi} mi`);
+    }
   }
 
   setReachVisible(v) {
     this.reachGroup.visible = v;
     if (v) this.setReach(this._reachOpts);
+  }
+
+  /* Whether the Mach 2.0 (clean) ring may be drawn at all. Off by default. */
+  setMaxCleanVisible(v) {
+    this._maxClean = !!v;
+    if (this.reachGroup.visible) this.setReach(this._reachOpts);
   }
 
   /* The recorded-data trail. Every point where the record actually says
@@ -1025,11 +1089,27 @@ export class Map3D {
 
   _bindInput() {
     const c = this.canvas;
-    let dragging = false, lastX = 0, lastY = 0, moved = 0, button = 0;
+
+    /* Every active pointer, by id. One is a drag; two are a pinch. Tracking
+       them in a map rather than in a single pair of coordinates is what makes
+       a phone work at all: without it there is no second finger to measure a
+       pinch against, and the map cannot be zoomed by touch. */
+    const pts = new Map();
+    let moved = 0, button = 0;
+    let pinchDist = 0, pinchMidX = 0, pinchMidY = 0;
+
+    const mid = () => {
+      const [a, b] = [...pts.values()];
+      return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2, d: Math.hypot(a.x - b.x, a.y - b.y) };
+    };
 
     c.addEventListener('pointerdown', (e) => {
-      dragging = true; moved = 0; button = e.button;
-      lastX = e.clientX; lastY = e.clientY;
+      pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (pts.size === 1) { moved = 0; button = e.button; }
+      if (pts.size === 2) {
+        const p = mid();
+        pinchDist = p.d; pinchMidX = p.x; pinchMidY = p.y;
+      }
       c.setPointerCapture(e.pointerId);
     });
 
@@ -1037,13 +1117,31 @@ export class Map3D {
       const r = c.getBoundingClientRect();
       this.pointer.x = ((e.clientX - r.left) / r.width) * 2 - 1;
       this.pointer.y = -((e.clientY - r.top) / r.height) * 2 + 1;
-      if (!dragging) return;
-      const dx = e.clientX - lastX, dy = e.clientY - lastY;
-      lastX = e.clientX; lastY = e.clientY;
+
+      const prev = pts.get(e.pointerId);
+      if (!prev) return;
+      const dx = e.clientX - prev.x, dy = e.clientY - prev.y;
+      pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
       moved += Math.abs(dx) + Math.abs(dy);
 
+      /* Two fingers: the spread zooms and the midpoint rotates. That keeps the
+         same division of labour as the desktop, where a plain drag pans and
+         the secondary gesture orbits. */
+      if (pts.size >= 2) {
+        const p = mid();
+        if (pinchDist > 0) {
+          this.dist = clamp(this.dist * (pinchDist / p.d), 6, 460);
+        }
+        this.yaw -= (p.x - pinchMidX) * 0.005;
+        this.pitch = clamp(this.pitch - (p.y - pinchMidY) * 0.005, this.minPitch, this.maxPitch);
+        pinchDist = p.d; pinchMidX = p.x; pinchMidY = p.y;
+        this.onManualCamera();
+        this._applyCamera();
+        return;
+      }
+
       /* Plain drag pans, the way every other map behaves. Rotating is the
-         secondary gesture — right-drag, shift-drag or ctrl-drag.
+         secondary gesture - right-drag, shift-drag or ctrl-drag.
 
          Panning is a statement about where you want to look, so it hands
          camera control back from follow mode. Rotating is not: you can orbit
@@ -1063,8 +1161,14 @@ export class Map3D {
     });
 
     const end = (e) => {
-      if (dragging && moved < 5) this._pick();
-      dragging = false;
+      const wasLast = pts.size === 1;
+      pts.delete(e.pointerId);
+      /* A fingertip is not a mouse pointer. Five pixels of travel is nothing
+         on a trackpad and almost unavoidable on a touchscreen, which is why
+         tapping a marker used to do nothing: the tap registered as a drag. */
+      const slop = e.pointerType === 'touch' ? 14 : 5;
+      if (wasLast && moved < slop) this._pick();
+      if (pts.size < 2) pinchDist = 0;
       if (c.hasPointerCapture?.(e.pointerId)) c.releasePointerCapture(e.pointerId);
     };
     c.addEventListener('pointerup', end);
@@ -1181,9 +1285,31 @@ export class Map3D {
     };
   }
 
+  /* Distance is not a property of the framing on its own. The camera's
+     vertical field of view is fixed, so the world WIDTH it covers scales with
+     the canvas aspect: the distance that frames the country on a 1600-wide
+     canvas shows about a third of it on a phone in full-map mode, and the
+     whole Northeast theatre falls off the right edge. So the reset distance is
+     computed from the current aspect instead of being stored.
+
+     HOME_FRAME is the rectangle the reset view has to contain, in map units:
+     the extent of every anchor the app draws, from San Francisco east to Otis
+     and from Fargo south to Langley, measured off the projection. At a wide
+     desktop aspect this returns the 152 the reset has always used. */
+  homeDist() {
+    const H = HOME_FRAME;
+    const vfov = this.camera.fov * Math.PI / 180;
+    const hfov = 2 * Math.atan(Math.tan(vfov / 2) * (this.camera.aspect || 1));
+    const dW = H.halfW / Math.tan(hfov / 2);
+    // Ground running away from the camera is foreshortened by pitch.
+    const dZ = H.halfZ / Math.tan(vfov / 2) / Math.max(0.4, Math.sin(this.pitch));
+    // The same bounds the wheel zoom uses, so a reset cannot leave the range.
+    return clamp(Math.max(dW, dZ) * H.pad, 42, 460);
+  }
+
   resetView() {
     this.pitch = 1.12; this.yaw = 0;
-    this._startTween(0, 0, 152);
+    this._startTween(HOME_FRAME.cx, HOME_FRAME.cz, this.homeDist());
   }
 
   /* --- per-frame update --------------------------------------------------- */
@@ -1344,6 +1470,7 @@ export class Map3D {
     }
 
     this._rescaleMarkers();
+    this._rescaleArcs();
 
     const pulse = 1 + Math.sin(performance.now() * 0.004) * 0.22;
     for (const o of this.flightObjs.values()) {
@@ -1379,20 +1506,37 @@ export class Map3D {
 
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 
+/* The framing the Reset-view button restores. See Map3D.homeDist(): the pad is
+   set so a 2:1 desktop canvas comes out at the distance of 152 this view used
+   before it was made aspect-aware. */
+const HOME_FRAME = { cx: 0, cz: 0, halfW: 64, halfZ: 26, pad: 1.82 };
+
 /* Indices into a ring's vertex array, ordered from the preferred bearing
    outward in both directions. Cached, because it only depends on the count. */
 const PREFERRED_BEARING = 202;
+/* One start bearing per ring, in the order the rings are laid down, so the
+   labels of nested rings fan out instead of stacking on one radial. */
+const RING_BEARINGS = [202, 215, 190, 228, 178, 240, 165];
+/* What each speed band's ring says on the map: a plain phrase plus one
+   number. The band label and the inner-outer span go in the tooltip. */
+const RING_PHRASE = {
+  cruise: 'How far he could be by now, at cruise',
+  sustained: 'Fastest down low',
+  dash: 'Fastest possible',
+  clean: 'Clean jet, not available to this claim',
+};
 const _orderCache = new Map();
-function searchOrder(n) {
-  if (_orderCache.has(n)) return _orderCache.get(n);
+function searchOrder(n, bearing = PREFERRED_BEARING) {
+  const ck = `${n}:${bearing}`;
+  if (_orderCache.has(ck)) return _orderCache.get(ck);
   const span = n - 1;                       // last vertex repeats the first
-  const start = Math.round((PREFERRED_BEARING / 360) * span) % span;
+  const start = Math.round((bearing / 360) * span) % span;
   const out = [start];
   for (let d = 1; d <= Math.ceil(span / 2); d++) {
     out.push((start + d) % span);
     out.push((start - d + span) % span);
   }
-  _orderCache.set(n, out);
+  _orderCache.set(ck, out);
   return out;
 }
 const Y_AXIS = new THREE.Vector3(0, 1, 0);

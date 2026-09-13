@@ -155,6 +155,7 @@ export const COMMAND_CHECK = {
     { t: '10:31', text: 'NEADS receives the authorisation, and does not pass it down to its pilots.', src: 'commission' },
     { t: '10:42', text: 'The first armed fighter launches from Andrews.', src: 'commission' },
   ],
-  conclusion: 'The air defence sector did not know United 93 existed until after it was down, and the authority to fire arrived 33 minutes after the alleged shot. For the claim to be true, a pilot two time zones away must have executed an order that nobody had yet been given, against a target his sector had not yet been told about.',
+  conclusion: 'The air defence sector did not know United 93 existed until after it was down, and the authority to fire arrived 33 minutes after the alleged shot. For the claim to be true, the pilot fired 33 minutes before any order existed, at a target his sector had not yet been told about.',
   src: 'derived',
+  refs: ['COMMISSION'],
 };

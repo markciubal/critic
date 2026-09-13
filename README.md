@@ -1,3 +1,7 @@
+# truth.help
+
+Help me understand the last six minutes of United 93.
+
 # CRITIC — DIRNSA CRITIC 1-2001
 
 A single-page app in plain JavaScript, built around one question: what was the

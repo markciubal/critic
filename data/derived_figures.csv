@@ -1,0 +1,18 @@
+quantity,value,time_edt,certainty,method
+peak vertical acceleration,+4.148 g,10:01:56,measured,"Maximum of 40,400 samples in the NTSB tabulation. Exactly one sample reaches 4 g; none reaches 5 or 6."
+minimum vertical acceleration,-1.885 g,10:01:44,measured,"Minimum of the same 40,400 samples."
+maximum roll angle,+161.4 deg,10:03:07,measured,ROLL ANGLE CAPT. Passes 90 deg at 10:03:03.
+pitch at last sample,-41.1 deg,10:03:09,measured,"PITCH ANGLE CAPT, final recorded value."
+maximum lateral acceleration,0.112 g,10:02:00,measured,"Whole flight, on a channel with +/-1 g full scale."
+altitude at last sample,2189 ft,10:03:09,measured,"Pressure altitude on the 1013.25 mB datum. Crash site terrain is about 2,370 ft MSL, so this is ground level."
+apex of the final climb,9902 ft,10:02:15,measured,"Maximum of the per-second pressure altitude samples. The NTSB anchor H at 10:02 reads 9,827 ft, which is five seconds past the apex and is not the maximum."
+"sink rate, last recorded second",575 ft/s,10:03:08 to 10:03:09,derived,2764 ft minus 2189 ft over one second.
+sink rate doubles after the roll passes 90 deg,229 to 456 ft/s,10:03:02 to 10:03:07,derived,Per-second differences of pressure altitude. The roll crosses 90 deg at 10:03:03.
+EPR left-right difference during thrust reduction,"mean 0.007, max 0.062",10:01:50 to 10:03:10,derived,80 paired samples of ENG EPR-ACTUAL L and R.
+thrust retardation begins,10:02:17,10:02:17,derived,EPR peaks 1.197 at 10:02:09-14 then falls to 0.79 by 10:02:45. The CVR has Shut them off at 10:02:03.5.
+"selected altitude changed to 4,992 ft",09:48:32,09:48:32,measured,"ALTITUDE SELECTED-MAN. Nine minutes before the revolt. ALT HOLD engages at 4,996 ft at 09:59:15."
+cabin pressure blind window,8 min 19 s,09:54:50 to 10:03:09,derived,"The aircraft crosses below 10,000 ft at 09:54:51 and never regains it, so the CABIN ALT > 10kft discrete cannot trip."
+analogue hydraulic pressure sampling,"once per 64 s in the tabulation, 0.5 Hz in the recorder",,derived,"Decimation factor 32. Last samples 10:02:18, 10:02:26 and 10:02:34, i.e. 53, 45 and 37 s before impact."
+"hydraulic supply pressure, all systems",1488 to 1860 psi,whole flight,measured,"Validated channel, correct scaling (y = 4x, 10 bit, 0 to 4092 psi, all values exact multiples of 4). Unexplained against a nominal usually quoted at 3000 psi."
+GOFER 06 bearing to the crash site,"nine o clock, 30 statute mi, 10:04 to 10:06",,derived,"Solved from the ATC vector to heading 030 and the radio call. The app previously drew 11 to 12 o clock, which contradicted the call it quoted."
+UA93 heading after the turnaround vs the Capitol,"117.5 deg flown, 118.4 deg to the Capitol, 91.9 deg to Newark",,derived,Great-circle bearings from the westernmost track point. The NTSB records the turn as flown in autopilot heading select mode.

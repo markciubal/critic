@@ -8,30 +8,25 @@
    and the argument collapses into "a fast jet could have got there", which is
    the opposite of what it says.
 
-   The last two steps are the CRITIC, and they were missing for far too long.
-   This app is named after DIRNSA CRITIC 1-2001 and exists as a companion to a
-   records request for its text — and the tour walked the entire argument
-   without mentioning it once. It belongs at the end rather than among the
-   blockers, because it is not another objection. It is the document that would
-   settle the question either way, it is dated to the minute, and the reason
-   nobody can read it is a decision somebody made.
+   The last two steps are the CRITIC. This app is named after DIRNSA CRITIC
+   1-2001 and exists as a companion to a records request for its text. It
+   belongs at the end rather than among the blockers, because it is not another
+   objection. It is the document that would settle the question either way, it
+   is dated to the minute, and it is withheld.
 
-   So the tour is not decoration. It is the argument's sequence, made playable:
-   each step sets the clock, moves the camera and opens the panel that carries
-   the evidence, so the claim is being *watched* while it is being explained.
+   Each step sets the clock, moves the camera and opens the panel that carries
+   the evidence, so the claim is being watched while it is being explained.
 
    WRITTEN FOR SOMEONE WHO HAS NEVER READ AN NTSB REPORT
 
-   The first version of this was written in the vocabulary of the sources it
-   came from — "placarded to Mach 1.6", "combat radius", "primary returns".
-   All correct, and all a wall to anyone who had not spent a week in the same
-   documents. Every step now says it in plain words and puts the exact term
-   behind an (i), so nothing is lost and nothing is in the way.
+   Every step says it in plain words and puts the exact term behind an (i), so
+   nothing is lost and nothing is in the way.
 
    Bodies are functions over a live context, so the tour cannot quote a figure
-   the panel beside it disagrees with. The first draft did exactly that: it
-   said "Mach 1.26 over 1,012 miles" from the prose in steelman.js while the
-   panel three inches away computed Mach 1.22 over 990 miles from the model.
+   the panel beside it disagrees with.
+
+   Each step also carries `src` (a badge key) and `refs` (links.js REFS keys);
+   main.js renders them at the foot of the tour body.
 
    `view` kinds:
      reset                  the whole country
@@ -77,12 +72,9 @@ export const TOUR_STEPS = [
     title: 'Start by making the claim as strong as possible',
     body: (c, i) => `
       There is a story that a fighter pilot shot down United 93. This app exists to test it.
-      <p>The useful way to test a claim is not to argue with its weakest version. It is to build
-      the <em>best</em> version you can — give it every benefit of the doubt at once — and then
-      see what is still wrong with it. That is called steelmanning ${i('steelman')}.</p>
-      <p>So over the next few minutes this app hands the story
-      <strong>everything it could reasonably want</strong>: the right aircraft, the right
-      weapons, a perfect takeoff time, a perfect route. Then we look at what is left.</p>
+      <p>It does so by building the strongest version of the claim, granting every benefit of
+      the doubt at once, and then checking what is still wrong with it. That is called
+      steelmanning ${i('steelman')}.</p>
       <p class="tour-warn"><strong>Nothing you are about to see on the map is real.</strong>
       The aircraft we draw, ${HYPO.callsign}, never existed. It is drawn in white dashes to show
       what the story would have needed, not to suggest any of it happened.</p>`,
@@ -90,6 +82,8 @@ export const TOUR_STEPS = [
     tab: 'claim',
     view: 'reset',
     layers: { hypo: false, envelope: false, wez: false },
+    src: 'derived',
+    refs: [],
   },
 
   {
@@ -97,131 +91,132 @@ export const TOUR_STEPS = [
     tone: 'setup',
     title: 'What the story actually says',
     body: (c, i) => `
-      Rick Gibney was a real Air National Guard pilot in North Dakota. On 11 September he really
-      did fly a state official, <strong>Ed Jacoby Jr.</strong>, from Montana back to Albany, New
-      York. Jacoby has talked about the flight. That part is not in dispute.
-      <p>The accusation, which surfaced years later, is that in between he was sent up from
-      <strong>Fargo</strong>, caught <strong>United 93</strong> over Pennsylvania, and shot it
-      down.</p>
-      <p>So there are two versions of his day on the map: the one with witnesses, and the one
-      without.</p>`,
+      Rick Gibney was an Air National Guard ${i('ang')} pilot in North Dakota. On 11 September
+      he flew a state official, Ed Jacoby Jr., from Montana to Albany, New York. Jacoby has
+      described the flight. That part is not in dispute.
+      <p>The accusation, made in 2004, is that in between he was scrambled ${i('scramble')}
+      from Fargo, intercepted United 93 over Pennsylvania, and shot it down.</p>
+      <p>The claim names Gibney, and Gibney was at Fargo, so the steelman starts there. The
+      wing's other F-16s that morning were at Langley, and their morning is on the NEADS
+      ${i('neads')} tapes.</p>
+      <p>The map draws both versions of his day: the documented route and the alleged one.</p>`,
     t: at(8, 42, 0),
     tab: 'claim',
     view: 'reset',
     layers: { routeDoc: true, routeClaim: true, hypo: false },
+    src: 'press',
+    refs: ['GIBNEY', 'CLAIMANT', 'GIBNEY_UNIT'],
   },
 
   {
     id: 'grant-hardware',
     tone: 'grant',
-    title: 'He had the fuel. That is not a favour — it is a fact.',
+    title: 'He had the fuel: the documented flight shows it',
     body: (c, i) => `
-      This app used to treat the extra fuel as something it was generously handing the story.
-      That was wrong, and the correction is worth making out loud.
-      <p>A fighter jet carries very little fuel on its own, so for long trips it bolts spare
-      tanks to the outside ${i('dropTanks')}. The undisputed part of Gibney's day includes
-      Montana to Albany <strong>in one hop of
-      ${Math.round(c.fuel.legBA).toLocaleString()} miles</strong>. Without the extra tanks, a
-      jet like his runs out at roughly
-      ${Math.round(c.fuel.twoSeatCleanMi).toLocaleString()} miles ${i('twoSeat')} — and there
-      was no refuelling in mid-air. He must have had the tanks. It is proven by the trip he
-      actually made.</p>
-      <p>He would also have had the missiles. They are short-range heat-seekers
-      ${i('sidewinder')} that hang on the wingtips, and the tanks hang underneath, so carrying
-      both at once is completely normal.</p>
-      <p>So from here on, <strong>every version of the story assumes a tanked jet</strong> and
-      fuel is never the objection. The app used to draw a 340-mile "combat radius" ring for a
-      fighter carrying nothing; that ring is gone, because this aircraft demonstrably was not
-      carrying nothing.</p>
-      <p>There is a price, though, and it is charged to the story rather than to us. Tanks are
-      draggy. A tanked F-16 is limited to about
-      ${F16.maxWithTanksMph.toLocaleString()} mph ${i('placard')} — the famous "Mach 2" belongs
-      to a clean jet with nothing hanging off it. Proving he had the fuel proves he did not have
-      his top speed.</p>
-      <p><em>Remember the fuel. It comes back later, and not in the way you would expect.</em></p>`,
+      A fighter carries little fuel on its own; for long trips it carries external tanks
+      ${i('dropTanks')}. The documented part of Gibney's day includes Montana to Albany, flown
+      nonstop as reported, in one hop of ${Math.round(c.fuel.legBA).toLocaleString()} miles.
+      Without tanks a jet like his runs out at roughly
+      ${Math.round(c.fuel.twoSeatCleanMi).toLocaleString()} miles ${i('twoSeat')}, and there
+      was no refuelling in mid-air. So he had the tanks.
+      <p>He would also have had the missiles: short-range heat-seekers ${i('sidewinder')} on
+      the wingtips, with the tanks underneath. Carrying both is normal.</p>
+      <p>From here on every version of the story assumes a tanked jet.</p>
+      <p>Tanks add drag. A tanked F-16 is limited to about
+      ${F16.maxWithTanksMph.toLocaleString()} mph ${i('placard')}; the Mach 2 figure applies
+      only to a clean jet. So the tanks also cap his speed at Mach 1.6 ${i('mach')}.</p>
+      <p>An earlier version of this app drew a 340-mile combat-radius ring, the figure for a
+      fighter carrying no tanks. That ring is gone: the documented leg shows the tanks were
+      fitted.</p>`,
     t: at(8, 46, 40),
     tab: 'claim',
     view: 'place:KFAR',
     viewDist: 120,
     layers: { envelope: true, wez: false, hypo: false, routeDoc: false, routeClaim: true },
     highlight: '#reach-out',
+    src: 'derived',
+    refs: ['F16', 'GIBNEY'],
   },
 
   {
     id: 'grant-launch',
     tone: 'grant',
-    title: 'He took off the very first second anyone could have',
+    title: 'He took off at the earliest possible moment',
     body: (c, i) => `
-      The clock above reads <strong>08:46:40</strong>. That is the moment the first aircraft hit
-      the World Trade Center — the first instant anybody in the country had any reason to think
-      something was wrong.
-      <p>We are giving the story a takeoff at that exact second. No hesitation, no briefing, no
-      time starting the engine, no taxiing to the runway.</p>
-      <p>Even that is a gift, and it is worth naming: <strong>no record anywhere says what time
-      Gibney actually took off.</strong> We picked the time that helps the story most.</p>`,
+      The clock above reads 08:46:40. That is the moment the first aircraft hit the World
+      Trade Center, the first instant anybody in the country had a reason to think something
+      was wrong.
+      <p>The story is given a takeoff at that exact second, with no time allowed for
+      hesitation, briefing, engine start or taxiing to the runway.</p>
+      <p>This is itself an assumption: no published record gives Gibney's takeoff time. The
+      app uses the time most favourable to the claim.</p>`,
     t: at(8, 46, 40),
     tab: 'claim',
     view: 'place:KFAR',
     viewDist: 90,
     layers: { envelope: true, hypo: false },
+    src: 'derived',
+    refs: ['COMMISSION'],
   },
 
   {
     id: 'grant-heading',
     tone: 'grant',
-    title: 'And he flew a flawless route',
+    title: 'He flew a flawless route',
     body: (c, i) => `
-      Straight line from Fargo, dead on course, to the exact spot where United 93 will be over
+      A straight line from Fargo, on course, to the exact spot where United 93 will be over
       an hour later.
-      <p>No being redirected by air traffic control, no headwind, no weather, no time spent on
-      the ground anywhere. We also ignore a real problem: to carry a passenger he needed the
-      two-seat version of the jet ${i('twoSeat')}, which holds less fuel.</p>
-      <p>That is every easy assumption granted at once. The white dashed line now on the map is
-      that perfect flight. It is the best case the story can possibly have.</p>`,
+      <p>No redirection by air traffic control ${i('atc')}, no headwind, no weather, no time
+      spent on the ground anywhere. A real problem is also set aside: to carry a passenger he
+      needed the two-seat version of the jet ${i('twoSeat')}, which holds less fuel.</p>
+      <p>That is every easy assumption granted at once. The white dashed line now on the map
+      is that flight: the best case the story can have.</p>`,
     t: at(9, 20, 0),
     tab: 'claim',
     view: 'hypo',
     viewDist: 90,
     layers: { hypo: true, envelope: true },
     highlight: '#steel-out',
+    src: 'derived',
+    refs: ['F16'],
   },
 
   {
     id: 'survives',
     tone: 'survives',
-    title: 'And it works. The jet really could have got there.',
+    title: 'The jet could have got there',
     body: (c, i) => `
-      This is the honest result, and it is the reason building the best case was worth doing.
-      <p>To cover the distance in the time available he would need about
-      <strong>${Math.round(c.steel.mph).toLocaleString()} mph</strong> — roughly
-      <strong>${c.steel.mach.toFixed(1)} times the speed of sound</strong> ${i('mach')}. His jet
-      was allowed up to about ${F16.maxWithTanksMph.toLocaleString()} mph with the tanks fitted
-      ${i('placard')}. So it fits, with room to spare.</p>
-      <p>Anyone who tells you the story is impossible because the aircraft was too slow, or
-      could not carry enough fuel, has not checked. <strong>Speed and fuel do not sink this
-      story.</strong> Something else has to, or nothing does.</p>`,
+      To cover the distance in the time available he would need about
+      ${Math.round(c.steel.mph).toLocaleString()} mph, roughly
+      ${c.steel.mach.toFixed(1)} times the speed of sound ${i('mach')}. His jet was allowed up
+      to about ${F16.maxWithTanksMph.toLocaleString()} mph with the tanks fitted
+      ${i('placard')}. So it fits, within the placard limit; fuel burn at that speed is not
+      modelled here.
+      <p>Speed and fuel do not rule the story out, so the objection that the aircraft was too
+      slow or too short-ranged does not hold.</p>`,
     t: at(9, 48, 0),
     tab: 'claim',
     view: 'hypo',
     viewDist: 70,
     layers: { hypo: true, envelope: true, wez: false },
     highlight: '#steel-out',
+    src: 'derived',
+    refs: ['F16'],
   },
 
   {
     id: 'block-knowledge',
     tone: 'blocks',
-    title: 'Problem 1: he would have to know the future',
+    title: 'Problem 1: he would have to know about the hijacking before it happened',
     body: (c, i) => `
-      Look at the clock, and look at United 93 on the map.
-      <p>It is <strong>08:46</strong>. United 93 left Newark four minutes ago and is climbing
-      normally. Nothing has happened to it. It will not be hijacked for another
-      <strong>42 minutes</strong>.</p>
+      Look at the clock, and at United 93 on the map.
+      <p>It is 08:46. United 93 left Newark four minutes ago and is climbing normally. Nothing
+      has happened to it. It will not be hijacked for another 42 minutes.</p>
       <p>So to take off now, pointed at it, somebody has to already know that this particular
-      ordinary flight is going to be hijacked at 09:28 — and where it is going to be at 09:58,
-      an hour and a quarter from now.</p>
-      <p>That is not a story about intelligence. That is a story about knowing in advance, which
-      is a far bigger and completely different accusation.</p>
+      flight is going to be hijacked at 09:28, and where it is going to be at 09:58, an hour
+      and a quarter from now.</p>
+      <p>That is foreknowledge of the hijacking, a much larger and different accusation than
+      the one made.</p>
       <p class="tour-warn">${FOREKNOWLEDGE.caution}</p>`,
     t: at(8, 46, 40),
     tab: 'claim',
@@ -229,6 +224,8 @@ export const TOUR_STEPS = [
     viewDist: 60,
     layers: { hypo: true, UA93: true },
     highlight: '#fk-out',
+    src: 'commission',
+    refs: ['COMMISSION', 'NEADS'],
   },
 
   {
@@ -236,28 +233,29 @@ export const TOUR_STEPS = [
     tone: 'blocks',
     title: 'Problem 2: nobody could have guided him to it',
     body: (c, i) => `
-      Say we grant the impossible knowledge anyway. He still has to be steered onto an airliner
-      crossing Pennsylvania at 400-odd miles an hour, and a pilot cannot find that alone.
-      <p><strong>Half the government could see it the whole time.</strong> Cleveland Center heard
-      the hijacking live at 09:28 and never lost the aircraft — not even when the transponder went
-      off. By 09:46 the FAA had worked out it was twenty-nine minutes from Washington.</p>
-      <p><strong>The half that could send a fighter was never told.</strong> The air defence
-      sector ${i('neads')} heard the words "United 93" for the first time at
-      <strong>10:07</strong> — the time on the clock now, and four minutes <em>after</em> the
-      aircraft was already in the ground.</p>
-      <p>In between sits a twenty-five minute conversation, on recorded lines, in which the FAA
-      discusses asking the military for help and never does it. At 09:36: has anyone requested
-      fighters? At 09:49: <em>"Do we want to think about, uh, scrambling aircraft?" — "Oh, God, I
-      don't know."</em> At 09:53: still discussing.</p>
-      <p>So the objection that the government knew is <em>correct</em>, and it does not help the
-      story. Air traffic control cannot task or vector fighters. The organisation that can had no
-      track, no request, and nothing to point anyone at — and Gibney was flying a passenger, not
-      sitting on the air defence net.</p>`,
+      Grant the knowledge anyway. He still has to be steered onto an airliner crossing
+      Pennsylvania at about 370 mph (the speed of its recorded track after 09:46), and a pilot
+      cannot find that alone.
+      <p>The civil side had the aircraft the whole time. Cleveland Center ${i('faa')} heard the
+      hijacking live at 09:28 and never lost it, even after the transponder ${i('transponder')}
+      went off. By 09:46 the FAA had worked out it was twenty-nine minutes from Washington.</p>
+      <p>The military side, which could send a fighter, was not told. The air defence sector
+      ${i('neads')} heard the words "United 93" for the first time at 10:07, the time on the
+      clock now, four minutes after the aircraft crashed.</p>
+      <p>In between, on recorded lines, the FAA discussed asking the military for help for
+      twenty-five minutes, 09:28 to 09:53, and did not do it. 09:36: has anyone requested fighters? 09:49: "Do we want to think about, uh,
+      scrambling aircraft?" "Oh, God, I don't know." 09:53: still discussing.</p>
+      <p>The civil side of the government did know. Air traffic control ${i('atc')} cannot task
+      or vector ${i('vector')} fighters; the organisation that can had no track and received no
+      request; and on the documented account Gibney was on a transport tasking rather than the
+      air defence net.</p>`,
     t: at(10, 7, 0),
     tab: 'aware',
     view: 'reset',
     layers: { hypo: true, aware: true },
     highlight: '#aware-body',
+    src: 'commission',
+    refs: ['COMMISSION', 'NEADS'],
   },
 
   {
@@ -265,73 +263,71 @@ export const TOUR_STEPS = [
     tone: 'blocks',
     title: 'Problem 3: nobody had permission to shoot',
     body: (c, i) => `
-      Grant the guidance too. He still needs an order authorising him to destroy a passenger
-      aircraft with forty people on board. No pilot does that on his own judgement.
-      <p>Permission to shoot down civilian airliners was passed down at about 10:10 and reached
-      the air-defence sector at <strong>10:31</strong> — the time on the clock now. That sector
-      then never passed it on to its own pilots at all.</p>
-      <p>The shot is supposed to have happened at <strong>09:58</strong>. That is
-      <strong>33 minutes before</strong> the permission existed anywhere in the chain of
-      command.</p>`,
+      Grant the guidance too. He still needs an order from the chain of command authorising him
+      to destroy a passenger aircraft with forty people on board.
+      <p>The claim needs him to have fired without any order. The earliest documented
+      authorisation to engage civilian aircraft is about 10:10; it came down through NORAD
+      ${i('norad')} and reached the sector ${i('neads')} at 10:31, the time on the clock now.
+      The sector never passed it to its own pilots.</p>
+      <p>The alleged shot is at 09:58. That is 33 minutes before the order reached the sector,
+      and before the permission is documented anywhere in the chain of command.</p>`,
     t: at(10, 31, 0),
     tab: 'critic',
     view: 'reset',
     layers: { hypo: true, critic: true },
+    src: 'commission',
+    refs: ['COMMISSION'],
   },
 
   {
     id: 'block-jacoby',
     tone: 'blocks',
-    title: 'Problem 4: the easy version deletes the only witness',
+    title: 'Problem 4: the shortest route leaves out the only witness',
     body: (c, i) => `
-      This one is self-inflicted, and it is the most damaging.
-      <p>The version we have been flying goes Fargo → intercept → Albany. It is
-      ${Math.round(c.steel.totalMi).toLocaleString()} miles, comfortably within one load of
-      fuel — and <strong>it never goes to Montana</strong>. That is the only reason it fits so
-      easily.</p>
-      <p>But Montana is where Ed Jacoby was standing. He was picked up, he got to Albany, and he
-      has said so himself. He is the one first-hand witness to the whole day.</p>
-      <p><strong>And here is where the fuel comes back.</strong> The Montana trip is what proved
-      Gibney had the extra tanks. But it also proves where he went. Put Montana back into the
-      route and the trip to the intercept grows from
-      ${Math.round(c.boz.directMi).toLocaleString()} to
-      <strong>${Math.round(c.boz.viaMi).toLocaleString()} miles</strong> in the same
+      The version flown so far goes Fargo → intercept → Albany. It is
+      ${Math.round(c.steel.totalMi).toLocaleString()} miles, within one load of fuel, and it
+      does not go to Montana. That is why it fits.
+      <p>Jacoby was in Bozeman. He was picked up, reached Albany, and has said so. He is the one
+      first-hand witness to Gibney's flight that day.</p>
+      <p>The documented flight that establishes the tanks began in Montana. Put Montana back and
+      the trip to the intercept grows from ${Math.round(c.boz.directMi).toLocaleString()} to
+      ${Math.round(c.boz.viaMi).toLocaleString()} miles in the same
       ${Math.round(c.boz.hours * 60)} minutes. That needs
-      <strong>${c.boz.viaMach.toFixed(1)} times the speed of sound</strong> —
-      <strong>${c.boz.overPlacard.toFixed(1)} times faster than his jet was allowed to go</strong>
-      ${i('placard')}, and that is granting him zero seconds on the ground in Montana to land
-      and collect a passenger.</p>
-      <p>So the same fact does both jobs, in opposite directions. Use the Montana trip to prove
-      he had the fuel, and you have also proved he went to Montana — which makes the interception
-      impossible. <strong>The story needs the first and cannot survive the second.</strong></p>`,
+      ${c.boz.viaMach.toFixed(1)} times the speed of sound ${i('mach')},
+      ${c.boz.overPlacard.toFixed(1)} times faster than his jet was allowed to go
+      ${i('placard')}, and that grants zero seconds on the ground in Montana to land and
+      collect a passenger.</p>`,
     t: at(10, 20, 0),
     tab: 'claim',
     view: 'fit:KBZN,KFAR,KALB',
     layers: { hypo: true, routeDoc: true, places: true },
     highlight: '#concessions',
+    src: 'press',
+    refs: ['GIBNEY'],
   },
 
   {
     id: 'scale',
     tone: 'blocks',
-    title: 'And the shot itself needs a twenty-mile coincidence',
+    title: 'The shot requires being inside a twenty-mile ring',
     body: (c, i) => `
-      Every circle drawn on this map so far has been generous to the story. This one is not.
-      <p>His missiles ${i('sidewinder')} only reach about
-      <strong>${c.los.wezMi} miles</strong>, and they will not work closer than about half a
-      mile either, so the area he could actually hit is a thin ring ${i('wez')}.</p>
-      <p>Compare that with how far apart the two aircraft could be and still <em>see</em> each
-      other: about <strong>${Math.round(c.los.losMi)} miles</strong> ${i('lineOfSight')}. That is
-      <strong>${Math.round(c.los.ratio)} times bigger</strong>.</p>
-      <p>Spotting the airliner was never the difficult part. Being inside a twenty-mile circle
-      around one specific aircraft at one specific instant is — and nothing in the record puts
-      him there, or anywhere else.</p>`,
+      This ring is set by the missile's range rather than by how far the aircraft could travel.
+      <p>His missiles ${i('sidewinder')} reach about ${c.los.wezMi} miles, and will not work
+      closer than about half a mile, so the area he could hit is a thin ring ${i('wez')}.</p>
+      <p>Compare that with how far apart the two aircraft could be and still see each other:
+      about ${Math.round(c.los.losMi)} miles ${i('lineOfSight')}, or
+      ${Math.round(c.los.ratio)} times bigger.</p>
+      <p>Line of sight is the wider constraint. The missile requires being within about
+      ${AIM9.rMaxMi} miles of the airliner at one instant, and no record places him there, or
+      anywhere else, at that time.</p>`,
     t: at(9, 58, 0),
     tab: 'claim',
     view: 'ua93',
     viewDist: 40,
     layers: { hypo: true, wez: true, envelope: true },
     highlight: '#wez-out',
+    src: 'press',
+    refs: ['AIM9'],
   },
 
   {
@@ -339,90 +335,91 @@ export const TOUR_STEPS = [
     tone: 'blocks',
     title: 'The government was writing it down at the time',
     body: (c, i) => `
-      This app is named after what is on screen now. A <strong>CRITIC</strong> ${i('critic')} is
-      the most urgent message the US intelligence system has — meant to be in front of the
-      President within ten minutes. Four went out that morning.
-      <p>They matter here because they are not a later account of the day. They are the
-      government writing down, at the time, what it believed was happening. And the sequence
-      lands on <em>both sides</em> of the moment this story needs.</p>
+      This app is named after what is on screen now. A CRITIC ${i('critic')} is the most
+      urgent message the US intelligence system has, meant to be in front of the President
+      within ten minutes. Four went out that morning.
+      <p>They are contemporaneous: the government's own record, at the time, of what it
+      believed was happening. Two were sent before the alleged shot and two after.</p>
       ${c.critic.slice(0, 2).map((k) => `
       <div class="tour-crit">
         <b>${esc0(k.c.mapLabel)}</b> &middot; ${hms0(k.c.t).slice(0, 5)}<br>
         ${k.sepMi === null ? 'Not yet airborne.' : `
-        ${HYPO.callsign} would be <strong>${Math.round(k.sepMi)} miles</strong> from United 93 —
-        <strong>${k.outsideBy.toFixed(1)}\u00d7 further than its missile can reach</strong>, with
+        ${HYPO.callsign} would be ${Math.round(k.sepMi)} miles from United 93,
+        ${k.outsideBy.toFixed(1)}× further than its missile can reach, with
         ${Math.round(k.minsToShot)} minutes left to close.`}
       </div>`).join('')}
-      <p>So at the two moments the nation's own alarm system was ringing, the best-case shooter
-      is still tens of miles away and has not fired. Nothing about that is impossible — he is
-      closing fast. It is just the last stretch of the run, recorded by the government, minute
-      by minute, in the one channel that cannot be quietly backdated.</p>`,
+      <p>At both of these moments the best-case shooter is still tens of miles from United 93
+      and has not fired. That is not impossible; he is closing fast. The last stretch of the run
+      coincides with two timestamped messages in the national warning channel.</p>`,
     t: at(9, 52, 0),
     tab: 'critic',
     view: 'hypo',
     viewDist: 95,
     layers: { hypo: true, critic: true, UA93: true, wez: true },
+    src: 'foia',
+    refs: ['KARA_CRITIC', 'MUCKROCK', 'MANEKI'],
   },
 
   {
     id: 'critic-silence',
     tone: 'blocks',
-    title: 'And then the same channel says nothing about it',
+    title: 'Two more messages follow. Their contents are withheld.',
     body: (c, i) => `
-      United 93 is on the ground. If an American fighter had just destroyed an American airliner
-      full of people, that is not a detail anyone sits on — it is the single most urgent fact in
-      the country, and there is a channel built for exactly that.
+      United 93 is on the ground. A US fighter destroying a US airliner is the kind of
+      information the CRITIC ${i('critic')} channel exists to carry.
       <p>Two more messages go out on it.</p>
       ${c.critic.slice(2).map((k) => `
       <div class="tour-crit">
         <b>${esc0(k.c.mapLabel)}</b> &middot; ${hms0(k.c.t).slice(0, 5)}<br>
-        United 93 has been down <strong>${Math.round(k.minsAfterImpact)} minutes</strong>.
+        United 93 has been down ${Math.round(k.minsAfterImpact)} minutes.
         ${k.landed
           ? `${HYPO.callsign} has already landed at Albany.`
           : `${HYPO.callsign} is over Pennsylvania on its way to Albany.`}
       </div>`).join('')}
-      <p>Neither is publicly known to say a word about a shootdown, and a summary written two
-      days later — the place any correction to the record would go — is withheld along with
-      them.</p>
-      <p><strong>This is the honest shape of it.</strong> Those messages are redacted, so this
-      app cannot tell you they are silent on the point. What it can tell you is that this is the
-      document which would settle the question either way, that it exists, that it is dated to
-      the minute, and that the reason you cannot read it is a decision somebody made. That is
-      what the records request ${i('foia')} behind this app is for.</p>`,
+      <p>Their contents are withheld, so this app cannot say whether they mention a shootdown.
+      A summary written two days later, where any correction to the record would go, is
+      withheld along with them.</p>
+      <p>What is known: the documents exist, they are dated to the minute, they would settle
+      the question either way, and NSA has withheld them. That is what the records request
+      ${i('foia')} behind this app asks for.</p>`,
     t: at(10, 48, 0),
     tab: 'critic',
     view: 'reset',
     layers: { hypo: true, critic: true },
     highlight: '#critic-body',
+    src: 'foia',
+    refs: ['KARA_CRITIC', 'MUCKROCK', 'MANEKI', 'NSA'],
   },
 
   {
     id: 'verdict',
     tone: 'verdict',
-    title: 'The flying works. Nothing else does.',
+    title: 'The flight was feasible. The knowledge, guidance, order and witness it needs are not documented.',
     body: (c, i) => `
       <p>Give the story the best jet, the best fuel, the fastest possible takeoff and a perfect
-      route, and the flight itself is achievable. That is worth saying plainly, because it is
-      true and because most people arguing against this story get it wrong.</p>
-      <p>What defeats it is everything that is not flying: that he would have to know about a
-      hijacking 42 minutes before it happened, that nobody was tracking the aircraft to guide
-      him, that permission to shoot did not exist for another half hour, and that the trip which
-      proves he had the fuel also proves he was somewhere else.</p>
-      <p>That is a more useful answer than "impossible". A claim beaten on arithmetic just
-      invites better arithmetic. A claim beaten on knowledge, permission and an eyewitness has
-      nowhere left to go.</p>
-      <p class="tour-warn">${HYPO.callsign} has been taken off the map. It was never there.</p>`,
+      route, and the flight itself is achievable.</p>
+      <p>The remaining problems are not about flying: he would have to know about the
+      hijacking 42 minutes before it happened; the military was not tracking the airliner, so
+      nobody in a position to guide him could; shootdown authority did not reach the sector
+      until 10:31; and his documented flight that morning, the one that establishes his fuel
+      tanks, began in Montana.</p>
+      <p>The result does not depend on speed or fuel figures that could be revised. It depends
+      on the time of the hijacking, the absence of any order, and an eyewitness.</p>
+      <p class="tour-warn">${HYPO.callsign} has been removed from the map. It was a construct;
+      no such aircraft flew.</p>`,
     t: at(9, 58, 0),
     tab: 'claim',
     view: 'reset',
     layers: { hypo: false, wez: false },
     last: true,
+    src: 'derived',
+    refs: [],
   },
 ];
 
 /* The chapter strip: one dot per step, grouped by tone, so the shape of the
-   argument — grant, grant, grant, survive, block, block, block — is visible
-   before it is heard. */
+   argument (grant, grant, grant, survive, block, block, block) is visible up
+   front. */
 export function tourChapters() {
   const out = [];
   for (const s of TOUR_STEPS) {

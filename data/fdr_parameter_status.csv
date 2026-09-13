@@ -1,0 +1,58 @@
+parameter,port,status,attachment,established_by
+ROLL ANGLE CAPT,EFIS L/C-A-1,validated,I-5,direct read
+ROLL DISAGREE CAPT,EFIS L/C-A-1,validated,I-5,direct read
+PITCH ANGLE CAPT,EFIS L/C-A-1,validated,I-5,direct read
+PITCH DISAGREE CAPT,EFIS L/C-A-1,validated,I-5,direct read
+PASS OXY ON,EICAS L/R-A-1,validated,I-5,direct read
+LATERAL ACCELERATION,ACCEL,validated,I-5,direct read
+LONGITUDINAL ACCEL,ACCEL,validated,I-5,direct read
+ENG EPR-ACTUAL - L,EICAS L/R-A-1,validated,I-2,direct read
+ENG EPR-ACTUAL - R,EICAS L/R-A-1,validated,I-2,direct read
+ENG FUEL FLOW - L,EICAS L/R-A-1,validated,I-2,direct read
+ENG FUEL FLOW - R,EICAS L/R-A-1,validated,I-2,direct read
+ENG FUEL CUTOFF - L,EICAS L/R-A-1,validated,I-2,direct read
+ENG FUEL CUTOFF - R,EICAS L/R-A-1,validated,I-2,direct read
+ENG FUEL VALVE - L,EICAS L/R-A-1,validated,I-2,direct read
+ENG EPR COMMAND - L,EICAS L/R-A-1,validated,I-2,direct read
+ENGINE FIRE - L,EICAS L/R-A-1,validated,I-3,direct read
+ENGINE FIRE - R,EICAS L/R-A-1,validated,I-3,direct read
+ENGINE OVHT - L,EICAS L/R-A-1,validated,I-3,direct read
+ENGINE OVHT - R,EICAS L/R-A-1,validated,I-3,direct read
+ENG VIBRATION - R,EICAS L/R-A-1,validated,I-3,direct read
+HYD PRES - C,EICAS L/R-A-1,validated,I-4,direct read
+HYD PRES - L,EICAS L/R-A-1,validated,I-4,direct read
+HYD PRES - R,EICAS L/R-A-1,validated,I-4,direct read
+HYD SYS LO PRESS - C,EICAS L/R-A-1,validated,I-4,direct read
+HYD SYS LO PRESS - L,EICAS L/R-A-1,validated,I-4,direct read
+HYD SYS LO PRESS - R,EICAS L/R-A-1,validated,I-4,direct read
+HYD RSVR PRESS < 17 - C/L/R,EICAS L/R-A-1,validated,I-4,direct read
+RUDDER POSITION,EICAS L/R-A-1,validated,I-6,direct read
+RUDDER PEDAL POSN,SYNCHRO,validated,I-6,direct read
+CABIN ALT > 10kft,EICAS L/R-A-1,validated,I-2,direct read
+CONTROL COLUMN POSN-CAPT,SYNCHRO,validated,I-2,direct read
+CONTROL WHEEL POSN-CAPT,SYNCHRO,validated,I-2,direct read
+COMPUTED AIRSPEED,ADC L/R-A-4,validated,I-2,direct read
+VERTICAL ACCELERATION,ACCEL,validated,,inferred from absence on I-8..I-10
+ENG N1-ACTUAL - L/R,EICAS L/R-A-1,validated,,inferred from absence on I-8..I-10
+ENG N2-ACTUAL - L/R,EICAS L/R-A-1,validated,,inferred from absence on I-8..I-10
+ALTITUDE (1013.25mB),ADC L/R-A-4,validated,,inferred from absence on I-8..I-10
+HYD SYS LO QTY - C,EICAS L/R-A-1,not_working_or_unconfirmed,I-9,direct read
+HYD SYS LO QTY - L,EICAS L/R-A-1,not_working_or_unconfirmed,I-9,direct read
+HYD SYS LO QTY - R,EICAS L/R-A-1,not_working_or_unconfirmed,I-9,direct read
+ENG EPR COMMAND - R,EICAS L/R-A-1,not_working_or_unconfirmed,I-8,direct read
+ENG EGT-LEFT,EICAS L/R-A-1,not_working_or_unconfirmed,I-8,direct read
+ENG EGT-RIGHT,EICAS L/R-A-1,not_working_or_unconfirmed,I-8,direct read
+ENG FUEL PRES - L,EICAS L/R-A-1,not_working_or_unconfirmed,I-8,direct read
+ENG FUEL PRES - R,EICAS L/R-A-1,not_working_or_unconfirmed,I-8,direct read
+ENG BLEED OFF - L/R,EICAS L/R-A-1,not_working_or_unconfirmed,I-8,direct read
+VIB IDENT 1-L / 1-R / 2-L / 2-R,EICAS L/R-A-1,not_working_or_unconfirmed,I-10,direct read
+YAW DAMPER ENGAGE L/R,YAW DMPR,not_working_or_unconfirmed,I-10,direct read
+VERTICAL DEVIATION,FMC L/R-D-4,not_working_or_unconfirmed,I-10,direct read
+TOTAL FUEL QUANTITY,FQPU,not_working_or_unconfirmed,I-10,direct read
+STATIC AIR TEMP,ADC L/R-A-4,not_working_or_unconfirmed,I-10,direct read
+RUDDER PCU,EICAS L/R-A-1,not_working_or_unconfirmed,I-10,direct read
+TRUE HEADING CAPT,EFIS L/C-A-1,not_working_or_unconfirmed,I-10,direct read
+ALTITUDE REPORTING,TCAS,not_working_or_unconfirmed,I-8,direct read
+ALTITUDE SELECT,TMC L-D-4,not_working_or_unconfirmed,I-8,direct read
+IDG OIL LEVEL - R,EICAS L/R-A-1,not_working_or_unconfirmed,I-9,direct read
+ICE DETECTOR - L/R,EICAS L/R-A-1,not_working_or_unconfirmed,I-9,direct read
