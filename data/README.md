@@ -53,9 +53,9 @@ Status is recorded **per channel, not per parameter name**, because they differ:
 `ENG EPR COMMAND - L` is validated and `ENG EPR COMMAND - R` is not.
 
 `established_by` says whether each row was read directly off the attachment or inferred from
-absence on the not-working list. Four rows are inferred rather than seen, and they are marked
-— including vertical acceleration, which is the weakest one to leave that way because the
-peak-g figure rests on it.
+absence on the not-working list. Every row is now read directly: vertical acceleration, which
+the peak-g figure rests on, is on Attachment I-7, N1 and N2 are on I-3, and pressure altitude
+(coarse and fine) is on I-1.
 
 ## The rest
 
@@ -64,7 +64,7 @@ peak-g figure rests on it.
 | `reconstruction.csv` / `.json` | 371 | 09:57:00–10:03:11, aircraft state and voices on one clock |
 | `ua93_ground_track.csv` | 320 | ground track polyline, uniform ~1.96 mi spacing |
 | `ua93_ntsb_anchors.csv` | 9 | the study's lettered events, the only points carrying a clock time |
-| `derived_figures.csv` | 17 | every computed number, with the method that produced it |
+| `derived_figures.csv` | 25 | every computed number, with the method that produced it |
 | `SOURCES.md` | — | source documents with byte counts and SHA-256 |
 
 ## How to read the certainty markers
@@ -102,6 +102,11 @@ absent thing cannot, and no request will ever produce it.
   nominal, steady from before pushback, on a validated channel with provably correct scaling.
   Unexplained. The nominal figure is an assumption, not something taken from a document for
   this airframe, so the anomaly may be in the baseline.
+- **AC BUS OFF and R ENG BLEED OVHT read an alert state from before takeoff.** AC BUS OFF - L
+  and - R read BUS OFF on every sample from 08:39:09, and R ENG BLEED OVHT reads OVHT on every
+  sample from 08:39:43. Both are validated channels. Neither is possible as a literal reading
+  (the recorder itself runs on AC power), so the labels are inverted or the channels are stuck,
+  and they are evidence of nothing.
 
 ## Reproducing it
 
@@ -112,8 +117,8 @@ the same file. `pymupdf` is the only non-standard dependency.
 ## Corrections
 
 This project publishes its own errors, dated, with the wrong version kept beside the right
-one. At the time of writing there are 21, most of them introduced here rather than by a
-source. If you find a twenty-second, that is the most useful thing you can send.
+one. At the time of writing there are 29, most of them introduced here rather than by a
+source. If you find a thirtieth, that is the most useful thing you can send.
 
 ## Provenance and use
 

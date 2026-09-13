@@ -52,18 +52,18 @@ export const BANDS = [
   { key: 'clean', label: 'Clean jet (not available to this claim)', mph: F16.maxAltitudeMph, color: 0xffffff,
     unavailable: true,
     provenance: 'DERIVED. 1,320 mph is this app\'s arithmetic, Mach 2.0 times the speed of sound at 40,000 ft. The USAF fact sheet gives 1,500 mph (Mach 2 at altitude), 180 mph higher. The band is ruled out for this claim either way, so the higher official figure changes nothing in the verdict.',
-    note: 'Mach 2.0 at altitude, drawn only so the ceiling is visible. The 1,320 mph figure is computed here; the USAF fact sheet gives 1,500 mph. It is not available to this claim: Mach 2.0 is a clean figure, clean means no external tanks, and the tanks are established by the Montana-to-Albany leg rather than assumed. An aircraft that flew that leg was carrying them, so its ceiling is the placarded Mach 1.6 above.' },
+    note: 'Mach 2.0 at altitude, drawn only so the ceiling is visible. The 1,320 mph figure is computed here; the USAF fact sheet gives 1,500 mph. It is not available to this claim: Mach 2.0 is a clean figure, clean means no external tanks, and the tanks are inferred from the Montana-to-Albany leg: even with the reported refuelling over Fargo, its Fargo-to-Albany piece of 1,159 miles is beyond a clean two-seat F-16. An aircraft that flew that leg on one refuelling was carrying them, so its ceiling is the placarded Mach 1.6 above.' },
 ];
 
 /* The trade the two fastest bands describe, stated once rather than left in a
    tooltip. */
 export const CONFIG_TRADE = {
-  title: 'The configuration is settled, and it sets the top speed',
+  title: 'The configuration is inferred, and it sets the top speed',
   clean: {
     label: 'Clean: ruled out',
     topMph: F16.maxAltitudeMph,
     radiusMi: F16.combatRadiusMi,
-    note: 'Mach 2.0 available, but no external fuel, and the documented Montana-to-Albany leg cannot be flown without external fuel. This configuration is not open to the claim.',
+    note: 'Mach 2.0 available, but no external fuel, and the documented Montana-to-Albany leg, refuelled once over Fargo as reported, cannot be flown without external fuel. This configuration is not open to the claim.',
     provenance: 'Top speed: DERIVED (see the clean band above; the fact sheet gives 1,500 mph). Radius: the 340-mile figure is 295 nmi from the F-16C Block 50/52 spec block, where it is a hi-lo-hi mission carrying four 1,000 lb bombs, not a clean airframe. The app labels it "unrefuelled, no external tanks", which is wrong. The USAF fact sheet separately gives more than 500 miles for the air-to-surface radius. The figure is not drawn anywhere.',
   },
   tanked: {
@@ -73,7 +73,7 @@ export const CONFIG_TRADE = {
     note: 'Ferry range near 2,450 miles, so the distance is easy. Reported placard of Mach 1.6, which is therefore the ceiling used for every version of this claim.',
     provenance: 'Top speed: REPORTED, primary document not obtained (see the dash band above). Ferry range: the app\'s 2,450 miles is not sourced to a retrievable document; the USAF fact sheet gives 2,002 miles ferry range, 448 lower. Radius: 578 miles is DERIVED, being 340 x 1.7, the app\'s own arithmetic. A published figure exists for this exact fit — two 370-gallon tanks, one 300-gallon tank, two AIM-9 and two AIM-120 — and it is 865 nmi, or 995 statute miles. The app\'s number understates the airframe by about 40%, which makes the flying harder for the claim than the sources do.',
   },
-  reading: 'Nobody observed the aircraft\'s configuration directly, but the Montana leg settles it: he was carrying tanks [[dropTanks]], so he had the range and did not have Mach 2.0 [[mach]]. The reported tanked placard [[placard]], Mach 1.6, is the ceiling used for every version of the claim. The flight manual establishes that external stores reduce the airspeed limit; the Mach 1.6 value itself comes from a source that could not be retrieved, so it is carried here as reported rather than cited.',
+  reading: 'Nobody observed the aircraft\'s configuration directly, but the Montana leg points to it: if the refuelling reported over Fargo was his only one, he was carrying tanks [[dropTanks]], so he had the range and did not have Mach 2.0 [[mach]]. The reported tanked placard [[placard]], Mach 1.6, is the ceiling used for every version of the claim. The flight manual establishes that external stores reduce the airspeed limit; the Mach 1.6 value itself comes from a source that could not be retrieved, so it is carried here as reported rather than cited.',
   src: 'derived',
   refs: ['F16'],
 };
@@ -89,9 +89,10 @@ export const CONFIG_TRADE = {
    you wait", which was true of the ring and misleading about the claim. That
    error is logged in the discrepancy register.
 
-   And it describes an aircraft this one demonstrably was not. Combat radius
-   with no tanks presumes no tanks; the Montana-to-Albany leg shows the tanks
-   were fitted. Drawing a limit for a configuration the record rules out is an
+   And it describes an aircraft this one very likely was not. Combat radius
+   with no tanks presumes no tanks; the Montana-to-Albany leg, with its one
+   reported refuelling over Fargo, implies the tanks were fitted. Drawing a
+   limit for a configuration the record makes unlikely is an
    error that flatters the argument. The 340-mile figure is also mislabelled at
    source: it is a strike profile carrying four 1,000 lb bombs.
 
@@ -131,8 +132,8 @@ export const reachMi = (mph, seconds) => Math.max(0, mph * (seconds / 3600));
 /* =============================================================================
    Departure-time tolerance, and why the rings have thickness
 
-   A single ring asserts a departure time to the minute. No departure time for
-   Gibney has ever been published — repeated searching turns up the route and
+   A single ring asserts a departure time to the minute. No departure time from
+   Fargo has ever been published — repeated searching turns up the route and
    the tasking and no clock, so a hairline ring is false precision, and the
    band is the accurate shape.
 

@@ -18,8 +18,9 @@
    no weather, no turnaround, the two-seat problem waved away, and an order that
    did not exist. Every one of those is granted simultaneously.
 
-   Fuel is not on that list. The external tanks are not an assumption this app
-   makes for the claim; they follow from the claim's own documented mission.
+   Fuel is on that list as an inference rather than a free assumption. The
+   external tanks follow from the claim's own documented mission only if its
+   eastbound leg was refuelled once, over Fargo, and no record documents that.
    See below.
 
    PROVENANCE OF THE CONDITIONS
@@ -67,30 +68,35 @@ export const HYPO = {
 
 
 /* =============================================================================
-   THE FUEL IS NOT A CONCESSION
+   THE FUEL IS AN INFERENCE
 
-   The app used to hand the claim its external tanks as a favour. The tanks are
-   a finding instead, and they follow from the mission nobody disputes.
+   The app once handed the claim its external tanks as a favour, and then
+   treated them as established by the mission. They are an inference from the
+   mission, and the inference depends on how the eastbound leg was refuelled.
 
-   Bozeman to Albany is one leg of 1,843 miles. Flight-manual figures give
-   6,400 lb of external fuel against 6,950 lb internal in a single-seater, so
-   the tank fit adds about 92% and a clean airframe reaches roughly half the
-   tanked ferry range — on the app's 2,450-mile ferry figure, about 1,225
-   miles, and that is generous, because tanks add drag as well as fuel.
-   Carrying a passenger forces a two-seat F-16B/D with 18.7% less internal
-   fuel, which brings a clean aircraft down to about 996 miles. The leg is 1.85
-   times that. No configuration without external tanks flies it, and there was
-   no aerial refuelling.
+   Bozeman to Albany is 1,843 miles. The aircraft refuelled in the air roughly
+   over Fargo, which splits the leg into Bozeman to Fargo, 687 miles, and Fargo
+   to Albany, 1,159 miles. Flight-manual figures give 6,400 lb of external fuel
+   against 6,950 lb internal in a single-seater, so the tank fit adds about 92%
+   and a clean airframe reaches roughly half the tanked ferry range — on the
+   app's 2,450-mile ferry figure, about 1,225 miles, and that is generous,
+   because tanks add drag as well as fuel. Carrying a passenger forces a
+   two-seat F-16B/D with 18.7% less internal fuel, which brings a clean
+   aircraft down to about 996 miles. Bozeman to Fargo is 0.69 times that and
+   Fargo to Albany 1.16 times. With one refuelling the second piece needs the
+   tanks. No record documents a single refuelling, so the tanks are inferred
+   on that assumption rather than established.
 
    On the USAF fact sheet's ferry figure of 2,002 miles the same arithmetic
-   gives about 814 miles for a clean two-seater and the leg is 2.26 times that,
-   so the finding holds on either number. The app's 2,450 is the weaker of the
-   two for this argument. See `open` on the first concession.
+   gives about 814 miles for a clean two-seater, and the two pieces are 0.84
+   and 1.42 times that, so the inference holds on either number. The app's
+   2,450 is the weaker of the two for this argument. See `open` on the first
+   concession.
 
    THE SAME MISSION CONSTRAINS THE ROUTE
 
-   The documented mission that establishes the tanks also establishes the
-   route, and the steelman only closes because it omits the middle of it. Fargo
+   The documented mission that implies the tanks also establishes the route,
+   and the steelman only closes because it omits the middle of it. Fargo
    straight to Somerset County is 1,012 miles and needs about Mach 1.26, which
    works. Fargo via Bozeman to Somerset County is 2,354 miles in the same 71
    minutes, which needs about Mach 2.9: roughly twice the Mach 1.6 placarded
@@ -99,8 +105,9 @@ export const HYPO = {
    the ground at Bozeman, and he had to land there, shut down enough to board a
    civilian, and get airborne again.
 
-   The documented mission establishes either the fuel or the route. The claim
-   needs the first and does not survive the second.
+   The documented mission implies the fuel and establishes the route. The claim
+   needs the first and does not survive the second, and the second does not
+   depend on the first: Mach 2.9 is above even a clean jet's Mach 2.0.
    ========================================================================== */
 
 /* A two-seat F-16B/D trades internal fuel for the second cockpit.
@@ -114,6 +121,9 @@ export const TWO_SEAT_FUEL_PENALTY = 0.187;
 export function fuelProof() {
   const legFB = haversineMi(PLACES.KFAR, PLACES.KBZN);
   const legBA = haversineMi(PLACES.KBZN, PLACES.KALB);
+  // The eastbound leg was refuelled roughly over Fargo, so it flies in two
+  // pieces: Bozeman to Fargo, which is legFB, and Fargo to Albany.
+  const legFA = haversineMi(PLACES.KFAR, PLACES.KALB);
 
   // Tanks add about 92% to a single-seater's internal fuel, so clean is about
   // half of tanked ferry. DERIVED from F16.ferryRangeMi.
@@ -125,6 +135,7 @@ export function fuelProof() {
   return {
     legFB,
     legBA,
+    legFA,
     dayMi: legFB + legBA,
     cleanFerryMi,
     twoSeatCleanMi,
@@ -184,17 +195,21 @@ export function bozemanCost(targetLatLon, departEDT, interceptEDT) {
 export const CONCESSIONS = [
   {
     grant: 'He has the fuel',
-    detail: 'Two 370-gallon wing tanks and a 300-gallon centreline tank. The flight manual gives 6,400 lb of external fuel against 6,950 lb internal in a single-seater and 5,650 lb in a two-seater: about 92% more fuel in the first case, about 113% in the second.',
-    status: 'CITED',
-    source: 'Tank fit: Eaton Mission Systems / Blue Aerospace F-16 wing and centreline tank datasheet, 370-gallon wing and 300-gallon centreline assemblies with part numbers. Fuel quantities: USAF T.O. 1F-16A-1 flight manual, figure 1-21, Fuel Quantity Data. Carrying two AIM-9 and two external tanks on one payload line: USAF F-16 fact sheet.',
-    derived: 'The 1,040-gallon external total is this app\'s arithmetic (2 x 370 + 300). The clean and two-seat ranges below are computed here from F16.ferryRangeMi.',
-    open: 'The 2,450-mile ferry range this app uses is not sourced to a retrievable document. The USAF fact sheet gives 2,002 miles, 448 lower. On the official figure a clean two-seater reaches about 814 miles and the Bozeman-Albany leg is 2.26 times that rather than 1.85, so the finding survives and gets stronger.',
-    cost: 'CITED: not a concession. The documented mission, flown nonstop as reported, establishes it.',
-    costFn: (c) => `CITED: not a concession. Bozeman to Albany is a single `
-      + `leg of ${Math.round(c.fuel.legBA).toLocaleString()} miles, and a clean two-seat F-16D `
-      + `reaches about ${Math.round(c.fuel.twoSeatCleanMi).toLocaleString()}. The leg is `
-      + `${c.fuel.shortfall.toFixed(1)}× that, and there was no aerial refuelling, so the tanks `
-      + `are established by the mission rather than granted by this app.`,
+    detail: 'Two 370-gallon wing tanks and a 300-gallon centreline tank. The flight manual gives 6,400 lb of external fuel against 6,950 lb internal in a single-seater and 5,650 lb in a two-seater: about 92% more fuel in the first case, about 113% in the second. The Bozeman-Albany leg was refuelled in the air roughly over Fargo, which splits it into Bozeman to Fargo, 687 miles, and Fargo to Albany, 1,159 miles. A clean two-seat F-16 reaches about 996 miles on this app\'s figure, so the second piece needs the tanks if that was the only refuelling.',
+    status: 'GRANTED',
+    source: 'Tank fit: Eaton Mission Systems / Blue Aerospace F-16 wing and centreline tank datasheet, 370-gallon wing and 300-gallon centreline assemblies with part numbers. Fuel quantities: USAF T.O. 1F-16A-1 flight manual, figure 1-21, Fuel Quantity Data. Carrying two AIM-9 and two external tanks on one payload line: USAF F-16 fact sheet. Refuelling in the air roughly above Fargo on the eastbound leg: Dave Roepke, "Unforgettable day", The Forum of Fargo-Moorhead, 25 August 2011, the only retrieved source for it.',
+    derived: 'The 1,040-gallon external total is this app\'s arithmetic (2 x 370 + 300). The clean and two-seat ranges below are computed here from F16.ferryRangeMi, and the Bozeman-Fargo and Fargo-Albany distances from the airfield positions.',
+    open: 'The 2,450-mile ferry range this app uses is not sourced to a retrievable document. The USAF fact sheet gives 2,002 miles, 448 lower. On the official figure a clean two-seater reaches about 814 miles, Bozeman to Fargo is 0.84 times that and Fargo to Albany 1.42 times rather than 1.16, so the inference survives and gets stronger. The refuelling rests on one press account; no record times it, and none documents that it was the only one.',
+    cost: 'GRANTED: inferred, not established. With one refuelling roughly over Fargo, the Fargo-Albany piece is longer than a clean two-seat F-16 flies, so the tanks follow only if there was a single refuelling, which no record documents.',
+    costFn: (c) => `GRANTED: inferred, not established. The Bozeman-Albany leg was refuelled in the air `
+      + `roughly over Fargo, so it flies in two pieces: Bozeman to Fargo, `
+      + `${Math.round(c.fuel.legFB).toLocaleString()} miles, and Fargo to Albany, `
+      + `${Math.round(c.fuel.legFA).toLocaleString()} miles. A clean two-seat F-16 reaches about `
+      + `${Math.round(c.fuel.twoSeatCleanMi).toLocaleString()}. The first piece is `
+      + `${(c.fuel.legFB / c.fuel.twoSeatCleanMi).toFixed(2)}× that and the second `
+      + `${(c.fuel.legFA / c.fuel.twoSeatCleanMi).toFixed(2)}×, so with one refuelling the second `
+      + `piece needs the tanks. No record documents a single refuelling, so the tanks are inferred `
+      + `on that assumption rather than established by the mission.`,
     blocking: false,
   },
   {
@@ -210,8 +225,8 @@ export const CONCESSIONS = [
     detail: '08:46:40 — the first impact, the first instant anyone had reason to act.',
     status: 'GRANTED',
     source: '08:46:40 is the 9/11 Commission\'s impact time for American 11.',
-    open: 'No departure time for Gibney has ever been published. The route and the tasking are on the record; the clock is not.',
-    cost: 'GRANTED: an assumption. It is cheap, but no departure time for Gibney has ever been published.',
+    open: 'No departure time from Fargo has ever been published. The route and the tasking are on the record; the morning clock is not. FAA records time only his afternoon leg from Bozeman.',
+    cost: 'GRANTED: an assumption. It is cheap, but no departure time from Fargo has ever been published.',
     blocking: false,
   },
   {
@@ -263,7 +278,7 @@ export const CONCESSIONS = [
     open: 'The placarded Mach 1.6 limit that the multiple is measured against is reported rather than sourced: the only attestation is a forum post quoting a personal F-16 Block 40 flight manual, and the primary stores-limitations manual (T.O. 1F-16C-1-3 / 1F-16C-1-4, figure 5-11) was not obtained.',
     cost: 'CITED against: Jacoby was in Bozeman; adding it to the route breaks the kinematics.',
     costFn: (c) => `CITED against: Jacoby was in Bozeman. He was collected, he reached Albany, and he has said on `
-      + `the record that Gibney flew him. The documented mission that shows the tanks also shows `
+      + `the record that Gibney flew him. The documented mission that implies the tanks also shows `
       + `the route. Fargo straight to the intercept is `
       + `${Math.round(c.boz.directMi).toLocaleString()} mi, Mach ${c.boz.directMach.toFixed(2)}, `
       + `which works. Fargo via Bozeman is ${Math.round(c.boz.viaMi).toLocaleString()} mi in the same `
@@ -413,7 +428,7 @@ export function criticSnapshots(hypoTrack, ua93Path, interceptEDT) {
 
 export const VERDICT = {
   headline: 'The flight is within the aircraft\'s performance. The knowledge, tracking, order and witness the claim needs are absent from the record.',
-  body: 'The fuel is not in dispute: the documented Montana-to-Albany leg, flown nonstop as reported, is 1,843 miles, which no clean F-16 flies, so the external tanks are established rather than granted. Add the missiles, the earliest permitted launch and a perfect heading, and the run to Somerset County needs about Mach 1.2 sustained, inside the placarded limit for a tanked jet and about 40% of its ferry range. Speed and fuel do not rule it out. Four other conditions do: the launch requires knowing at 08:46 what would not happen until 09:28; the sector had no track on the aircraft until four minutes after it crashed; no order to fire is documented before about 10:10 and none reached the sector until 10:31; and the mission that shows the fuel also puts Bozeman in the route, which pushes the intercept to about Mach 2.9, nearly twice what a tanked F-16 is permitted.',
+  body: 'The fuel is inferred rather than established: the documented Montana-to-Albany leg was refuelled in the air roughly over Fargo, and its Fargo-to-Albany piece, 1,159 miles, is more than a clean two-seat F-16 flies, so the external tanks follow if that was the only refuelling, which no record documents. Add the missiles, the earliest permitted launch and a perfect heading, and the run to Somerset County needs about Mach 1.2 sustained, inside the placarded limit for a tanked jet and about 40% of its ferry range. Speed and fuel do not rule it out. Four other conditions do: the launch requires knowing at 08:46 what would not happen until 09:28; the sector had no track on the aircraft until four minutes after it crashed; no order to fire is documented before about 10:10 and none reached the sector until 10:31; and the mission that implies the fuel also puts Bozeman in the route, which pushes the intercept to about Mach 2.9, nearly twice what a tanked F-16 is permitted.',
   src: 'derived',
 };
 

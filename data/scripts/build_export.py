@@ -241,10 +241,35 @@ PARAMS = [
     ('CONTROL COLUMN POSN-CAPT', 'SYNCHRO', 'validated', 'I-2', 'direct read'),
     ('CONTROL WHEEL POSN-CAPT', 'SYNCHRO', 'validated', 'I-2', 'direct read'),
     ('COMPUTED AIRSPEED', 'ADC L/R-A-4', 'validated', 'I-2', 'direct read'),
-    ('VERTICAL ACCELERATION', 'ACCEL', 'validated', '', 'inferred from absence on I-8..I-10'),
-    ('ENG N1-ACTUAL - L/R', 'EICAS L/R-A-1', 'validated', '', 'inferred from absence on I-8..I-10'),
-    ('ENG N2-ACTUAL - L/R', 'EICAS L/R-A-1', 'validated', '', 'inferred from absence on I-8..I-10'),
-    ('ALTITUDE (1013.25mB)', 'ADC L/R-A-4', 'validated', '', 'inferred from absence on I-8..I-10'),
+    ('AC BUS OFF - L', 'EICAS L/R-A-1', 'validated', 'I-1', 'direct read'),
+    ('AC BUS OFF - R', 'EICAS L/R-A-1', 'validated', 'I-1', 'direct read'),
+    ('AFT CARGO FIRE', 'EICAS L/R-A-1', 'validated', 'I-1', 'direct read'),
+    ('APU BLEED VALVE', 'EICAS L/R-A-1', 'validated', 'I-1', 'direct read'),
+    ('APU BUS AC VOLTS', 'EICAS L/R-A-1', 'validated', 'I-1', 'direct read'),
+    ('APU EGT', 'EICAS L/R-A-1', 'validated', 'I-1', 'direct read'),
+    ('APU FAULT', 'EICAS L/R-A-1', 'validated', 'I-1', 'direct read'),
+    ('APU FIRE', 'EICAS L/R-A-1', 'validated', 'I-1', 'direct read'),
+    ('APU GEN APB OPEN', 'EICAS L/R-A-1', 'validated', 'I-1', 'direct read'),
+    ('APU LOW OIL QUANT', 'EICAS L/R-A-1', 'validated', 'I-1', 'direct read'),
+    ('APU RPM', 'EICAS L/R-A-1', 'validated', 'I-1', 'direct read'),
+    ('ECS PACK ON/OFF LEFT', 'TMC L-D-4', 'validated', 'I-2', 'direct read'),
+    ('ECS PACK ON/OFF RIGHT', 'TMC L-D-4', 'validated', 'I-2', 'direct read'),
+    ('MASTER CAUTION LIGHT', 'EICAS L/R-A-1', 'validated', 'I-5', 'direct read'),
+    ('MASTER WARNING CAPT', 'WEU WARN', 'validated', 'I-5', 'direct read'),
+    ('MASTER WARNING F/O', 'WEU WARN', 'validated', 'I-5', 'direct read'),
+    ('OVERSPEED', 'ADC L/R-A-4', 'validated', 'I-5', 'direct read'),
+    ('R ENG BLEED OVHT', 'EICAS L/R-A-1', 'validated', 'I-5', 'direct read'),
+    ('STAB POSITION', 'FCC C-A-4 / FCC L-A-4 / FCC R-A-4 / MCP A-A-2', 'validated', 'I-6', 'direct read'),
+    ('STAB TRIM FAULT', 'EICAS L/R-A-1', 'validated', 'I-6', 'direct read'),
+    ('STAB TRIM MODULE', 'EICAS L/R-A-1', 'validated', 'I-6', 'direct read'),
+    ('UNSCHED STAB MOVE', 'EICAS L/R-A-1', 'validated', 'I-6', 'direct read'),
+    ('YAW DAMPER - L', 'EICAS L/R-A-1', 'validated', 'I-7', 'direct read'),
+    ('YAW DAMPER - R', 'EICAS L/R-A-1', 'validated', 'I-7', 'direct read'),
+    ('YAW DAMPER MODULE', 'EICAS L/R-A-1', 'validated', 'I-7', 'direct read'),
+    ('VERTICAL ACCELERATION', 'ACCEL', 'validated', 'I-7', 'direct read'),
+    ('ENG N1-ACTUAL - L/R', 'EICAS L/R-A-1', 'validated', 'I-3', 'direct read'),
+    ('ENG N2-ACTUAL - L/R', 'EICAS L/R-A-1', 'validated', 'I-3', 'direct read'),
+    ('ALTITUDE (1013.25mB)', 'ADC L/R-A-4', 'validated', 'I-1', 'direct read'),
     ('HYD SYS LO QTY - C', 'EICAS L/R-A-1', 'not_working_or_unconfirmed', 'I-9', 'direct read'),
     ('HYD SYS LO QTY - L', 'EICAS L/R-A-1', 'not_working_or_unconfirmed', 'I-9', 'direct read'),
     ('HYD SYS LO QTY - R', 'EICAS L/R-A-1', 'not_working_or_unconfirmed', 'I-9', 'direct read'),
@@ -265,6 +290,9 @@ PARAMS = [
     ('ALTITUDE SELECT', 'TMC L-D-4', 'not_working_or_unconfirmed', 'I-8', 'direct read'),
     ('IDG OIL LEVEL - R', 'EICAS L/R-A-1', 'not_working_or_unconfirmed', 'I-9', 'direct read'),
     ('ICE DETECTOR - L/R', 'EICAS L/R-A-1', 'not_working_or_unconfirmed', 'I-9', 'direct read'),
+    ('APU BUS FREQ', 'EICAS L/R-A-1', 'not_working_or_unconfirmed', 'I-8', 'direct read'),
+    ('APU LOAD', 'EICAS L/R-A-1', 'not_working_or_unconfirmed', 'I-8', 'direct read'),
+    ('APU OIL LEVEL', 'EICAS L/R-A-1', 'not_working_or_unconfirmed', 'I-8', 'direct read'),
 ]
 with io.open(os.path.join(OUT, 'fdr_parameter_status.csv'), 'w', encoding='utf-8', newline='') as f:
     w = csv.writer(f)
@@ -283,7 +311,8 @@ DERIVED = [
     ('maximum lateral acceleration', '0.112 g', '10:02:00', 'measured', 'Whole flight, on a channel with +/-1 g full scale.'),
     ('altitude at last sample', '2189 ft', '10:03:09', 'measured',
      'Pressure altitude on the 1013.25 mB datum. Crash site terrain is about 2,370 ft MSL, so this is ground level.'),
-    ('apex of the final climb', '9827 ft', '10:02:20', 'measured', 'The aircraft never regains 10,000 ft after 09:54:50.'),
+    ('apex of the final climb', '9902 ft', '10:02:15', 'measured',
+     'Maximum of the per-second pressure altitude samples. The NTSB anchor H at 10:02 reads 9,827 ft, which is five seconds past the apex and is not the maximum.'),
     ('sink rate, last recorded second', '575 ft/s', '10:03:08 to 10:03:09', 'derived',
      '2764 ft minus 2189 ft over one second.'),
     ('sink rate doubles after the roll passes 90 deg', '229 to 456 ft/s', '10:03:02 to 10:03:07', 'derived',
@@ -304,6 +333,22 @@ DERIVED = [
      'Solved from the ATC vector to heading 030 and the radio call. The app previously drew 11 to 12 o clock, which contradicted the call it quoted.'),
     ('UA93 heading after the turnaround vs the Capitol', '117.5 deg flown, 118.4 deg to the Capitol, 91.9 deg to Newark', '', 'derived',
      'Great-circle bearings from the westernmost track point. The NTSB records the turn as flown in autopilot heading select mode.'),
+    ('auxiliary power unit speed (APU RPM)', '0.0 per cent', '08:39:42 to 10:02:54', 'measured',
+     'All 79 samples in the NTSB tabulation, one every 64 s. Validated channel (Attachment I-1). APU BUS AC VOLTS reads 2.5 VAC on all 79. The APU was not running at any point in the recording.'),
+    ('auxiliary power unit exhaust temperature (APU EGT)', '6 to 8 deg C', 'whole flight', 'measured',
+     'All 79 samples, one every 64 s, the last at 10:02:50. 8 deg C from 08:50:18 to 08:57:46, 6 deg C otherwise. Validated channel (Attachment I-1). APU FIRE, APU FAULT and AFT CARGO FIRE read normal to the end.'),
+    ('overspeed warning on', '10:02:39', '10:02:39 to 10:03:09', 'measured',
+     'OVERSPEED, validated channel, on from 10:02:39 to the last sample. COMPUTED AIRSPEED rises every second from 338 kt at 10:02:28 to 487.5 kt at 10:03:09. The only other overspeed is 09:44:37 to 09:45:40. The FBI transcript starts a loud air noise at 10:02:43.1.'),
+    ('both air-conditioning packs switched off', 'between 10:01:17 and 10:01:21', '10:01:17 to 10:01:21', 'measured',
+     'ECS PACK ON/OFF LEFT and RIGHT read ON to 10:01:17 and OFF from 10:01:21 to the last sample. CAM-1 Cut off the oxygen! is at 10:01:16.9 on the CVR. The recorder does not show who moved the switches.'),
+    ('CVR alert tones matching the master caution light', '09:46:03.2, 09:59:57.8, 10:02:32.1', '', 'derived',
+     'MASTER CAUTION LIGHT, sampled every 4 s, comes on at 09:46:04, 10:00:00 and 10:02:32. Each onset falls within one 4 s sample of a tone set in the FBI transcript (four, three and four tones). The 09:45:42.3 tones fall with the master caution off on both neighbouring samples and stay unexplained.'),
+    ('CVR alert tones after leaving the selected altitude by 300 ft', '09:59:57.8, 10:03:05.5', '', 'derived',
+     'Selected altitude 4,992 ft from 09:48:32. The aircraft moves more than 300 ft off it at 09:59:56 (5,317 ft) and 10:03:04 (4,552 ft), about 2 s before each tone set. No crossing back inside 300 ft produced a tone. No altitude alert channel is recorded, so this is a timing match only.'),
+    ('NODAK99 departure from Bozeman', 'near 15:39 EDT (19:39Z)', '15:39', 'derived',
+     'No wind, filed true airspeed 500 kt, no refuelling time. Bozeman to Toronto 1,544 mi is about 161 min, counted back from the 22:20Z Toronto estimate in the flight plan Toronto Centre held at 21:39Z (NARA NAID 7599510). Refuelling time moves it earlier, a tailwind later. Toronto to Albany 300 mi is about 31 min, which agrees with the 22:49Z Albany arrival on the ALB TRACON strip (NARA NAID 7601591). The records do not name the pilot.'),
+    ('Fargo off the Bozeman-Albany great circle', '56 mi north, 685 mi along its 1,843 mi', '', 'derived',
+     'Cross-track and along-track great-circle distances. Bozeman to Fargo is 687 mi and Fargo to Albany 1,159 mi. No record times or places the refuelling; InForum 2011 puts it roughly above Fargo.'),
 ]
 with io.open(os.path.join(OUT, 'derived_figures.csv'), 'w', encoding='utf-8', newline='') as f:
     w = csv.writer(f)
@@ -312,18 +357,28 @@ with io.open(os.path.join(OUT, 'derived_figures.csv'), 'w', encoding='utf-8', ne
 print('derived_figures.csv: %d rows' % len(DERIVED))
 
 # =============================================================== checksums ====
+IA_TAB = ('NTSB Attachment III. Internet Archive item https://archive.org/details/NTSB_FOIA_Appeal_2012-00001-A_Nov_10_2011, '
+          'folder `111028_0837_NTSB-Appeal_No._FOIA-2012-00001-9-11_Records/UA93-FDR-Tabular_files`')
 SRC = [
     ('UA93_CVR.pdf', 'FBI transcript of the United 93 cockpit voice recorder',
      'https://www.nps.gov/flni/learn/historyculture/upload/CVR-Transcript.pdf'),
     ('UAL93FDR.pdf', 'NTSB Specialists Factual Report, Digital Flight Data Recorder, DCA01MA065, 15 Feb 2002',
      'https://nsarchive2.gwu.edu/NSAEBB/NSAEBB196/doc04.pdf'),
-    ('DCA01MA065_tabAtoE.csv', 'NTSB tabulated FDR parameters A to E', 'NTSB Attachment III'),
-    ('DCA01MA065_tabFtoL.csv', 'NTSB tabulated FDR parameters F to L', 'NTSB Attachment III'),
-    ('DCA01MA065_tabMtoT.csv', 'NTSB tabulated FDR parameters M to T', 'NTSB Attachment III'),
-    ('DCA01MA065_tabUtoZ.csv', 'NTSB tabulated FDR parameters U to Z', 'NTSB Attachment III'),
+    ('DCA01MA065_tabAtoE.csv', 'NTSB tabulated FDR parameters A to E', IA_TAB),
+    ('DCA01MA065_tabFtoL.csv', 'NTSB tabulated FDR parameters F to L', IA_TAB),
+    ('DCA01MA065_tabMtoT.csv', 'NTSB tabulated FDR parameters M to T', IA_TAB),
+    ('DCA01MA065_tabUtoZ.csv', 'NTSB tabulated FDR parameters U to Z', IA_TAB),
     ('757UALmap.xls', 'United Airlines 757 DFDR data frame layout', 'NTSB Attachment IV'),
     ('V_757.txt', 'United Airlines 757-3b parameter database dump, 1110 parameters',
      'http://www.warrenstutt.com/NTSBFOIARequest2-1-09/CDROM/757-3b_1.TXT'),
+    ('ZBW_FD_TRASH.TXT', 'Boston ARTCC flight-data message file, 11 Sep 2001, catalogue title 5 ZBW 70 FD SEPT 11 TRASH.TXT. '
+     'Holds the NODAK99 and NODAC99 F-16 flight plans. FAA 9/11 records, Record Group 237, NARA NAID 7599510',
+     'https://catalog.archives.gov/id/7599510'),
+    ('ALB_TRACON_strips_91101.pdf', 'Albany TRACON flight strips, 11 Sep 2001, catalogue title 5 ALB 7 Flight Strips ALB TRACON 91101.pdf. '
+     'NODAK99 and NODAC99 strips on page 12. FAA 9/11 records, Record Group 237, NARA NAID 7601591',
+     'https://catalog.archives.gov/id/7601591'),
+    ('nd_hj_2007_hr10.pdf', 'North Dakota House Journal, 60th Legislative Assembly, 16 January 2007',
+     'https://www.ndlegis.gov/assembly/60-2007/regular/journals/HR10.pdf'),
 ]
 lines = []
 for fn, desc, url in SRC:
@@ -333,8 +388,9 @@ for fn, desc, url in SRC:
         continue
     lines.append('| `%s` | %s | %d | `%s` | %s |' % (fn, desc, os.path.getsize(p), sha256(p), url))
 io.open(os.path.join(OUT, 'SOURCES.md'), 'w', encoding='utf-8').write(
-    '# Sources\n\nThe large source documents are not redistributed here. They are US Government works and\n'
-    'freely available. Each is listed with a byte count and a SHA-256 so you can confirm you have the\n'
-    'same file these data were built from.\n\n'
+    '# Sources\n\nThe large source documents are not redistributed here. They are US Government works, apart from\n'
+    'the North Dakota House Journal, which is a state record, and all are freely available. Each is\n'
+    'listed with a byte count and a SHA-256 so you can confirm you have the same file these data were\n'
+    'built from.\n\n'
     '| file | what it is | bytes | sha256 | where |\n|---|---|---|---|---|\n' + '\n'.join(lines) + '\n')
 print('SOURCES.md written')

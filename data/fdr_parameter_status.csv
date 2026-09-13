@@ -32,10 +32,35 @@ CABIN ALT > 10kft,EICAS L/R-A-1,validated,I-2,direct read
 CONTROL COLUMN POSN-CAPT,SYNCHRO,validated,I-2,direct read
 CONTROL WHEEL POSN-CAPT,SYNCHRO,validated,I-2,direct read
 COMPUTED AIRSPEED,ADC L/R-A-4,validated,I-2,direct read
-VERTICAL ACCELERATION,ACCEL,validated,,inferred from absence on I-8..I-10
-ENG N1-ACTUAL - L/R,EICAS L/R-A-1,validated,,inferred from absence on I-8..I-10
-ENG N2-ACTUAL - L/R,EICAS L/R-A-1,validated,,inferred from absence on I-8..I-10
-ALTITUDE (1013.25mB),ADC L/R-A-4,validated,,inferred from absence on I-8..I-10
+AC BUS OFF - L,EICAS L/R-A-1,validated,I-1,direct read
+AC BUS OFF - R,EICAS L/R-A-1,validated,I-1,direct read
+AFT CARGO FIRE,EICAS L/R-A-1,validated,I-1,direct read
+APU BLEED VALVE,EICAS L/R-A-1,validated,I-1,direct read
+APU BUS AC VOLTS,EICAS L/R-A-1,validated,I-1,direct read
+APU EGT,EICAS L/R-A-1,validated,I-1,direct read
+APU FAULT,EICAS L/R-A-1,validated,I-1,direct read
+APU FIRE,EICAS L/R-A-1,validated,I-1,direct read
+APU GEN APB OPEN,EICAS L/R-A-1,validated,I-1,direct read
+APU LOW OIL QUANT,EICAS L/R-A-1,validated,I-1,direct read
+APU RPM,EICAS L/R-A-1,validated,I-1,direct read
+ECS PACK ON/OFF LEFT,TMC L-D-4,validated,I-2,direct read
+ECS PACK ON/OFF RIGHT,TMC L-D-4,validated,I-2,direct read
+MASTER CAUTION LIGHT,EICAS L/R-A-1,validated,I-5,direct read
+MASTER WARNING CAPT,WEU WARN,validated,I-5,direct read
+MASTER WARNING F/O,WEU WARN,validated,I-5,direct read
+OVERSPEED,ADC L/R-A-4,validated,I-5,direct read
+R ENG BLEED OVHT,EICAS L/R-A-1,validated,I-5,direct read
+STAB POSITION,FCC C-A-4 / FCC L-A-4 / FCC R-A-4 / MCP A-A-2,validated,I-6,direct read
+STAB TRIM FAULT,EICAS L/R-A-1,validated,I-6,direct read
+STAB TRIM MODULE,EICAS L/R-A-1,validated,I-6,direct read
+UNSCHED STAB MOVE,EICAS L/R-A-1,validated,I-6,direct read
+YAW DAMPER - L,EICAS L/R-A-1,validated,I-7,direct read
+YAW DAMPER - R,EICAS L/R-A-1,validated,I-7,direct read
+YAW DAMPER MODULE,EICAS L/R-A-1,validated,I-7,direct read
+VERTICAL ACCELERATION,ACCEL,validated,I-7,direct read
+ENG N1-ACTUAL - L/R,EICAS L/R-A-1,validated,I-3,direct read
+ENG N2-ACTUAL - L/R,EICAS L/R-A-1,validated,I-3,direct read
+ALTITUDE (1013.25mB),ADC L/R-A-4,validated,I-1,direct read
 HYD SYS LO QTY - C,EICAS L/R-A-1,not_working_or_unconfirmed,I-9,direct read
 HYD SYS LO QTY - L,EICAS L/R-A-1,not_working_or_unconfirmed,I-9,direct read
 HYD SYS LO QTY - R,EICAS L/R-A-1,not_working_or_unconfirmed,I-9,direct read
@@ -56,3 +81,6 @@ ALTITUDE REPORTING,TCAS,not_working_or_unconfirmed,I-8,direct read
 ALTITUDE SELECT,TMC L-D-4,not_working_or_unconfirmed,I-8,direct read
 IDG OIL LEVEL - R,EICAS L/R-A-1,not_working_or_unconfirmed,I-9,direct read
 ICE DETECTOR - L/R,EICAS L/R-A-1,not_working_or_unconfirmed,I-9,direct read
+APU BUS FREQ,EICAS L/R-A-1,not_working_or_unconfirmed,I-8,direct read
+APU LOAD,EICAS L/R-A-1,not_working_or_unconfirmed,I-8,direct read
+APU OIL LEVEL,EICAS L/R-A-1,not_working_or_unconfirmed,I-8,direct read

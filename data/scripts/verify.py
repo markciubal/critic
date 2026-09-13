@@ -41,9 +41,9 @@ check('lines of English as spoken', sum(1 for r in cvr if r['language'] == 'engl
 check('lines translated from Arabic', sum(1 for r in cvr if r['language'] == 'translated_arabic'), 54)
 
 st = list(csv.DictReader(io.open(os.path.join(D, 'fdr_parameter_status.csv'), encoding='utf-8')))
-check('channels marked not working', sum(1 for r in st if r['status'] != 'validated'), 20)
+check('channels marked not working', sum(1 for r in st if r['status'] != 'validated'), 23)
 check('validated rows resting on absence, not sight',
-      sum(1 for r in st if r['status'] == 'validated' and 'absence' in r['established_by']), 4)
+      sum(1 for r in st if r['status'] == 'validated' and 'absence' in r['established_by']), 0)
 
 trk = list(csv.reader(io.open(os.path.join(D, 'ua93_ground_track.csv'), encoding='utf-8')))[1:]
 check('ground track points', len(trk), 320)

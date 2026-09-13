@@ -27,6 +27,7 @@ export const CERTAINTY = [
     examples: [
       'Roll angle 161.4 degrees at 10:03:07. The aircraft really was inverted, and this is the channel that says so.',
       'Passenger oxygen reads OFF on all 79 samples, with no transition. The masks never deployed.',
+      'APU RPM reads 0 per cent on all 79 samples. The auxiliary power unit in the tail was never running.',
       'All three hydraulic systems read normal to 10:03:08, and both engines are still running at 10:03:06.',
     ],
     src: 'ntsb',

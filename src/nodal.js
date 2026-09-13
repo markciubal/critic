@@ -72,7 +72,7 @@ export const NODES = [
     note: 'Passenger. Called 911 from United 93 at about 09:58. No recording has been released.',
     cite: 'Westmoreland County dispatch', src: 'press' },
   { id: 'gibney', type: 'person', label: 'Rick Gibney',
-    note: 'Air National Guard pilot at Fargo. Flew a state official from Montana to Albany that morning. That part is not in dispute.',
+    note: 'Air National Guard pilot at Fargo. Flew a state official from Montana to Albany that afternoon. That part is not in dispute.',
     cite: 'InForum; Popular Mechanics, March 2005', src: 'press' },
   { id: 'jacoby', type: 'person', label: 'Edward Jacoby Jr',
     note: 'New York State emergency management. The passenger on the documented Gibney flight, and its only witness.',

@@ -111,14 +111,15 @@ export const TOUR_STEPS = [
   {
     id: 'grant-hardware',
     tone: 'grant',
-    title: 'He had the fuel: the documented flight shows it',
+    title: 'He had the fuel: the documented flight points to it',
     body: (c, i) => `
       A fighter carries little fuel on its own; for long trips it carries external tanks
-      ${i('dropTanks')}. The documented part of Gibney's day includes Montana to Albany, flown
-      nonstop as reported, in one hop of ${Math.round(c.fuel.legBA).toLocaleString()} miles.
-      Without tanks a jet like his runs out at roughly
-      ${Math.round(c.fuel.twoSeatCleanMi).toLocaleString()} miles ${i('twoSeat')}, and there
-      was no refuelling in mid-air. So he had the tanks.
+      ${i('dropTanks')}. The documented part of Gibney's day includes Montana to Albany,
+      ${Math.round(c.fuel.legBA).toLocaleString()} miles, refuelled in mid-air roughly over
+      Fargo. That leaves Fargo to Albany, ${Math.round(c.fuel.legFA).toLocaleString()} miles,
+      in one hop. Without tanks a jet like his runs out at roughly
+      ${Math.round(c.fuel.twoSeatCleanMi).toLocaleString()} miles ${i('twoSeat')}. So if that
+      was his only refuelling, he had the tanks. No record says it was.
       <p>He would also have had the missiles: short-range heat-seekers ${i('sidewinder')} on
       the wingtips, with the tanks underneath. Carrying both is normal.</p>
       <p>From here on every version of the story assumes a tanked jet.</p>
@@ -126,8 +127,8 @@ export const TOUR_STEPS = [
       ${F16.maxWithTanksMph.toLocaleString()} mph ${i('placard')}; the Mach 2 figure applies
       only to a clean jet. So the tanks also cap his speed at Mach 1.6 ${i('mach')}.</p>
       <p>An earlier version of this app drew a 340-mile combat-radius ring, the figure for a
-      fighter carrying no tanks. That ring is gone: the documented leg shows the tanks were
-      fitted.</p>`,
+      fighter carrying no tanks. That ring is gone: the documented leg, with one refuelling,
+      needs the tanks.</p>`,
     t: at(8, 46, 40),
     tab: 'claim',
     view: 'place:KFAR',
@@ -148,7 +149,7 @@ export const TOUR_STEPS = [
       was wrong.
       <p>The story is given a takeoff at that exact second, with no time allowed for
       hesitation, briefing, engine start or taxiing to the runway.</p>
-      <p>This is itself an assumption: no published record gives Gibney's takeoff time. The
+      <p>This is itself an assumption: no published record gives Gibney's takeoff time from Fargo. The
       app uses the time most favourable to the claim.</p>`,
     t: at(8, 46, 40),
     tab: 'claim',
@@ -289,8 +290,9 @@ export const TOUR_STEPS = [
       does not go to Montana. That is why it fits.
       <p>Jacoby was in Bozeman. He was picked up, reached Albany, and has said so. He is the one
       first-hand witness to Gibney's flight that day.</p>
-      <p>The documented flight that establishes the tanks began in Montana. Put Montana back and
-      the trip to the intercept grows from ${Math.round(c.boz.directMi).toLocaleString()} to
+      <p>The documented flight began at Fargo and went west to Montana, and the tanks are
+      inferred from its eastbound leg, which was refuelled in the air roughly over Fargo. Put
+      Montana back and the trip to the intercept grows from ${Math.round(c.boz.directMi).toLocaleString()} to
       ${Math.round(c.boz.viaMi).toLocaleString()} miles in the same
       ${Math.round(c.boz.hours * 60)} minutes. That needs
       ${c.boz.viaMach.toFixed(1)} times the speed of sound ${i('mach')},
@@ -401,8 +403,9 @@ export const TOUR_STEPS = [
       <p>The remaining problems are not about flying: he would have to know about the
       hijacking 42 minutes before it happened; the military was not tracking the airliner, so
       nobody in a position to guide him could; shootdown authority did not reach the sector
-      until 10:31; and his documented flight that morning, the one that establishes his fuel
-      tanks, began in Montana.</p>
+      until 10:31; and his documented flight that day began at Fargo and went west to Montana,
+      with his fuel tanks inferred from its eastbound leg, which was refuelled in the air
+      roughly over Fargo.</p>
       <p>The result does not depend on speed or fuel figures that could be revised. It depends
       on the time of the hijacking, the absence of any order, and an eyewitness.</p>
       <p class="tour-warn">${HYPO.callsign} has been removed from the map. It was a construct;

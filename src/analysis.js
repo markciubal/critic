@@ -20,7 +20,7 @@ export const ASSUMPTIONS = [
   'Zero turnaround: landing, boarding a passenger and taking off again take no time at all.',
   'Instantaneous climb and descent; the whole leg is flown at cruise altitude.',
   'Still air. A real westbound leg fights the jet stream, often by 80–120 mph.',
-  'No fuel stop and no tanker rendezvous is charged against the clock.',
+  'For the claimed flight, no fuel stop and no tanker rendezvous is charged against the clock.',
 ];
 
 /* Verdict bands, expressed against the airframe rather than against a vibe. */
@@ -117,7 +117,7 @@ export function analyseDocumented() {
     label: DOC_ROUTE.label,
     legs: [l1, l2],
     totalMi,
-    note: `${Math.round(totalMi)} miles in two legs with one stop — a long day, but an ordinary one for a fighter with tanker support, and it is the route the unit, the pilot and the passenger all describe.`,
+    note: `${Math.round(totalMi)} miles in two legs with one landing, at Bozeman, and one refuelling in the air reported over Fargo — a long day, but an ordinary one for a fighter with tanker support, and it is the route the unit, the pilot and the passenger all describe.`,
   };
 }
 

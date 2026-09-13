@@ -1060,7 +1060,7 @@ export const CRITIC = {
      against it. */
   internal: [
     { text: 'The three times given are mutually inconsistent: 09:35 to 10:00 as the engagement window in the transcript, 10:00 as de Grand-Pre\'s restatement, 09:58 in LetsRoll911.org. None of them is 10:03:11, the impact time established by the flight data recorder, the cockpit voice recorder, radar, air traffic control and the impact site.', src: 'claim' },
-    { text: 'The narrative places the firing aircraft in a North Dakota Air Guard F-16 launched from Langley at 09:35, and names a pilot who was at Fargo and then in Montana that morning. Both cannot hold. The claim has to give up either the named pilot or the Langley launch.', src: 'derived' },
+    { text: 'The narrative places the firing aircraft in a North Dakota Air Guard F-16 launched from Langley at 09:35, and names a pilot who was at Fargo that morning and then in Montana. Both cannot hold. The claim has to give up either the named pilot or the Langley launch.', src: 'derived' },
   ],
   dateNote: {
     text: 'Popular Mechanics gives only "February 2004". The date 29 February 2004 is widely repeated and is inferred from the filename of the original Prison Planet transcript (022904degrand.html) and from 911facts.dk\'s citation of it. This app does not assert a day.',
@@ -1090,7 +1090,7 @@ export const GIBNEY = {
       why: 'Positioning leg. Gibney launched from his home base at Fargo in a two-seat F-16 and flew west to collect a passenger stranded in Montana with every civil aircraft in the country grounded [[groundStop]]. The original tasking was to collect FEMA director Joe Allbaugh, who travelled by other means; Jacoby went instead. North Dakota adjutant general Maj. Gen. Michael Haugen, who was at the same conference, acted as Gibney\'s crew chief. Sources: Air National Guard spokesman Master Sgt. David Somdahl in Popular Mechanics, March 2005; Dave Roepke, "Unforgettable day", The Forum of Fargo-Moorhead, 25 August 2011.',
       src: 'press' },
     { from: 'KBZN', to: 'KALB',
-      why: 'The mission itself: return New York State\'s emergency management director to Albany to run the state response, which involved some 17,000 rescue workers. The aircraft refuelled in the air roughly over Fargo on the eastbound leg. This was an in-flight refuelling; no ground fuel stop is documented in any retrieved source. Sources: Somdahl in Popular Mechanics, March 2005; Roepke, The Forum of Fargo-Moorhead, 25 August 2011.',
+      why: 'The mission itself: return New York State\'s emergency management director to Albany. FAA records at the National Archives time this leg: an F-16 filed as NODAK99 on a route beginning at Bozeman was estimated over Toronto at 18:20 EDT, with an Albany arrival time of 18:49 EDT. The records do not name the pilot; the type, date, route and onward Langley leg match the accounts of his flight. A second flight plan, NODAC99, takes the same type on from Albany to Langley via Atlantic City, proposed for 19:50 EDT, and the North Dakota House Journal of 16 January 2007 records that Gibney "returned Mr. Edward Jacoby to Albany on Sept. 11th, then flew on to the Langley Alert Detachment for duty." Gibney asked for permission to fly at lower altitudes to ease stress on Jacoby. The aircraft refuelled in the air roughly over Fargo on the eastbound leg; only Roepke\'s 2011 account reports this, and no retrieved source documents a ground fuel stop. Sources: Somdahl in Popular Mechanics, March 2005, for the delivery to Albany; FAA flight-data messages and Albany TRACON flight strips, National Archives, NAIDs 7599510 and 7601591, for the callsigns, route and times; North Dakota House Journal, 16 January 2007, for Albany then Langley; April Baumgarten, InForum, 11 September 2019, for the lower altitudes; Dave Roepke, "Unforgettable day", The Forum of Fargo-Moorhead, 25 August 2011, for the refuelling.',
       src: 'press' },
   ],
   landings: [
@@ -1100,12 +1100,12 @@ export const GIBNEY = {
   ],
   sourceConflict: {
     title: 'Which Montana airport',
-    text: 'Two readings are in print. Popular Mechanics (2005), InForum (2019) and Jacoby\'s own quoted words all say Bozeman. The 2011 InForum piece says Missoula. Bozeman is the better-supported reading: Jacoby places himself at Big Sky, which is about 45 miles from Bozeman and about 200 miles from Missoula. This app uses Bozeman and records the conflict.',
+    text: 'Two readings are in print. Popular Mechanics (2005), InForum (2019) and Jacoby\'s own quoted words all say Bozeman. The 2011 InForum piece says Missoula. A record, not only press, now settles it: the FAA flight plan for NODAK99, the eastbound F-16, held at the National Archives (NAID 7599510), gives a route beginning BZN, Bozeman. The geography agrees: Jacoby places himself at Big Sky, which is about 45 miles from Bozeman and about 200 miles from Missoula. This app uses Bozeman and records the conflict.',
     src: 'press',
   },
-  afterword: 'After dropping Jacoby at Albany, Gibney went back up. He described flying over New York City, the smell of the smoke and the look of the city, and said of the airspace: "I was the only airplane between Seattle and New York City." Sources: April Baumgarten, InForum, 11 September 2019; Dave Roepke, "Unforgettable day", 2011.',
+  afterword: 'After dropping Jacoby at Albany, Gibney went back up. It was dark as he flew over New York City. He described the smell of the smoke and the look of the city, and said of the airspace: "I was the only airplane between Seattle and New York City." InForum (2019) describes him as "the only plane in the sky - except for Air Force One". Sources: April Baumgarten, InForum, 11 September 2019; Dave Roepke, "Unforgettable day", 2011.',
   timingCaveat: {
-    text: 'No minute-by-minute log of Gibney\'s day has been published, and no retrieved source gives a departure, pickup or landing time for any leg. That absence does not favour either side. Rather than assert times, the feasibility panel lets you set them and shows the speed each leg would then demand.',
+    text: 'No minute-by-minute log of Gibney\'s day has been published. FAA records at the National Archives time the eastbound leg: NODAK99, on a route from Bozeman, was estimated over Toronto at 18:20 EDT with an Albany arrival time of 18:49 EDT, so the Bozeman departure was in the afternoon. No retrieved source times the morning or the refuelling: the tasking, the Fargo departure and the Bozeman arrival are all untimed. The Bozeman arrival is the time the claim turns on. An afternoon departure does not by itself rule out the claimed itinerary, because Shanksville to Bozeman is 1,667 miles, under three hours at cruise. The missing morning times do not favour either side. Rather than assert times, the feasibility panel lets you set them and shows the speed each leg would then demand.',
     src: 'derived',
   },
   rebuttals: [
@@ -1129,17 +1129,16 @@ export const GIBNEY = {
   unverified: [
     'The Jacoby quote "I summarily dismiss that because Lt. Col. Gibney was with me at that time." It is repeated by many secondary sources but could not be retrieved from an originating publication. The Jacoby words used above are the ones Popular Mechanics prints.',
     'The Jacoby quote "It disgusts me to see this because the public is being misled." Returned by a search summary only; not present in the Popular Mechanics text retrieved. Not used here.',
-    'An earlier version of this app said Gibney requested clearance to fly lower than normal to reduce the physical stress on his passenger. No retrieved source states this. It has been removed from the leg description.',
-    'An earlier version said Gibney flew over New York City after dark, and that he described himself as airborne alongside Air Force One. Neither detail is in any retrieved source. The retrieved wording is "I was the only airplane between Seattle and New York City."',
+    'An earlier version said Gibney described himself as airborne alongside Air Force One. No retrieved source says "alongside". InForum (2019) mentions Air Force One only as the one other aircraft in the sky, and that is the wording the afterword above uses.',
     'Any 2004 Fargo Forum article that first broke the Gibney denial. Widely assumed to exist; no retrievable copy was found. The Somdahl and Jacoby quotes trace to Popular Mechanics\' own March 2005 reporting.',
     'The original LetsRoll911.org page naming "Major Rick Gibney". The site is defunct. Its wording survives only as quoted inside Popular Mechanics.',
     'Gibney\'s official 119th Wing biography (119wg.ang.af.mil) returned 403. His exact rank date, his position title in September 2001 and his promotion dates could not be confirmed from an official record.',
-    'Departure, pickup and landing times for the Fargo–Bozeman–Albany flight. No retrieved source states a time for any leg.',
-    'The tail number and model of the aircraft Gibney flew. The 2011 account says only "a two-seater F-16", which implies an F-16B or D; no source names the model or serial.',
-    'The North Dakota House Journal of 16 January 2007, which a search summary says records that Gibney returned Jacoby to Albany and then flew on to the Langley alert detachment. The PDF was fetched but its text could not be extracted, so the sentence is unconfirmed. If confirmed it would be the best non-press source for the Albany-then-Langley sequence.',
+    'The tasking time, the Fargo departure time, the Bozeman arrival and pickup times, and the time of the in-air refuelling. No retrieved source states any of them. The eastbound leg is timed by FAA records at the National Archives (estimated over Toronto at 18:20 EDT, Albany arrival time 18:49 EDT); the morning is not.',
+    'The pilot of NODAK99. The FAA flight plan and flight strips do not name him. The identification rests on the type, date, route and onward Langley leg matching the accounts of Gibney\'s flight.',
+    'The tail number and model of the aircraft Gibney flew. The 2011 account says only "a two-seater F-16", which implies an F-16B or D, and the FAA flight plan gives the type only as F16/I. No source names the model or serial.',
     'Whether Gibney was decorated at a North Dakota ceremony "a year later", as de Grand-Pre claims. No retrieved source confirms or rebuts it.',
   ],
-  refs: ['GIBNEY', 'GIBNEY_UNIT'],
+  refs: ['GIBNEY', 'INFORUM_2011', 'NARA_FAA_NODAK', 'ND_HOUSE_2007', 'GIBNEY_UNIT'],
 };
 
 /* The claim's implied itinerary. This is the thing the app actually measures:
@@ -1201,7 +1200,7 @@ export const F16 = {
     { figure: 'Max at low altitude, 915 mph',
       text: 'CITED. Mach 1.2 at sea level, from the Aerospaceweb F-16 specifications, corroborated by the Wikipedia spec block citing Frawley at Mach 1.2, 800 kn or 921 mph.' },
     { figure: 'Max at altitude, 1,320 mph',
-      text: 'DERIVED. This app\'s arithmetic: Mach 2.0 times the speed of sound at 40,000 ft. The USAF fact sheet gives 1,500 mph, 180 higher. The figure is a clean-configuration number and is not available to this claim either way, because the Montana leg establishes the tanks.' },
+      text: 'DERIVED. This app\'s arithmetic: Mach 2.0 times the speed of sound at 40,000 ft. The USAF fact sheet gives 1,500 mph, 180 higher. The figure is a clean-configuration number. This app treats it as unavailable to this claim because it infers from the Montana leg that external tanks were fitted; that inference depends on the single in-air refuelling reported in 2011, and no record documents the tank fit. The Montana-route finding does not rest on it: the Bozeman detour needs roughly Mach 2.9, beyond this clean figure as well.' },
     { figure: 'Max with tanks, 1,050 mph',
       text: 'REPORTED, primary document not obtained. The 600 KIAS / Mach 1.6 placard for two 370-gallon wing tanks, a 300-gallon centreline tank and wingtip AIM-9s is attested only by a forum post quoting a personal F-16 Block 40 flight manual. T.O. 1F-16A-1 establishes that external stores reduce the limit and refers the figures out to the stores supplement (T.O. 1F-16C-1-3 / 1F-16C-1-4, figure 5-11), which was not obtained. This is the most load-bearing number in the app.' },
     { figure: 'Ferry range, 2,450 mi',

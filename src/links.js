@@ -155,6 +155,35 @@ export const REFS = {
       url: 'https://www.history.co.uk/articles/911-flight-93-myths-debunked' },
     wiki('Debunking_9/11_Myths', 'Wikipedia — Debunking 9/11 Myths'),
   ],
+
+  /* --- added 13 Sep 2026, each read directly ------------------------------
+     The FAA flight plans and flight strips for NODAK99 and NODAC99 (Record
+     Group 237, FAA 9/11 records, NAID 7419198), the North Dakota House
+     Journal entry, the 2011 Roepke piece, Kara's post on the Andrews
+     fighters, and the NTSB tabulation files for the United 93 flight data
+     recorder as released on FOIA appeal and held by the Internet Archive. */
+  NARA_FAA_NODAK: [
+    { label: 'National Archives — Boston ARTCC flight-data messages, 11 Sep 2001 (flight plans NODAK99 and NODAC99), NAID 7599510', kind: 'doc',
+      url: 'https://catalog.archives.gov/id/7599510' },
+    { label: 'National Archives — Albany TRACON flight strips, 11 Sep 2001 (page 12: NODAK99 and NODAC99), NAID 7601591', kind: 'doc',
+      url: 'https://catalog.archives.gov/id/7601591' },
+  ],
+  ND_HOUSE_2007: [
+    { label: 'North Dakota House Journal, 60th Legislative Assembly, 16 January 2007 (Jacoby to Albany, then Langley)', kind: 'doc',
+      url: 'https://www.ndlegis.gov/assembly/60-2007/regular/journals/HR10.pdf' },
+  ],
+  INFORUM_2011: [
+    { label: 'Dave Roepke, "Unforgettable day", The Forum of Fargo-Moorhead, 25 August 2011', kind: 'press',
+      url: 'https://inforum.com/entertainment/2996984-unforgettable-day-north-dakota-guard-pilots-who-flew-911-tell-their-stories' },
+  ],
+  KARA_ANDREWS: [
+    { label: 'Miles Kara — The Andrews fighters: a complex story, itself chaotic', kind: 'press',
+      url: 'https://www.oredigger61.org/?p=4918' },
+  ],
+  NTSB_TAB_IA: [
+    { label: 'NTSB DCA01MA065 — United 93 flight data recorder tabulation files, FOIA appeal release (Internet Archive)', kind: 'doc',
+      url: 'https://archive.org/details/NTSB_FOIA_Appeal_2012-00001-A_Nov_10_2011' },
+  ],
 };
 
 export function refsFor(key) {
