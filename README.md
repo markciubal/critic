@@ -1,6 +1,6 @@
 # truth.help
 
-Help me understand the last six minutes of United 93.
+Help me understand the 9/11 CRITIC, given the STEELMAN argument.
 
 # CRITIC — DIRNSA CRITIC 1-2001
 

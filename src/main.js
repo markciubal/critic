@@ -2026,8 +2026,8 @@ function renderRecon() {
 
   host.innerHTML = `
     <section class="card recon">
-      <p class="kicker">truth.help</p>
-      <h2>Help me understand the last six minutes</h2>
+      <p class="kicker">The record</p>
+      <h2>The last six minutes</h2>
       <p class="recon-range">09:57:00 to 10:03:11, the revolt to the ground.</p>
       <p class="sec-note">${RECON_NOTE}</p>
       <div class="recon-filter">
